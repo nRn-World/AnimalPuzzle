@@ -1,0 +1,344 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-sans);
+    background-color: #0F1219;
+    color: #F1F5F9;
+    overflow-x: hidden;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.perspective-stage {
+  perspective: 1150px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+@keyframes gem-spawn {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -22%, 0) scale(0.72);
+  }
+  70% {
+    opacity: 1;
+    transform: translate3d(0, 4%, 10px) scale(1.07);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes gem-clear {
+  0% {
+    opacity: 1;
+    transform: perspective(500px) rotateY(0deg) scale(1);
+  }
+  38% {
+    opacity: 1;
+    transform: perspective(500px) rotateY(140deg) scale(1.26) translateZ(24px);
+  }
+  100% {
+    opacity: 0;
+    transform: perspective(500px) rotateY(260deg) scale(0.18) translateZ(-20px);
+  }
+}
+
+@keyframes gem-land-3d {
+  0% {
+    transform: scale3d(1, 1, 1);
+  }
+  35% {
+    transform: scale3d(1.1, 0.87, 1);
+  }
+  68% {
+    transform: scale3d(0.95, 1.06, 1);
+  }
+  100% {
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+@keyframes gem-invalid {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px) rotateZ(-4deg);
+  }
+  75% {
+    transform: translateX(5px) rotateZ(4deg);
+  }
+}
+
+@keyframes hint-pulse {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.96;
+  }
+  50% {
+    transform: translateY(-3px) scale(1.1);
+    opacity: 1;
+  }
+}
+
+@keyframes aura-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes menu-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes menu-bob {
+  0%, 100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(2deg);
+  }
+}
+
+@keyframes menu-twinkle {
+  0%, 100% {
+    opacity: 0.25;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes menu-glow {
+  0%, 100% {
+    box-shadow: 0 12px 26px rgba(16, 185, 129, 0.34), 0 0 0 0 rgba(52, 211, 153, 0.34);
+  }
+  50% {
+    box-shadow: 0 16px 34px rgba(16, 185, 129, 0.5), 0 0 0 10px rgba(52, 211, 153, 0);
+  }
+}
+
+@keyframes menu-pop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.975);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes menu-firefly {
+  0%, 100% {
+    opacity: 0.1;
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    opacity: 0.85;
+    transform: translate3d(10px, -20px, 0);
+  }
+}
+
+@keyframes pet-blink {
+  0%, 90%, 100% {
+    transform: scaleY(1);
+  }
+  93%, 95% {
+    transform: scaleY(0.06);
+  }
+  97% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes board-shake {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  20% {
+    transform: translate3d(-5px, 3px, 0);
+  }
+  40% {
+    transform: translate3d(5px, -3px, 0);
+  }
+  60% {
+    transform: translate3d(-4px, -2px, 0);
+  }
+  80% {
+    transform: translate3d(4px, 2px, 0);
+  }
+}
+
+
+.animate-gem-spawn {
+  animation: gem-spawn 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-gem-clear {
+  animation: gem-clear 240ms cubic-bezier(0.32, 0, 0.2, 1) both;
+}
+
+.animate-gem-land {
+  animation: gem-land-3d 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-gem-invalid {
+  animation: gem-invalid 200ms ease-in-out both;
+}
+
+.animate-hint-pulse {
+  animation: hint-pulse 900ms ease-in-out infinite;
+}
+
+.animate-aura-spin {
+  animation: aura-spin 5s linear infinite;
+}
+
+.animate-board-shake {
+  animation: board-shake 240ms ease-out both;
+}
+
+.pet-eyes {
+  animation: pet-blink 6200ms ease-in-out infinite;
+}
+
+.dolphin-blink-frame {
+  opacity: 0;
+  animation: dolphin-blink 6200ms step-start infinite;
+}
+
+@keyframes dolphin-blink {
+  0%, 92%, 100% {
+    opacity: 0;
+  }
+  96% {
+    opacity: 1;
+  }
+}
+
+@keyframes star-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-18deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.18) rotate(4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+.animate-star-pop {
+  animation: star-pop 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes combo-banner {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.94);
+  }
+  12%, 78% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+
+.animate-combo-banner {
+  animation: combo-banner 2400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-menu-float {
+  animation: menu-float 5s ease-in-out infinite;
+}
+
+.animate-menu-bob {
+  animation: menu-bob 2.8s ease-in-out infinite;
+}
+
+.animate-menu-twinkle {
+  animation: menu-twinkle 2.6s ease-in-out infinite;
+}
+
+.animate-menu-glow {
+  animation: menu-glow 2.8s ease-in-out infinite;
+}
+
+.animate-menu-pop {
+  animation: menu-pop 460ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-menu-firefly {
+  animation: menu-firefly 7s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-gem-spawn,
+  .animate-gem-clear,
+  .animate-gem-land,
+  .animate-gem-invalid,
+  .animate-hint-pulse,
+  .animate-aura-spin,
+  .animate-board-shake,
+  .animate-menu-float,
+  .animate-menu-bob,
+  .animate-menu-twinkle,
+  .animate-menu-glow,
+  .animate-menu-pop,
+  .animate-menu-firefly,
+  .pet-eyes,
+  .dolphin-blink-frame,
+  .animate-star-pop,
+  .animate-combo-banner {
+    animation: none !important;
+  }
+}

@@ -1,0 +1,256 @@
+export const BOARD_SIZE = 8;
+
+export type GemColor =
+  | 'ruby'
+  | 'amber'
+  | 'emerald'
+  | 'cobalt'
+  | 'amethyst'
+  | 'quartz'
+  | 'tangerine'
+  | 'lime'
+  | 'sky'
+  | 'violet'
+  | 'rose'
+  | 'mint';
+
+export type SpecialType = 'none' | 'beam_h' | 'beam_v' | 'nova' | 'prism';
+
+export type ComboType =
+  | 'crossbeam'
+  | 'supernova'
+  | 'starburst'
+  | 'prism'
+  | 'prism_beam'
+  | 'prism_nova'
+  | 'prism_storm';
+
+export interface Gem {
+  id: number;
+  color: GemColor;
+  special: SpecialType;
+  chained: boolean;
+}
+
+export interface Cell {
+  row: number;
+  col: number;
+  gem: Gem | null;
+  ice: number; // 0 = clear, 1 = thin frost, 2 = deep permafrost
+  crate: number; // 0 = open, 1 = cracked geode, 2 = solid basalt geode
+}
+
+export type Board = Cell[][];
+
+export interface Coord {
+  row: number;
+  col: number;
+}
+
+export type GameMode = 'campaign' | 'endless' | 'daily';
+
+export type AnimalSkinId = 'classic' | 'royal' | 'winter' | 'starlight';
+
+export interface AnimalSkinMeta {
+  id: AnimalSkinId;
+  nameSv: string;
+  descSv: string;
+}
+
+export type GamePhase =
+  | 'TITLE_MENU'
+  | 'PLAYING'
+  | 'PAUSED'
+  | 'VICTORY'
+  | 'GAME_OVER';
+
+export type ToolType = 'hammer' | 'pulse' | 'shuffle';
+
+export type ObjectiveKind =
+  | 'color'
+  | 'ice'
+  | 'crate'
+  | 'chain'
+  | 'score'
+  | 'specials'
+  | 'cascade3';
+
+export interface LevelObjective {
+  id: string;
+  kind: ObjectiveKind;
+  color?: GemColor;
+  label: string;
+  target: number;
+}
+
+export interface LevelProgress {
+  score: number;
+  clearedColors: Record<GemColor, number>;
+  clearedIce: number;
+  clearedCrates: number;
+  clearedChains: number;
+  specialsCreated: number;
+  cascade3Count: number;
+}
+
+export type LevelDifficulty = 'easy' | 'medium' | 'hard' | 'extreme';
+
+export interface LevelConfig {
+  id: number;
+  name: string;
+  subtitle: string;
+  moves: number;
+  colorCount: number; // 5 or 6
+  /** Optional animal crew for this level. Defaults to the first colorCount colors. */
+  palette?: GemColor[];
+  /** Campaign chapter (1-4). Omitted for daily/endless configs. */
+  chapter?: number;
+  difficulty?: LevelDifficulty;
+  objectives: LevelObjective[];
+  iceCells?: Array<{ row: number; col: number; hp: number }>;
+  crateCells?: Array<{ row: number; col: number; hp: number }>;
+  chainCells?: Array<{ row: number; col: number }>;
+}
+
+export interface BlastEvent {
+  type: 'beam_h' | 'beam_v' | 'nova' | 'prism' | 'ice' | 'crate' | 'chain' | 'match';
+  row: number;
+  col: number;
+  color?: GemColor;
+}
+
+export interface CascadeStep {
+  boardAfterClear: Board;
+  boardAfterGravity: Board;
+  clearedCoords: Coord[];
+  spawnedSpecials: Array<{ coord: Coord; special: SpecialType; color: GemColor }>;
+  blasts: BlastEvent[];
+  stepScore: number;
+  cascadeIndex: number; // 1-based
+  energyGained: number;
+  deltaProgress: {
+    clearedColors: Record<GemColor, number>;
+    clearedIce: number;
+    clearedCrates: number;
+    clearedChains: number;
+  };
+}
+
+export interface SwapResult {
+  valid: boolean;
+  reason?: 'not_adjacent' | 'blocked' | 'no_match';
+  steps: CascadeStep[];
+  finalBoard: Board;
+  totalScore: number;
+  totalEnergy: number;
+  maxCascade: number;
+  reshuffled: boolean;
+  /** Set when two specials (or a prism and a normal gem) are combined. */
+  combo?: ComboType;
+}
+
+export interface HintMove {
+  from: Coord;
+  to: Coord;
+  score: number;
+  createsSpecial: SpecialType;
+}
+
+export const GEM_COLORS_ORDER: GemColor[] = [
+  'ruby',
+  'amber',
+  'emerald',
+  'cobalt',
+  'amethyst',
+  'quartz',
+  'tangerine',
+  'lime',
+  'sky',
+  'violet',
+  'rose',
+  'mint',
+];
+
+export const GEM_META: Record<
+  GemColor,
+  { nameSv: string; hex: string; lightHex: string; darkHex: string }
+> = {
+  ruby: {
+    nameSv: 'Räv',
+    hex: '#E94E65',
+    lightHex: '#FF8A9B',
+    darkHex: '#9E1F34',
+  },
+  amber: {
+    nameSv: 'Lejon',
+    hex: '#F59E0B',
+    lightHex: '#FDE047',
+    darkHex: '#B45309',
+  },
+  emerald: {
+    nameSv: 'Groda',
+    hex: '#19B87A',
+    lightHex: '#6EE7B7',
+    darkHex: '#047857',
+  },
+  cobalt: {
+    nameSv: 'Pingvin',
+    hex: '#3B82F6',
+    lightHex: '#93C5FD',
+    darkHex: '#1D4ED8',
+  },
+  amethyst: {
+    nameSv: 'Kanin',
+    hex: '#A855F7',
+    lightHex: '#D8B4FE',
+    darkHex: '#6B21A8',
+  },
+  quartz: {
+    nameSv: 'Isbjörn',
+    hex: '#E8EFFA',
+    lightHex: '#FFFFFF',
+    darkHex: '#94A3B8',
+  },
+  tangerine: {
+    nameSv: 'Tiger',
+    hex: '#FB923C',
+    lightHex: '#FDBA74',
+    darkHex: '#C2410C',
+  },
+  lime: {
+    nameSv: 'Sköldpadda',
+    hex: '#84CC16',
+    lightHex: '#BEF264',
+    darkHex: '#4D7C0F',
+  },
+  sky: {
+    nameSv: 'Delfin',
+    hex: '#38BDF8',
+    lightHex: '#7DD3FC',
+    darkHex: '#0369A1',
+  },
+  violet: {
+    nameSv: 'Panda',
+    hex: '#8B5CF6',
+    lightHex: '#C4B5FD',
+    darkHex: '#5B21B6',
+  },
+  rose: {
+    nameSv: 'Uggla',
+    hex: '#F472B6',
+    lightHex: '#F9A8D4',
+    darkHex: '#9D174D',
+  },
+  mint: {
+    nameSv: 'Säl',
+    hex: '#2DD4BF',
+    lightHex: '#5EEAD4',
+    darkHex: '#0F766E',
+  },
+};
+
+export const TOOL_COSTS: Record<ToolType, number> = {
+  hammer: 30,
+  pulse: 55,
+  shuffle: 20,
+};
