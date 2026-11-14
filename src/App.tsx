@@ -402,6 +402,14 @@ export default function App() {
     }
   }, []);
 
+  const handleBackToTitle = useCallback(() => {
+    runTokenRef.current += 1;
+    clearComboNotice();
+    soundEngine.playClick();
+    setShowGuide(false);
+    setPhase('TITLE_MENU');
+  }, [clearComboNotice]);
+
   const startSession = useCallback(
     (
       targetMode: GameMode,
@@ -559,23 +567,6 @@ export default function App() {
         }
 
         fxRef.current?.emitBlasts(step.blasts);
-        if (step.clearedCoords.length > 0) {
-          const anchor = step.clearedCoords[Math.floor(step.clearedCoords.length / 2)];
-          const cheer =
-            step.cascadeIndex >= 5
-              ? 'OTROLIGT!'
-              : step.cascadeIndex === 4
-              ? 'MAGISKT!'
-              : step.cascadeIndex === 3
-              ? 'SUPER!'
-              : step.cascadeIndex === 2
-              ? 'KASKAD!'
-              : '';
-          const label = cheer ? `${cheer} +${step.stepScore}` : `+${step.stepScore}`;
-          const textColor =
-            step.cascadeIndex >= 3 ? '#FDE047' : step.cascadeIndex === 2 ? '#6EE7B7' : '#FFFFFF';
-          fxRef.current?.emitFloatingText(anchor.row, anchor.col, label, textColor);
-        }
 
         await waitMs(230);
         if (runTokenRef.current !== token) return false;
@@ -605,6 +596,37 @@ export default function App() {
       }
 
       if (runTokenRef.current !== token) return false;
+
+      // Summarize the whole cascade in one floating label. Showing one label
+      // per cascade step made fast chains overlap and become unreadable.
+      if (result.steps.length > 0) {
+        const finalStep = result.steps[result.steps.length - 1];
+        const anchor = finalStep.clearedCoords[Math.floor(finalStep.clearedCoords.length / 2)];
+        if (anchor) {
+          const peakCascade = Math.max(...result.steps.map((step) => step.cascadeIndex));
+          const totalStepScore = result.steps.reduce((sum, step) => sum + step.stepScore, 0);
+          const cheer =
+            peakCascade >= 5
+              ? 'OTROLIGT!'
+              : peakCascade === 4
+              ? 'MAGISKT!'
+              : peakCascade === 3
+              ? 'SUPER!'
+              : peakCascade === 2
+              ? 'KASKAD!'
+              : '';
+          const formattedScore = Math.round(totalStepScore).toLocaleString('sv-SE');
+          const label = cheer
+            ? `${cheer} ×${peakCascade}  +${formattedScore}`
+            : `+${formattedScore}`;
+          fxRef.current?.emitFloatingText(
+            anchor.row,
+            anchor.col,
+            label,
+            peakCascade >= 2 ? '#FDE047' : '#FFFFFF'
+          );
+        }
+      }
 
       if (result.reshuffled) {
         setTransitionMode('none');
@@ -1016,7 +1038,7 @@ export default function App() {
             ? null
             : curr
         );
-      }, 2400);
+      }, 4000);
     }
   }, [board, busy, phase]);
 
@@ -1166,6 +1188,7 @@ export default function App() {
                 soundEngine.playClick();
                 startSession(mode, levelIdx);
               }}
+              onBackToTitle={handleBackToTitle}
             />
 
             <div className="order-2 lg:order-none flex min-h-0 w-full flex-1 flex-col items-center gap-1.5 sm:gap-2">
@@ -1274,13 +1297,7 @@ export default function App() {
               soundEngine.playClick();
               startSession('campaign', Math.min(CAMPAIGN_LEVELS.length - 1, levelIdx + 1));
             }}
-            onBackToTitle={() => {
-              runTokenRef.current += 1;
-              clearComboNotice();
-              soundEngine.playClick();
-              setShowGuide(false);
-              setPhase('TITLE_MENU');
-            }}
+            onBackToTitle={handleBackToTitle}
           />
         </div>
       )}

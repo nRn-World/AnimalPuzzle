@@ -59,6 +59,7 @@ const MAX_BEAMS = 24;
 const MAX_RINGS = 32;
 const MAX_LABELS = 18;
 const CELEBRATION_COLORS = ['#FF8A9B', '#FDE047', '#6EE7B7', '#93C5FD', '#D8B4FE', '#FFFFFF'];
+const LABEL_FONT = '700 16px "Bricolage Grotesque", "JetBrains Mono", sans-serif';
 
 export const ParticleCanvas = forwardRef<ParticleCanvasHandle>((_, ref) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -240,8 +241,21 @@ export const ParticleCanvas = forwardRef<ParticleCanvasHandle>((_, ref) => {
       const pool = labelsRef.current;
       const l = pool[labelCursor.current];
       labelCursor.current = (labelCursor.current + 1) % MAX_LABELS;
+
+      // Keep wide labels inside the board even when the anchor is in the
+      // first or last column. A fixed margin clipped cascade summaries.
+      let textWidth = Math.max(96, text.length * 8.5);
+      const measureCtx = canvasRef.current?.getContext('2d');
+      if (measureCtx) {
+        measureCtx.save();
+        measureCtx.font = LABEL_FONT;
+        textWidth = measureCtx.measureText(text).width;
+        measureCtx.restore();
+      }
+      const halfWidth = textWidth / 2 + 10;
+
       l.active = true;
-      l.x = Math.max(48, Math.min(width - 48, (col + 0.5) * cellW));
+      l.x = Math.max(halfWidth, Math.min(width - halfWidth, (col + 0.5) * cellW));
       l.y = Math.max(24, (row + 0.5) * cellH);
       l.vy = -48;
       l.text = text;
@@ -453,7 +467,7 @@ export const ParticleCanvas = forwardRef<ParticleCanvasHandle>((_, ref) => {
         ctx.globalAlpha = alpha;
         ctx.translate(l.x, l.y);
         ctx.scale(popScale, popScale);
-        ctx.font = '700 16px "Bricolage Grotesque", "JetBrains Mono", sans-serif';
+        ctx.font = LABEL_FONT;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.lineWidth = 4;

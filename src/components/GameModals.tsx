@@ -263,9 +263,16 @@ export const GameModals: React.FC<GameModalsProps> = ({
                   Spela igen
                 </button>
               )}
-              <button type="button" onClick={onBackToTitle} className={SECONDARY_BTN_CLASS}>
-                Till huvudmenyn
-              </button>
+              <div className={`grid gap-2.5 ${hasNextLevel ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                {hasNextLevel && (
+                  <button type="button" onClick={onRestart} className={SECONDARY_BTN_CLASS}>
+                    Spela igen
+                  </button>
+                )}
+                <button type="button" onClick={onBackToTitle} className={SECONDARY_BTN_CLASS}>
+                  Till huvudmenyn
+                </button>
+              </div>
             </div>
           </>
         )}

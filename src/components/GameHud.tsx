@@ -39,6 +39,7 @@ interface GameHudProps {
   onToggleFullscreen?: () => void;
   onPause: () => void;
   onRestart: () => void;
+  onBackToTitle: () => void;
 }
 
 export const GameHud: React.FC<GameHudProps> = ({
@@ -61,6 +62,7 @@ export const GameHud: React.FC<GameHudProps> = ({
   onToggleFullscreen,
   onPause,
   onRestart,
+  onBackToTitle,
 }) => {
   const energyPct = Math.min(100, Math.round((energy / maxEnergy) * 100));
   const lowMoves = movesLeft <= 4;
@@ -77,12 +79,28 @@ export const GameHud: React.FC<GameHudProps> = ({
         {/* Header row: Level title + Utility icon controls */}
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#CBD5E1] leading-tight">
-              {mode === 'campaign'
-                ? `Nivå ${level.id} av ${CAMPAIGN_LEVELS.length}`
-                : mode === 'daily'
-                ? 'Daglig utmaning'
-                : 'Oändligt läge'}
+            <div className="flex min-w-0 items-center gap-1">
+              <button
+                type="button"
+                tabIndex={-1}
+                data-testid="hud-home-btn"
+                onClick={(e) => blurAfterClick(e, onBackToTitle)}
+                title="Till huvudmenyn"
+                aria-label="Till huvudmenyn"
+                className="inline-flex shrink-0 items-center gap-1 rounded-md -ml-1 px-1.5 py-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#CBD5E1] hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+              >
+                <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5M9.5 21v-6h5v6" />
+                </svg>
+                <span className="hidden sm:inline">Meny</span>
+              </button>
+              <span className="truncate text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#CBD5E1] leading-tight">
+                {mode === 'campaign'
+                  ? `Nivå ${level.id}/${CAMPAIGN_LEVELS.length}`
+                  : mode === 'daily'
+                  ? 'Daglig'
+                  : 'Oändligt'}
+              </span>
             </div>
             <h1 className="font-display text-sm sm:text-[17px] font-bold text-white truncate leading-tight">
               {level.name}
