@@ -386,9 +386,9 @@ export const GemSvg: React.FC<GemSvgProps> = ({
       {/* 10. DELFIN (sky) — uploaded artwork with matching blink frame */}
       {special !== 'prism' && color === 'sky' && (
         <g>
-          <image href="/delfin-gem.png" x="0" y="0" width="64" height="64" />
+          <image href={`${import.meta.env.BASE_URL}delfin-gem.png`} x="0" y="0" width="64" height="64" />
           <image
-            href="/delfin-gem-eyes.png"
+            href={`${import.meta.env.BASE_URL}delfin-gem-eyes.png`}
             x="0"
             y="0"
             width="64"

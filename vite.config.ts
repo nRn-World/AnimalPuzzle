@@ -3,8 +3,15 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
 
+// GitHub Pages serves this project from /AnimalPuzzle/. Keep the root base
+// during local development, and use the repository path in Actions builds.
+const base =
+  process.env.VITE_BASE_PATH ??
+  (process.env.GITHUB_ACTIONS === 'true' ? '/AnimalPuzzle/' : '/');
+
 export default defineConfig(() => {
   return {
+    base,
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
