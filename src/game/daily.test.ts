@@ -7,6 +7,7 @@ import {
   createSeededRng,
   DAILY_BONUS_ENERGY,
   equipAnimalSkin,
+  EXCLUSIVE_DAILY_SKINS,
   getDailyChallenge,
   getDailyKey,
 } from './daily';
@@ -27,6 +28,26 @@ test('getDailyChallenge is deterministic per date and produces valid playable bo
 
   const board = createBoard(c1.level, createSeededRng(c1.seed));
   assert.equal(board.length, 8);
+});
+
+test('featured skin for a date stays fixed after its reward is claimed', () => {
+  const dateKey = '2026-11-13';
+  const before = getDailyChallenge(dateKey);
+  assert.equal(EXCLUSIVE_DAILY_SKINS.includes(before.featuredSkin), true);
+
+  const claim = claimDailyReward(
+    createInitialDailyState(),
+    dateKey,
+    before.featuredSkin
+  );
+  assert.equal(claim.newlyCompleted, true);
+  assert.equal(claim.unlockedNewSkin, before.featuredSkin);
+
+  const after = getDailyChallenge(dateKey);
+  assert.equal(after.featuredSkin, before.featuredSkin);
+  assert.equal(after.title, before.title);
+  assert.equal(after.level.name, before.level.name);
+  assert.equal(after.goalSummary, before.goalSummary);
 });
 
 test('extended objectives specials and cascade3 evaluate correctly', () => {

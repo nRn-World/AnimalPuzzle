@@ -433,7 +433,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                   <div
                     role="tablist"
                     aria-label="Kapitel"
-                    className="flex items-center gap-1.5 overflow-x-auto pb-0.5 -mx-0.5 px-0.5"
+                    className="no-scrollbar flex items-center gap-1.5 overflow-x-auto pb-0.5 -mx-0.5 px-0.5"
                   >
                     {CAMPAIGN_CHAPTERS.map((ch) => {
                       const firstIdx = CAMPAIGN_LEVELS.findIndex(

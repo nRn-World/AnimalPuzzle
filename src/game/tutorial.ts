@@ -1,5 +1,5 @@
 import { allocGemId, findBestHint, findMatchGroups } from './engine';
-import { BOARD_SIZE, Board, Cell, Coord, GemColor } from './types';
+import { BOARD_SIZE, Board, Cell, Coord, GameMode, GemColor } from './types';
 
 export type TutorialStepId = 'step1' | 'step2' | 'done';
 
@@ -14,6 +14,34 @@ export interface TutorialPrompt {
 }
 
 export const TUTORIAL_STORAGE_KEY = 'kromatik_tutorial_done';
+
+export interface TutorialGateOptions {
+  mode: GameMode;
+  targetLevelIndex: number;
+  tutorialDone: boolean;
+  forceTutorial?: boolean;
+  skipTutorial?: boolean;
+}
+
+/**
+ * The interactive tutorial belongs to the first campaign level only. It may be
+ * replayed explicitly with forceTutorial, but it must never replace another
+ * level's board or restart after the player skips it.
+ */
+export function shouldRunTutorial({
+  mode,
+  targetLevelIndex,
+  tutorialDone,
+  forceTutorial = false,
+  skipTutorial = false,
+}: TutorialGateOptions): boolean {
+  return (
+    mode === 'campaign' &&
+    targetLevelIndex === 0 &&
+    !skipTutorial &&
+    (forceTutorial || !tutorialDone)
+  );
+}
 
 export const TUTORIAL_STEP1_PAIR: { from: Coord; to: Coord } = {
   from: { row: 1, col: 4 },

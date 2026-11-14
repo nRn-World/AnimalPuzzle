@@ -8,6 +8,7 @@ import {
   PulseIcon,
   ShuffleIcon,
 } from './GemSvg';
+import { StarRating } from './StarRating';
 
 interface GuidePage {
   eyebrow: string;
@@ -114,6 +115,23 @@ const PAGES: GuidePage[] = [
             <span className="block h-full w-2/3 rounded-full bg-[#F5B841]" />
           </span>
           +energi
+        </div>
+      </div>
+    ),
+  },
+  {
+    eyebrow: 'Mästerskap',
+    title: 'Kombon, stjärnor & Skördefest',
+    text:
+      'Byt två specialdjur mot varandra för egna kombon som Korsstråle, Supernova och Prismstorm – de ger extra poäng. Klara nivån effektivt för stjärnor: 2★ vid 15 % drag kvar och 3★ vid 30 %.',
+    tip: 'Spara ett specialdjur till slutet – i Skördefesten ger varje kvarvarande specialdjur 150 extra poäng.',
+    visual: (
+      <div className="flex flex-col items-center gap-2">
+        <StarRating stars={3} size="md" />
+        <div className="flex items-center gap-1.5 rounded-full border border-[#F5B841]/30 bg-[#F5B841]/10 px-2.5 py-1 text-[10px] font-bold text-[#FDE047]">
+          <span>Korsstråle</span>
+          <span className="text-white/35">·</span>
+          <span>Prismstorm</span>
         </div>
       </div>
     ),

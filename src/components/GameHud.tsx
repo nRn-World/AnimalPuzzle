@@ -167,9 +167,10 @@ export const GameHud: React.FC<GameHudProps> = ({
               type="button"
               tabIndex={-1}
               onClick={(e) => blurAfterClick(e, onPause)}
+              disabled={busy}
               title="Paus (P / Esc)"
               aria-label="Pausa spelet"
-              className="w-8 h-8 flex items-center justify-center rounded-md bg-[#1E2535] hover:bg-[#293247] text-[#E2E8F0] border border-white/10 transition-colors cursor-pointer"
+              className="w-8 h-8 flex items-center justify-center rounded-md bg-[#1E2535] hover:bg-[#293247] text-[#E2E8F0] border border-white/10 transition-colors cursor-pointer disabled:opacity-45"
             >
               <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
                 <rect x="6" y="5" width="4" height="14" rx="1" />

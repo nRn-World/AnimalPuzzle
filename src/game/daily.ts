@@ -210,19 +210,15 @@ const DAILY_TEMPLATES: DailyTemplate[] = [
   },
 ];
 
-export function getDailyChallenge(
-  dateKey: string,
-  unlockedSkins: AnimalSkinId[] = ['classic']
-): DailyChallenge {
+export function getDailyChallenge(dateKey: string): DailyChallenge {
   const rng = createSeededRng(`kromatik-daily-${dateKey}`);
   const tplIdx = Math.floor(rng() * DAILY_TEMPLATES.length);
   const template = DAILY_TEMPLATES[tplIdx];
   const { goalSummary, level } = template.build(rng, dateKey);
 
-  // Pick a featured exclusive skin; prefer one the player hasn't unlocked yet
-  const unowned = EXCLUSIVE_DAILY_SKINS.filter((s) => !unlockedSkins.includes(s));
-  const skinPool = unowned.length > 0 ? unowned : EXCLUSIVE_DAILY_SKINS;
-  const featuredSkin = skinPool[Math.floor(rng() * skinPool.length)];
+  // The featured skin belongs to the date, not to the current save. It must not
+  // change when claiming the reward unlocks a skin and triggers a re-render.
+  const featuredSkin = EXCLUSIVE_DAILY_SKINS[Math.floor(rng() * EXCLUSIVE_DAILY_SKINS.length)];
 
   return {
     dateKey,

@@ -41,6 +41,7 @@ import {
   createTutorialBoard,
   isMatchingTutorialSwap,
   resolveTutorialPrompt,
+  shouldRunTutorial,
   TUTORIAL_STORAGE_KEY,
   TutorialStepId,
 } from './game/tutorial';
@@ -50,6 +51,7 @@ import {
   toggleDocumentFullscreen,
 } from './game/fullscreen';
 import { CAMPAIGN_LEVELS, ENDLESS_CONFIG } from './game/levels';
+import { BEST_SCORE_STORAGE_KEYS, nextBestScore } from './game/records';
 import {
   AnimalSkinId,
   Board,
@@ -207,18 +209,20 @@ export default function App() {
     Math.min(CAMPAIGN_LEVELS.length - 1, Math.max(0, readStoredInt('kromatik_unlocked', 0)))
   );
   const [bestCampaignScore, setBestCampaignScore] = useState<number>(() =>
-    readStoredInt('kromatik_best_campaign', 0)
+    readStoredInt(BEST_SCORE_STORAGE_KEYS.campaign, 0)
   );
   const [bestEndlessScore, setBestEndlessScore] = useState<number>(() =>
-    readStoredInt('kromatik_best_endless', 0)
+    readStoredInt(BEST_SCORE_STORAGE_KEYS.endless, 0)
+  );
+  const [bestDailyScore, setBestDailyScore] = useState<number>(() =>
+    readStoredInt(BEST_SCORE_STORAGE_KEYS.daily, 0)
   );
 
   const [dailyState, setDailyState] = useState<DailySaveState>(() => readDailyState());
+  const dailyStateRef = useRef(dailyState);
+  dailyStateRef.current = dailyState;
   const todayKey = useMemo(() => getDailyKey(), []);
-  const dailyChallenge = useMemo(
-    () => getDailyChallenge(todayKey, dailyState.unlockedSkins),
-    [todayKey, dailyState.unlockedSkins]
-  );
+  const dailyChallenge = useMemo(() => getDailyChallenge(todayKey), [todayKey]);
   const dailyCompletedToday = dailyState.completedDates.includes(todayKey);
 
   const [endlessTarget, setEndlessTarget] = useState<number>(2500);
@@ -294,6 +298,14 @@ export default function App() {
   const [bestStars, setBestStars] = useState<Record<number, number>>(() => readBestStars());
   const [comboNotice, setComboNotice] = useState<{ type: ComboType; nonce: number } | null>(null);
   const comboNoticeTimerRef = useRef<number | null>(null);
+
+  const clearComboNotice = useCallback(() => {
+    if (comboNoticeTimerRef.current !== null) {
+      window.clearTimeout(comboNoticeTimerRef.current);
+      comboNoticeTimerRef.current = null;
+    }
+    setComboNotice(null);
+  }, []);
 
   const [achievementState, setAchievementState] = useState<AchievementSaveState>(() =>
     readAchievementState(dailyState.completedDates.length)
@@ -390,18 +402,14 @@ export default function App() {
     }
   }, []);
 
-  const handleSkipTutorial = useCallback(() => {
-    soundEngine.playClick();
-    setTutorialStep('done');
-    setTutorialDone(true);
-    writeTutorialDone(true);
-    setSelected(null);
-    setStatusNotice('Guide hoppad över — spela fritt!');
-    window.setTimeout(() => setStatusNotice(null), 2000);
-  }, []);
-
   const startSession = useCallback(
-    (targetMode: GameMode, targetIdx: number, forceTutorial = false, playIntro = false) => {
+    (
+      targetMode: GameMode,
+      targetIdx: number,
+      forceTutorial = false,
+      playIntro = false,
+      skipTutorial = false
+    ) => {
       runTokenRef.current += 1;
       const lvl =
         targetMode === 'campaign'
@@ -414,22 +422,32 @@ export default function App() {
         document.activeElement.blur();
       }
 
-      const runTutorial = targetMode === 'campaign' && (forceTutorial || !tutorialDone);
+      const runTutorial = shouldRunTutorial({
+        mode: targetMode,
+        targetLevelIndex: targetIdx,
+        tutorialDone,
+        forceTutorial,
+        skipTutorial,
+      });
       setShowGuide(
         playIntro &&
           targetMode === 'campaign' &&
           (forceTutorial || !hasSeenIntroGuide())
       );
 
-      // Load banked bonus energy into campaign/endless starts
+      // Load banked bonus energy into campaign/endless starts. Skipping the
+      // tutorial restarts the same run, so keep the energy already earned in it.
       let startingEnergy = 0;
-      if (targetMode !== 'daily' && dailyState.bonusEnergyBank > 0) {
+      if (skipTutorial) {
+        startingEnergy = energy;
+      } else if (targetMode !== 'daily' && dailyState.bonusEnergyBank > 0) {
         const consumed = consumeBonusEnergy(dailyState, MAX_ENERGY);
         startingEnergy = consumed.loadedEnergy;
         setDailyState(consumed.nextState);
         writeDailyState(consumed.nextState);
       }
 
+      clearComboNotice();
       setMode(targetMode);
       setLevelIdx(targetIdx);
       setEndlessTarget(2500);
@@ -460,8 +478,18 @@ export default function App() {
       );
       setPhase('PLAYING');
     },
-    [dailyChallenge, dailyState, tutorialDone]
+    [clearComboNotice, dailyChallenge, dailyState, energy, tutorialDone]
   );
+
+  const handleSkipTutorial = useCallback(() => {
+    soundEngine.playClick();
+    setTutorialStep('done');
+    setTutorialDone(true);
+    writeTutorialDone(true);
+    startSession('campaign', levelIdx, false, false, true);
+    setStatusNotice('Guide hoppad över — spela fritt!');
+    window.setTimeout(() => setStatusNotice(null), 2000);
+  }, [levelIdx, startSession]);
 
   const playSwapResult = useCallback(
     async (
@@ -627,9 +655,26 @@ export default function App() {
           }
         }
 
-        const nextBest = Math.max(bestCampaignScore, finalScore);
-        setBestCampaignScore(nextBest);
-        writeStoredInt('kromatik_best_campaign', nextBest);
+        const record = nextBestScore(
+          {
+            campaign: bestCampaignScore,
+            daily: bestDailyScore,
+            endless: bestEndlessScore,
+          },
+          mode,
+          finalScore
+        );
+        const nextBest = record.best;
+        if (record.mode === 'campaign') {
+          setBestCampaignScore(nextBest);
+          writeStoredInt(BEST_SCORE_STORAGE_KEYS.campaign, nextBest);
+        } else if (record.mode === 'daily') {
+          setBestDailyScore(nextBest);
+          writeStoredInt(BEST_SCORE_STORAGE_KEYS.daily, nextBest);
+        } else {
+          setBestEndlessScore(nextBest);
+          writeStoredInt(BEST_SCORE_STORAGE_KEYS.endless, nextBest);
+        }
 
         if (mode === 'campaign' && levelIdx + 1 > highestUnlockedIdx && levelIdx + 1 < CAMPAIGN_LEVELS.length) {
           setHighestUnlockedIdx(levelIdx + 1);
@@ -639,7 +684,7 @@ export default function App() {
         let nextDailyCount = dailyState.completedDates.length;
         if (mode === 'daily') {
           const claimed = claimDailyReward(
-            dailyState,
+            dailyStateRef.current,
             dailyChallenge.dateKey,
             dailyChallenge.featuredSkin,
             dailyChallenge.rewardEnergy
@@ -684,16 +729,25 @@ export default function App() {
       }
 
       if (updatedMoves <= 0) {
-        const best =
-          mode === 'endless'
-            ? Math.max(bestEndlessScore, runningProgress.score)
-            : Math.max(bestCampaignScore, runningProgress.score);
-        if (mode === 'endless') {
+        const record = nextBestScore(
+          {
+            campaign: bestCampaignScore,
+            daily: bestDailyScore,
+            endless: bestEndlessScore,
+          },
+          mode,
+          runningProgress.score
+        );
+        const best = record.best;
+        if (record.mode === 'endless') {
           setBestEndlessScore(best);
-          writeStoredInt('kromatik_best_endless', best);
+          writeStoredInt(BEST_SCORE_STORAGE_KEYS.endless, best);
+        } else if (record.mode === 'daily') {
+          setBestDailyScore(best);
+          writeStoredInt(BEST_SCORE_STORAGE_KEYS.daily, best);
         } else {
           setBestCampaignScore(best);
-          writeStoredInt('kromatik_best_campaign', best);
+          writeStoredInt(BEST_SCORE_STORAGE_KEYS.campaign, best);
         }
 
         await waitMs(380);
@@ -720,6 +774,7 @@ export default function App() {
       activeLevel.id,
       activeLevel.moves,
       bestCampaignScore,
+      bestDailyScore,
       bestEndlessScore,
       bestStars,
       dailyChallenge,
@@ -994,6 +1049,7 @@ export default function App() {
       if (phase === 'PLAYING') {
         if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
           e.preventDefault();
+          if (busy) return;
           setPhase('PAUSED');
         } else if (e.key === 'h' || e.key === 'H') {
           e.preventDefault();
@@ -1027,6 +1083,7 @@ export default function App() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [
+    busy,
     handleHint,
     handleSelectTool,
     handleToggleFullscreen,
@@ -1101,6 +1158,7 @@ export default function App() {
               onToggleMute={handleToggleMute}
               onToggleFullscreen={handleToggleFullscreen}
               onPause={() => {
+                if (busy) return;
                 soundEngine.playClick();
                 setPhase('PAUSED');
               }}
@@ -1218,6 +1276,7 @@ export default function App() {
             }}
             onBackToTitle={() => {
               runTokenRef.current += 1;
+              clearComboNotice();
               soundEngine.playClick();
               setShowGuide(false);
               setPhase('TITLE_MENU');

@@ -5,6 +5,7 @@ import {
   createTutorialBoard,
   isMatchingTutorialSwap,
   resolveTutorialPrompt,
+  shouldRunTutorial,
   TUTORIAL_STEP1_PAIR,
   TUTORIAL_STEP2_PAIR,
 } from './tutorial';
@@ -39,6 +40,57 @@ test('tutorial step 2 swap triggers a guaranteed multi-step cascade and special 
   assert.ok(res2.maxCascade >= 2, `Expected maxCascade >= 2, got ${res2.maxCascade}`);
   const totalSpecials = res2.steps.reduce((acc, s) => acc + s.spawnedSpecials.length, 0);
   assert.ok(totalSpecials >= 1, 'Expected step 2 cascade to forge a Strale special');
+});
+
+test('tutorial only runs on the first campaign level and never after skip', () => {
+  assert.equal(
+    shouldRunTutorial({ mode: 'campaign', targetLevelIndex: 0, tutorialDone: false }),
+    true
+  );
+  assert.equal(
+    shouldRunTutorial({ mode: 'campaign', targetLevelIndex: 0, tutorialDone: true }),
+    false
+  );
+  assert.equal(
+    shouldRunTutorial({
+      mode: 'campaign',
+      targetLevelIndex: 0,
+      tutorialDone: true,
+      forceTutorial: true,
+    }),
+    true
+  );
+  assert.equal(
+    shouldRunTutorial({ mode: 'campaign', targetLevelIndex: 1, tutorialDone: false }),
+    false
+  );
+  assert.equal(
+    shouldRunTutorial({
+      mode: 'campaign',
+      targetLevelIndex: 1,
+      tutorialDone: false,
+      forceTutorial: true,
+    }),
+    false
+  );
+  assert.equal(
+    shouldRunTutorial({ mode: 'daily', targetLevelIndex: 0, tutorialDone: false }),
+    false
+  );
+  assert.equal(
+    shouldRunTutorial({ mode: 'endless', targetLevelIndex: 0, tutorialDone: false }),
+    false
+  );
+  assert.equal(
+    shouldRunTutorial({
+      mode: 'campaign',
+      targetLevelIndex: 0,
+      tutorialDone: false,
+      forceTutorial: true,
+      skipTutorial: true,
+    }),
+    false
+  );
 });
 
 test('isMatchingTutorialSwap accepts target pair in either order and rejects unrelated swaps', () => {
