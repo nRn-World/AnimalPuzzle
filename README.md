@@ -1,14 +1,14 @@
 <div align="center">
 
-<img src="public/icon-192.png" width="88" alt="AnimalPuzzle – Prismafjärilen" />
+<img src="public/icon-192.png" width="88" alt="AnimalPuzzle — the Prism Butterfly" />
 
 <h1>AnimalPuzzle</h1>
 
-**Taktiskt kristallpussel. Ovanligt söta djur.**
+**A tactical crystal puzzle. Unreasonably cute animals.**
 
-Matcha skogens vänner, bygg kedjereaktioner och tänd prismareaktioner i en mörk,
-nordisk kristallverkstad. Varje drag kan bli början på en kaskad — och varje
-kaskad kan bli en liten legend.
+Match forest friends, build cascades, and ignite prism reactions in a dark
+Nordic crystal workshop. Every move can start a chain reaction — and every
+cascade can become a small legend.
 
 <br />
 
@@ -21,79 +21,80 @@ kaskad kan bli en liten legend.
 </div>
 
 <p align="center">
-  <img src="docs/screenshots/menu.webp" alt="AnimalPuzzle huvudmeny med kampanj, daglig utmaning och djur-skinn" width="92%" />
+  <img src="docs/screenshots/menu.webp" alt="AnimalPuzzle main menu with campaign, daily challenge and animal skins" width="92%" />
 </p>
 
-## Ett pussel med bett
+## More than a match-3
 
-AnimalPuzzle är ett match-3-spel där varje ädelsten också är en liten varelse.
-Byt plats på intilliggande djur, bygg långa kedjor och använd specialare för att
-ta dig igenom frost, kedjor och trälådor.
+AnimalPuzzle is a match-3 game where every gem is also a tiny creature. Swap
+adjacent animals, build long chains, and use special pieces to break through
+frost, chains and wooden crates.
 
-Spelet är byggt för att vara lätt att börja med men svårt att släppa: korta drag,
-tydliga mål och en belöningsloop som känns lika bra på mobilen som på skrivbordet.
+The game is designed to be easy to pick up but hard to put down: short moves,
+clear goals, and a reward loop that feels just as good on mobile as on desktop.
+The in-game interface is currently in Swedish.
 
 <table>
   <tr>
     <td width="50%" valign="top">
-      <h3>🐾 Tolv djur, tolv färger</h3>
-      <p>Räven, pandan, delfinen och de andra har egna personligheter — och egna små ansikten som gör varje matchning lätt att läsa.</p>
+      <h3>🐾 Twelve animals, twelve colors</h3>
+      <p>The fox, the panda, the dolphin and the rest have their own personalities — and their own little faces that make every match easy to read.</p>
     </td>
     <td width="50%" valign="top">
-      <h3>✨ Kaskader som bygger vidare</h3>
-      <p>Fyra i rad, L-former och T-former skapar Strålar, Novor och Prisman. Kombinera dem för Crossbeam, Supernova och Prismstorm.</p>
+      <h3>✨ Cascades that keep building</h3>
+      <p>Matches of four, L-shapes and T-shapes create Beams, Novas and Prisms. Combine them for Crossbeams, Supernovas and Prismstorms.</p>
     </td>
   </tr>
   <tr>
     <td valign="top">
-      <h3>🏆 Fyra kapitel, 32 nivåer</h3>
-      <p>Från Skogsgläntan till Stjärnvalvet. Varje nivå har egna mål, stjärnkrav och en tydlig svårighetskurva.</p>
+      <h3>🏆 Four chapters, 32 levels</h3>
+      <p>From Skogsgläntan to Stjärnvalvet. Every level has its own objectives, star requirements and a clear difficulty curve.</p>
     </td>
     <td valign="top">
-      <h3>📅 Något nytt varje dag</h3>
-      <p>Dagliga utmaningar med datumlåst bräda, bonusenergi och exklusiva skinn. Oändligt läge finns för den som bara vill jaga ett till rekord.</p>
+      <h3>📅 Something new every day</h3>
+      <p>Daily challenges with a date-locked board, bonus energy and exclusive skins. Endless mode is there for anyone chasing one more record.</p>
     </td>
   </tr>
   <tr>
     <td valign="top">
-      <h3>🛠️ Verktyg med avsikt</h3>
-      <p>Hammare, Korspuls och Blanda laddas av kaskader. Använd dem när brädet sitter fast — inte som en genväg förbi spelet.</p>
+      <h3>🛠️ Tools with a purpose</h3>
+      <p>Hammer, Cross Pulse and Shuffle charge through cascades. Use them when the board is stuck — not as a shortcut around the game.</p>
     </td>
     <td valign="top">
-      <h3>📱 Spela var du vill</h3>
-      <p>Responsiv layout, touch- och musstyrning, helskärm och PWA-stöd med Prismafjärilen på hemskärmen.</p>
+      <h3>📱 Play anywhere</h3>
+      <p>Responsive layout, touch and mouse controls, fullscreen and PWA support with the Prism Butterfly on your home screen.</p>
     </td>
   </tr>
 </table>
 
-## Från bräda till seger
+## From board to victory
 
 <table>
   <tr>
     <td width="62%" align="center" valign="top">
-      <img src="docs/screenshots/board.webp" alt="Spelbrädet med matchande djur" width="100%" />
+      <img src="docs/screenshots/board.webp" alt="Game board with matching animals" width="100%" />
       <br />
-      <sub><strong>Åtta gånger åtta</strong> · matcha, kedja och läs brädet</sub>
+      <sub><strong>Eight by eight</strong> · match, chain and read the board</sub>
     </td>
     <td width="38%" align="center" valign="top">
-      <img src="docs/screenshots/victory.webp" alt="Vinstskärm med tre stjärnor" width="100%" />
+      <img src="docs/screenshots/victory.webp" alt="Victory screen with three stars" width="100%" />
       <br />
-      <sub><strong>Tre av tre</strong> · poäng, drag kvar och Skördefest</sub>
+      <sub><strong>Three out of three</strong> · score, moves left and Harvest bonus</sub>
     </td>
   </tr>
 </table>
 
-## Spellägen
+## Game modes
 
-| Läge | Vad som väntar |
+| Mode | What awaits |
 | :--- | :--- |
-| **Kampanj** | 32 handbyggda nivåer över fyra kapitel. Klara målen innan dragen tar slut och samla stjärnor för bättre belöningar. |
-| **Daglig utmaning** | En ny, datumlåst utmaning varje dag. Klara den för bonusenergi och en chans på exklusiva djur-skinn. |
-| **Oändligt** | Inga nivåmål — bara du, brädet och jakten på nästa personliga rekord. |
+| **Campaign** | 32 handcrafted levels across four chapters. Complete the objectives before your moves run out and collect stars for better rewards. |
+| **Daily Challenge** | A new, date-locked challenge every day. Complete it for bonus energy and a chance at exclusive animal skins. |
+| **Endless** | No level objectives — just you, the board, and the hunt for your next personal best. |
 
-## Kom igång
+## Getting started
 
-**Krav:** [Bun](https://bun.sh) 1.x
+**Requires:** [Bun](https://bun.sh) 1.x
 
 ```bash
 git clone https://github.com/nRn-World/AnimalPuzzle.git
@@ -102,67 +103,69 @@ bun install
 bun run dev
 ```
 
-Öppna [http://localhost:3000](http://localhost:3000). Inga API-nycklar eller
-externa tjänster behövs.
+Open [http://localhost:3000](http://localhost:3000). No API keys or external
+services are required.
 
-Bygg en produktionsversion:
+Build a production version:
 
 ```bash
 bun run build
 bun run preview
 ```
 
-## Så spelar du
+## How to play
 
-1. **Byt plats** på två intilliggande djur för att skapa en matchning.
-2. **Matcha fyra eller fler** för att skapa en Stråle. L- och T-former ger en
-   Nova, och ännu större kombinationer kan ge ett Prisma.
-3. **Kombinera specialare** för kraftfullare reaktioner — men håll koll på målen.
-   Frost, kedjor och trälådor kräver olika angreppssätt.
-4. **Ladda verktygen** genom att kedja matcher. Hammare spräcker en ruta,
-   Korspuls rensar en rad och kolumn, och Blanda lägger om brädet.
+1. **Swap two adjacent animals** to create a match.
+2. **Match four or more** to create a Beam. L- and T-shapes create a Nova, and
+   even larger combinations can create a Prism.
+3. **Combine special pieces** for more powerful reactions — but keep an eye on
+   the objectives. Frost, chains and wooden crates each need a different
+   approach.
+4. **Charge your tools** by chaining matches. Hammer breaks one tile, Cross
+   Pulse clears a row and column, and Shuffle rearranges the board.
 
-## Under huven
+## Under the hood
 
-| Del | Teknik |
+| Part | Technology |
 | :--- | :--- |
-| Gränssnitt | React 19 + TypeScript |
-| Bygge | Vite 8 + Tailwind CSS 4 |
-| Spelmotor | Ren TypeScript i `src/game` |
-| Effekter | Canvas, Web Audio och Three.js |
-| Kvalitet | `bun test` + `tsc --noEmit` |
-| Installation | PWA-manifest med 192- och 512-ikoner |
+| Interface | React 19 + TypeScript |
+| Build | Vite 8 + Tailwind CSS 4 |
+| Game engine | Plain TypeScript in `src/game` |
+| Effects | Canvas, Web Audio and Three.js |
+| Quality | `bun test` + `tsc --noEmit` |
+| Installation | PWA manifest with 192px and 512px icons |
+| Language | Swedish in-game interface |
 
 ```text
 src/
-├─ components/     Spelbräda, HUD, modaler och guider
-├─ game/           Motor, nivåer, dagliga utmaningar och tester
-├─ assets/         Bakgrund och grafik
-└─ App.tsx         Spellfaser och state
+├─ components/     Board, HUD, modals and guides
+├─ game/           Engine, levels, daily challenges and tests
+├─ assets/         Backgrounds and artwork
+└─ App.tsx         Game phases and state
 public/
 ├─ manifest.webmanifest
 ├─ icon-192.png
 ├─ icon-512.png
 └─ favicon.svg
-docs/screenshots/  Bilder till README
+docs/screenshots/  Images used by this README
 ```
 
-## Kvalitet
+## Quality
 
-Projektet har **34 tester i 8 filer** som täcker bland annat motorn, nivåer,
-dagliga rekord, achievements och tutorialgränser.
+The project has **34 tests across 8 files**, covering the engine, levels,
+daily records, achievements and tutorial limits.
 
 ```bash
-bun test        # 34 tester
-bun run lint    # TypeScript-kontroll
-bun run build   # produktionsbygge
+bun test        # 34 tests
+bun run lint    # TypeScript check
+bun run build   # production build
 ```
 
-## Installera som app
+## Install as an app
 
-AnimalPuzzle kan läggas till på hemskärmen. Öppna spelet i en modern webbläsare
-och välj **Installera** eller **Lägg till på hemskärmen**. Android använder
-manifestets 192- och 512-ikoner; iOS använder apple-touch-ikonen.
+AnimalPuzzle can be added to your home screen. Open the game in a modern
+browser and choose **Install** or **Add to Home Screen**. Android uses the
+192px and 512px manifest icons; iOS uses the Apple touch icon.
 
 ## License
 
