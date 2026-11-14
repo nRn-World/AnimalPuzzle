@@ -137,28 +137,62 @@ const InfinityIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' 
   </svg>
 );
 
-const PrismMark: React.FC<{ className?: string }> = ({ className = 'w-11 h-11' }) => (
-  <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
-    <defs>
-      <linearGradient id="title-medallion-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#FFF1C2" />
-        <stop offset="55%" stopColor="#F5B841" />
-        <stop offset="100%" stopColor="#C87A12" />
-      </linearGradient>
-    </defs>
-    <polygon
-      points="32,5 57,21 48,53 16,53 7,21"
-      fill="#141B29"
-      stroke="url(#title-medallion-grad)"
-      strokeWidth="2.6"
-      strokeLinejoin="round"
-    />
-    <polygon points="32,12 49,23 32,34 15,23" fill="#E13B55" fillOpacity="0.95" />
-    <polygon points="15,23 32,34 20,49" fill="#2C82F6" fillOpacity="0.95" />
-    <polygon points="49,23 44,49 32,34" fill="#19B87A" fillOpacity="0.95" />
-    <polygon points="20,49 32,34 44,49" fill="#F29D26" fillOpacity="0.96" />
-    <circle cx="32" cy="34" r="4.6" fill="#FFF8DC" />
-    <circle cx="30.4" cy="32.4" r="1.5" fill="#FFFFFF" />
+const PrismButterflyMark: React.FC<{ className?: string }> = ({ className = 'w-11 h-11' }) => (
+  <svg viewBox="58 68 396 388" className={className} aria-hidden="true">
+    <g strokeLinejoin="round">
+      <path
+        d="M248 126C230 101 207 89 189 88M264 126C282 101 305 89 323 88"
+        fill="none"
+        stroke="#F5B841"
+        strokeWidth="9"
+        strokeLinecap="round"
+      />
+      <circle cx="185" cy="87" r="8" fill="#FDE68A" stroke="#07111B" strokeWidth="4" />
+      <circle cx="327" cy="87" r="8" fill="#FDE68A" stroke="#07111B" strokeWidth="4" />
+
+      <path
+        d="M244 240C207 207 169 141 106 116C70 168 84 244 134 276C171 298 216 286 244 270Z"
+        fill="#F43F5E"
+        stroke="#07111B"
+        strokeWidth="11"
+      />
+      <path
+        d="M268 240C305 207 343 141 406 116C442 168 428 244 378 276C341 298 296 286 268 270Z"
+        fill="#F59E0B"
+        stroke="#07111B"
+        strokeWidth="11"
+      />
+      <path
+        d="M242 282C200 289 141 322 126 379C143 422 198 426 234 392C253 370 252 326 246 299Z"
+        fill="#10B981"
+        stroke="#07111B"
+        strokeWidth="11"
+      />
+      <path
+        d="M270 282C312 289 371 322 386 379C369 422 314 426 278 392C259 370 260 326 266 299Z"
+        fill="#38BDF8"
+        stroke="#07111B"
+        strokeWidth="11"
+      />
+
+      <path d="M232 250C202 223 174 167 124 144C103 181 116 229 154 251C180 266 212 261 232 250Z" fill="#FDA4AF" opacity="0.55" />
+      <path d="M280 250C310 223 338 167 388 144C409 181 396 229 358 251C332 266 300 261 280 250Z" fill="#FDE68A" opacity="0.55" />
+      <path d="M233 300C199 307 155 334 144 371C158 400 192 406 218 380C232 364 236 326 233 300Z" fill="#6EE7B7" opacity="0.5" />
+      <path d="M279 300C313 307 357 334 368 371C354 400 320 406 294 380C280 364 276 326 279 300Z" fill="#93C5FD" opacity="0.5" />
+
+      <path
+        d="M256 154C275 191 278 243 268 287L256 385L244 287C234 243 237 191 256 154Z"
+        fill="#F5B841"
+        stroke="#07111B"
+        strokeWidth="8"
+      />
+      <path d="M256 170C265 200 267 235 262 265L256 330L250 265C245 235 247 200 256 170Z" fill="#FFF1C2" opacity="0.3" />
+      <circle cx="256" cy="151" r="26" fill="#F5B841" stroke="#07111B" strokeWidth="7" />
+      <circle cx="247" cy="149" r="3" fill="#07111B" />
+      <circle cx="265" cy="149" r="3" fill="#07111B" />
+      <path d="M250 158Q256 163 262 158" fill="none" stroke="#07111B" strokeWidth="3" strokeLinecap="round" />
+      <path d="M246 215H266M244 260H268M247 305H265" stroke="#8A5405" strokeWidth="3" opacity="0.4" />
+    </g>
   </svg>
 );
 
@@ -208,7 +242,7 @@ const SkinEmblem: React.FC<{ skin: AnimalSkinId; className?: string }> = ({
   if (skin === 'royal') return <CrownEmblem className={className} />;
   if (skin === 'winter') return <SnowflakeEmblem className={className} />;
   if (skin === 'starlight') return <StarEmblem className={className} />;
-  return <PrismMark className={className} />;
+  return <PrismButterflyMark className={className} />;
 };
 
 const Shell: React.FC<{ children: React.ReactNode; className?: string }> = ({
@@ -340,7 +374,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                 <div className="relative shrink-0">
                   <span className="absolute -inset-3 rounded-full bg-[#F5B841]/20 blur-lg" />
                   <div className="relative w-12 h-12 sm:w-[62px] sm:h-[62px] rounded-[20px] bg-gradient-to-b from-[#1E2A42] to-[#111827] border border-white/15 flex items-center justify-center animate-menu-float">
-                    <PrismMark className="w-9 h-9 sm:w-11 sm:h-11" />
+                    <PrismButterflyMark className="w-10 h-10 sm:w-[52px] sm:h-[52px]" />
                   </div>
                   <SparkleIcon className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 text-[#FDE68A] animate-menu-twinkle" />
                   <SparkleIcon className="absolute -bottom-1 -left-2 w-2.5 h-2.5 text-[#FDE68A] animate-menu-twinkle" />
