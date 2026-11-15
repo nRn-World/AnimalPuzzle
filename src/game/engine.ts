@@ -16,6 +16,7 @@ import {
   LevelProgress,
   SpecialType,
   SwapResult,
+  TurnContext,
   ToolType,
 } from './types';
 
@@ -130,6 +131,13 @@ export function createBoard(level: LevelConfig, rng: RngFn = Math.random): Board
     }
   }
 
+  for (const belt of level.beltRows ?? []) {
+    if (belt.row < 0 || belt.row >= BOARD_SIZE) continue;
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (board[belt.row][c].crate === 0) board[belt.row][c].belt = belt.dir;
+    }
+  }
+
   const chainSet = new Set<string>(
     (level.chainCells ?? []).map((c) => `${c.row},${c.col}`)
   );
@@ -180,6 +188,12 @@ export function createBoard(level: LevelConfig, rng: RngFn = Math.random): Board
     if (!inBounds(egg.row, egg.col)) continue;
     const gem = board[egg.row][egg.col].gem;
     if (gem && !gem.chained) gem.egg = true;
+  }
+
+  for (const bomb of level.bombCells ?? []) {
+    if (!inBounds(bomb.row, bomb.col)) continue;
+    const gem = board[bomb.row][bomb.col].gem;
+    if (gem && !gem.chained && !gem.egg) gem.bomb = bomb.timer;
   }
 
   if (!hasValidMoves(board)) {
@@ -768,6 +782,58 @@ export function spreadHoney(board: Board, rng: RngFn = Math.random): Coord | nul
   return spot;
 }
 
+/**
+ * Slides the animals on every conveyor row one step, wrapping around.
+ * Belt cells that are blocked (honey crept in) are skipped. Mutates `board`.
+ */
+export function moveBelts(board: Board): boolean {
+  let moved = false;
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    const cols: number[] = [];
+    let dir = 0;
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      const cell = board[r][c];
+      if (cell.belt && cell.crate === 0) {
+        cols.push(c);
+        dir = cell.belt;
+      }
+    }
+    if (cols.length < 2) continue;
+    const gems = cols.map((c) => board[r][c].gem);
+    cols.forEach((c, i) => {
+      const from = (i - dir + cols.length) % cols.length;
+      board[r][c].gem = gems[from];
+    });
+    moved = true;
+  }
+  return moved;
+}
+
+/** Plain animals that can be given a bomb or a chain. */
+function plainSpots(board: Board): Coord[] {
+  const spots: Coord[] = [];
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      const cell = board[r][c];
+      const gem = cell.gem;
+      if (cell.crate > 0 || !gem) continue;
+      if (gem.special !== 'none' || gem.chained || gem.egg || gem.bomb !== undefined) continue;
+      spots.push({ row: r, col: c });
+    }
+  }
+  return spots;
+}
+
+function takeSpots(spots: Coord[], count: number, rng: RngFn): Coord[] {
+  const picked: Coord[] = [];
+  const pool = [...spots];
+  while (picked.length < count && pool.length > 0) {
+    const i = Math.min(pool.length - 1, Math.floor(rng() * pool.length));
+    picked.push(pool.splice(i, 1)[0]);
+  }
+  return picked;
+}
+
 function hasHoney(board: Board): boolean {
   return board.some((row) => row.some((cell) => cell.block === 'honey'));
 }
@@ -834,7 +900,8 @@ export function resolveSwap(
   a: Coord,
   b: Coord,
   colors: number | ColorPool,
-  rng: RngFn = Math.random
+  rng: RngFn = Math.random,
+  turn?: TurnContext
 ): SwapResult {
   const pool = resolveColorPool(colors);
   if (!canSwap(board, a, b)) {
@@ -1078,8 +1145,47 @@ export function resolveSwap(
     honeySpread = spreadHoney(currentBoard, rng);
   }
 
+  // Conveyor belts move, which can line up new matches.
+  if (currentBoard.some((row) => row.some((cell) => cell.belt))) {
+    currentBoard = cloneBoard(currentBoard);
+    if (moveBelts(currentBoard)) {
+      const afterBelt = runAutoCascades(currentBoard, steps.length + 1, pool, rng);
+      steps.push(...afterBelt.steps);
+      currentBoard = afterBelt.finalBoard;
+    }
+  }
+
+  // Bombs tick down; one reaching zero ends the level.
+  let bombExploded: Coord | undefined;
+  let bombsPlanted: Coord[] | undefined;
+  let bossAttack: Coord[] | undefined;
+  currentBoard = cloneBoard(currentBoard);
+  for (const row of currentBoard) {
+    for (const cell of row) {
+      if (cell.gem?.bomb === undefined) continue;
+      cell.gem.bomb -= 1;
+      if (cell.gem.bomb <= 0 && !bombExploded) bombExploded = { row: cell.row, col: cell.col };
+    }
+  }
+
+  if (turn && !bombExploded) {
+    const { level, moveNumber } = turn;
+    if (level.bombEvery && moveNumber % level.bombEvery === 0) {
+      bombsPlanted = takeSpots(plainSpots(currentBoard), 1, rng);
+      for (const spot of bombsPlanted) {
+        currentBoard[spot.row][spot.col].gem!.bomb = level.bombTimer ?? 9;
+      }
+    }
+    if (level.boss && moveNumber % level.boss.every === 0) {
+      bossAttack = takeSpots(plainSpots(currentBoard), level.boss.count, rng);
+      for (const spot of bossAttack) {
+        currentBoard[spot.row][spot.col].gem!.chained = true;
+      }
+    }
+  }
+
   let reshuffled = false;
-  if (!hasValidMoves(currentBoard)) {
+  if (!bombExploded && !hasValidMoves(currentBoard)) {
     currentBoard = shuffleBoard(currentBoard, pool, rng);
     reshuffled = true;
   }
@@ -1098,6 +1204,9 @@ export function resolveSwap(
     reshuffled,
     combo: combo ?? undefined,
     honeySpread: honeySpread ?? undefined,
+    bombExploded,
+    bombsPlanted: bombsPlanted?.length ? bombsPlanted : undefined,
+    bossAttack: bossAttack?.length ? bossAttack : undefined,
   };
 }
 
@@ -1347,6 +1456,12 @@ export function getObjectiveCurrent(
       return progress.clearedHoney;
     case 'egg':
       return progress.collectedEggs;
+    case 'boss': {
+      // Every animal cleared is one point of damage.
+      let damage = 0;
+      for (const color of GEM_COLORS_ORDER) damage += progress.clearedColors[color] ?? 0;
+      return damage;
+    }
     case 'score':
       return progress.score;
     case 'specials':

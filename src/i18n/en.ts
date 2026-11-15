@@ -948,8 +948,6 @@ export const en: Record<string, string> = {
     "Build long cascades to reach the goal",
   "Jaga poäng – stora matchningar ger mest":
     "Chase points – big matches score the most",
-  "Is tinas av matchningar på rutan, trälådor spräcks av matchningar intill och kedjor lossar när djuret matchas. Längre fram kommer hål i brädet, honung som sprider sig varje drag du inte rensar någon, och ägg som ska lotsas ner till botten.":
-    "Ice thaws when you match on the tile, wooden crates break from matches next to them and chains come off when the animal is matched. Later on you meet holes in the board, honey that spreads every move you clear none of it, and eggs to steer down to the bottom.",
   "ikonerna i menyerna och de inspelade ljudeffekterna":
     "the menu icons and the recorded sound effects",
   "Hål":
@@ -1024,4 +1022,72 @@ export const en: Record<string, string> = {
     "Weekly hunt done! +{n} energy and Party Hats unlocked",
   "Veckans jakt klar! +{n} energi":
     "Weekly hunt done! +{n} energy",
+  "Is tinas av matchningar på rutan, trälådor spräcks av matchningar intill och kedjor lossar när djuret matchas. Längre fram kommer hål i brädet, honung som sprider sig varje drag du inte rensar någon, och ägg som ska lotsas ner till botten. Sent i sagan dyker bombdjur med nedräkning och rullband upp, och varje kapitel slutar med en boss. En misslyckad kampanjnivå kostar ett liv; liven fylls på med tiden.":
+    "Ice thaws when you match on the tile, wooden crates break from matches next to them and chains come off when the animal is matched. Later on you meet holes in the board, honey that spreads every move you clear none of it, and eggs to steer down to the bottom. Late in the saga come bomb animals with a countdown and conveyor belts, and every chapter ends with a boss. A failed campaign level costs a life; lives refill over time.",
+  "Bomb, {n} drag kvar":
+    "Bomb, {n} moves left",
+  "Bomben smällde":
+    "The bomb went off",
+  "Du förlorade ett liv · {n} kvar":
+    "You lost a life · {n} left",
+  "Liven är slut – nya fylls på i huvudmenyn":
+    "Out of lives – new ones refill in the main menu",
+  "{n} av {max} liv":
+    "{n} of {max} lives",
+  "Klar! Skinnet {name} är ditt.":
+    "Done! The {name} skin is yours.",
+  "Samla djur i valfritt läge · {days} dagar kvar · pris: {name}":
+    "Collect animals in any mode · {days} days left · prize: {name}",
+  "Nästa event: {name} om {days} dagar":
+    "Next event: {name} in {days} days",
+  "Nytt liv om {time}":
+    "New life in {time}",
+  "Fyll på alla liv för {n} bonusenergi":
+    "Refill all lives for {n} bonus energy",
+  "Installera som app":
+    "Install as an app",
+  "Tomteluvor":
+    "Santa Hats",
+  "Röda tomteluvor (Julfesten)":
+    "Red Santa hats (Christmas Party)",
+  "Påskharar":
+    "Easter Bunnies",
+  "Långa haröron (Påskjakten)":
+    "Long bunny ears (Easter Hunt)",
+  "Solbrillor":
+    "Sunglasses",
+  "Coola solglasögon (Sommarlovet)":
+    "Cool sunglasses (Summer Holiday)",
+  "Julfesten":
+    "Christmas Party",
+  "Påskjakten":
+    "Easter Hunt",
+  "Sommarlovet":
+    "Summer Holiday",
+  "Bossen":
+    "The boss",
+  "Bossnivå – varje djur du rensar skadar bossen":
+    "Boss level – every animal you clear hurts the boss",
+  "Matcha bombdjuren innan nedräkningen når noll":
+    "Match the bomb animals before the countdown hits zero",
+  "Skärgården":
+    "The Archipelago",
+  "Sommarängen":
+    "The Summer Meadow",
+  "Öknen":
+    "The Desert",
+  "Vinterlandet":
+    "The Winter Land",
+  "Rymden":
+    "Space",
+  "Vulkanen":
+    "The Volcano",
+  "{name} klar! +{n} energi och nytt djur-skin":
+    "{name} done! +{n} energy and a new animal skin",
+  "Bossen kedjar fast djur!":
+    "The boss chains up animals!",
+  "En bomb har dykt upp – matcha den i tid!":
+    "A bomb has appeared – match it in time!",
+  "Fyll på · {n} energi":
+    "Refill · {n} energy",
 };

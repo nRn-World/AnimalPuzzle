@@ -567,6 +567,32 @@ export const GemSvg: React.FC<GemSvgProps> = ({
         </g>
       )}
 
+      {special !== 'prism' && skin === 'santa' && (
+        <g>
+          <path d="M21 17 C22 8 28 3 36 2.5 C42 5 45 10 46 15 L41 13.5 C41.5 15 42 16 42.5 17 Z" fill="#E11D48" stroke="#0F1219" strokeWidth="1.8" strokeLinejoin="round" />
+          <rect x="19" y="15.5" width="26" height="5" rx="2.5" fill="#FFFFFF" stroke="#0F1219" strokeWidth="1.5" />
+          <circle cx="46.5" cy="16" r="3.2" fill="#FFFFFF" stroke="#0F1219" strokeWidth="1.4" />
+        </g>
+      )}
+
+      {special !== 'prism' && skin === 'easter' && (
+        <g stroke="#0F1219" strokeWidth="1.7" strokeLinejoin="round">
+          <ellipse cx="24.5" cy="9" rx="4" ry="9.5" fill="#FFFFFF" transform="rotate(-12 24.5 9)" />
+          <ellipse cx="39.5" cy="9" rx="4" ry="9.5" fill="#FFFFFF" transform="rotate(12 39.5 9)" />
+          <ellipse cx="24.5" cy="10" rx="1.7" ry="6" fill="#F9A8D4" stroke="none" transform="rotate(-12 24.5 10)" />
+          <ellipse cx="39.5" cy="10" rx="1.7" ry="6" fill="#F9A8D4" stroke="none" transform="rotate(12 39.5 10)" />
+        </g>
+      )}
+
+      {special !== 'prism' && skin === 'summer' && (
+        <g stroke="#0F1219" strokeWidth="1.6" strokeLinejoin="round">
+          <path d="M18 27.5 H46" fill="none" strokeWidth="2" />
+          <rect x="18.5" y="25" width="11.5" height="8.5" rx="3.4" fill="#111827" />
+          <rect x="34" y="25" width="11.5" height="8.5" rx="3.4" fill="#111827" />
+          <path d="M21 27.5 l3 -1.5 M36.5 27.5 l3 -1.5" stroke="#FFFFFF" strokeWidth="1.4" strokeLinecap="round" />
+        </g>
+      )}
+
       {/* Special Power-up Overlays (kept around edges so cute faces stay visible!) */}
       {special === 'beam_h' && (
         <g>
@@ -752,5 +778,25 @@ export const HoneySvg: React.FC<{ className?: string }> = ({ className = 'w-full
       <path d="M12 27 l6 -3.5 l6 3.5 v7 l-6 3.5 l-6 -3.5 z" />
       <path d="M24 34 l6 -3.5 l6 3.5 v7 l-6 3.5 l-6 -3.5 z" />
     </g>
+  </svg>
+);
+
+/** The chapter boss: a grumpy storm cloud that chains animals. */
+export const BossSvg: React.FC<{ className?: string }> = ({ className = 'w-full h-full' }) => (
+  <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+    <path
+      d="M14 46 C6 46 3 40 5 34 C6 29 10 26 15 27 C15 18 22 12 31 12 C39 12 45 17 47 24 C54 23 60 28 60 35 C60 42 55 46 49 46 Z"
+      fill="#6B5B95"
+      stroke="#111111"
+      strokeWidth="3"
+      strokeLinejoin="round"
+    />
+    <path d="M20 27 L29 31 M44 27 L35 31" stroke="#111111" strokeWidth="3.2" strokeLinecap="round" />
+    <circle cx="25" cy="34" r="3" fill="#FFFFFF" stroke="#111111" strokeWidth="1.6" />
+    <circle cx="39" cy="34" r="3" fill="#FFFFFF" stroke="#111111" strokeWidth="1.6" />
+    <circle cx="25.6" cy="34.4" r="1.2" fill="#111111" />
+    <circle cx="38.4" cy="34.4" r="1.2" fill="#111111" />
+    <path d="M26 42 Q32 38 38 42" fill="none" stroke="#111111" strokeWidth="2.6" strokeLinecap="round" />
+    <path d="M30 46 L24 55 H31 L27 62 L40 51 H33 L37 46 Z" fill="#F2CD1C" stroke="#111111" strokeWidth="2.2" strokeLinejoin="round" />
   </svg>
 );

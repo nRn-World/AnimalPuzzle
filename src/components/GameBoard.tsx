@@ -392,6 +392,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 labelParts.push(t(GEM_META[cell.gem.color].nameSv));
                 if (cell.gem.special !== 'none') labelParts.push(t(SPECIAL_LABELS[cell.gem.special]));
                 if (cell.gem.chained) labelParts.push(t('Kedjad'));
+                if (cell.gem.bomb !== undefined) labelParts.push(t('Bomb, {n} drag kvar', { n: cell.gem.bomb }));
               }
               if (cell.ice > 0) labelParts.push(t('Is nivå {n}', { n: cell.ice }));
 
@@ -463,6 +464,26 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       : 'hover:bg-[#1E263A]'
                   } ${invalid ? 'animate-gem-invalid' : ''}`}
                 >
+                  {/* Conveyor belt floor: chevrons show which way it moves */}
+                  {cell.belt && !isHole && (
+                    <div
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 rounded-md border-y-[3px] border-[#111111] bg-[#3A3F4B]"
+                    >
+                      <svg viewBox="0 0 40 40" className={`h-full w-full ${cell.belt === -1 ? '-scale-x-100' : ''}`}>
+                        <path
+                          d="M9 9 L20 20 L9 31 M22 9 L33 20 L22 31"
+                          fill="none"
+                          stroke="#F2CD1C"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          opacity="0.75"
+                        />
+                      </svg>
+                    </div>
+                  )}
+
                   {/* Frosted 3D Ice Floor Layer */}
                   {cell.ice > 0 && (
                     <div
@@ -518,6 +539,17 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                             animationSeed={cell.gem.id}
                             className="relative z-10 w-full h-full drop-shadow-[0_3px_4px_rgba(0,0,0,0.68)]"
                           />
+                        )}
+                        {cell.gem.bomb !== undefined && (
+                          <span
+                            aria-hidden="true"
+                            data-testid="bomb-timer"
+                            className={`absolute -right-0.5 -top-0.5 z-20 grid h-[46%] w-[46%] place-items-center rounded-full border-2 border-[#111111] font-mono-num text-[min(3.4vw,15px)] font-extrabold leading-none ${
+                              cell.gem.bomb <= 3 ? 'bg-[#FF2E4D] text-white animate-pulse' : 'bg-[#111111] text-[#F2CD1C]'
+                            }`}
+                          >
+                            {cell.gem.bomb}
+                          </span>
                         )}
                       </GemMotion>
                     </div>

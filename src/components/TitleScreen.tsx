@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AchievementSaveState } from '../game/achievements';
-import { ANIMAL_SKINS, DailyChallenge, SKIN_SOURCE, getSkinMeta } from '../game/daily';
+import { ANIMAL_SKINS, DailyChallenge, SEASONAL_SKINS, SKIN_SOURCE, getSkinMeta } from '../game/daily';
 import {
   CAMPAIGN_CHAPTER_COUNT,
   DIFFICULTY_META,
@@ -19,6 +19,18 @@ import { StarRating } from './StarRating';
 import titleBackdrop from '../assets/images/title-backdrop.webp';
 import { WorkshopFireCanvas } from './WorkshopFireCanvas';
 import { CollectionModal } from './CollectionModal';
+import { biomeName, biomeOfChapter } from '../game/biomes';
+import { HeartIcon } from './GameModals';
+import { useInstallPrompt } from '../hooks/useInstallPrompt';
+import {
+  LivesState,
+  MAX_LIVES,
+  REFILL_COST,
+  formatCountdown,
+  msToNextLife,
+  settleLives,
+} from '../game/lives';
+import { ActiveSeason, SEASON_TARGET, getNextSeason } from '../game/seasons';
 import { GemSvg } from './GemSvg';
 import { GEM_META } from '../game/types';
 import {
@@ -27,6 +39,7 @@ import {
   WEEKLY_SKIN,
   WeeklyQuest,
   currentStreak,
+  seasonProgress,
   streakBonus,
   weeklyProgress,
 } from '../game/rewards';
@@ -48,6 +61,10 @@ interface TitleScreenProps {
   rewardState: RewardState;
   weeklyQuest: WeeklyQuest;
   todayKey: string;
+  lives: LivesState;
+  onBuyLives: () => void;
+  /** The seasonal event running now, if any. */
+  season: ActiveSeason | null;
   isFullscreen?: boolean;
   canFullscreen?: boolean;
   /** True while another dialog (guide, settings) covers the menu. */
@@ -72,6 +89,9 @@ const SKIN_TINT: Record<AnimalSkinId, string> = {
   starlight: 'text-[#D8B4FE]',
   party: 'text-[#FF8AA8]',
   explorer: 'text-[#E0BC43]',
+  santa: 'text-[#FF6B7D]',
+  easter: 'text-[#F9A8D4]',
+  summer: 'text-[#FDBA74]',
 };
 
 const MODE_TABS: { mode: GameMode; label: string; icon: UiIconName }[] = [
@@ -234,6 +254,33 @@ const SkinEmblem: React.FC<{ skin: AnimalSkinId; className?: string }> = ({
       </svg>
     );
   }
+  if (skin === 'santa') {
+    return (
+      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="currentColor">
+        <path d="M5 17 C6 9 10 5 15 4 C18 6 20 9 20.5 12 L17 11 C17 13 17.5 15 18 17 Z" />
+        <rect x="3.5" y="16.5" width="16" height="4" rx="2" />
+        <circle cx="20.5" cy="13" r="2.2" />
+      </svg>
+    );
+  }
+  if (skin === 'easter') {
+    return (
+      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="currentColor">
+        <ellipse cx="8.5" cy="8" rx="2.6" ry="6.5" transform="rotate(-10 8.5 8)" />
+        <ellipse cx="15.5" cy="8" rx="2.6" ry="6.5" transform="rotate(10 15.5 8)" />
+        <circle cx="12" cy="17" r="5" />
+      </svg>
+    );
+  }
+  if (skin === 'summer') {
+    return (
+      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="currentColor">
+        <rect x="2.5" y="9" width="8" height="6.5" rx="2.6" />
+        <rect x="13.5" y="9" width="8" height="6.5" rx="2.6" />
+        <rect x="10" y="10" width="4" height="1.8" />
+      </svg>
+    );
+  }
   return <PrismButterflyMark className={className} />;
 };
 
@@ -252,6 +299,9 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   rewardState,
   weeklyQuest,
   todayKey,
+  lives,
+  onBuyLives,
+  season,
   isFullscreen = false,
   canFullscreen = false,
   guideOpen = false,
@@ -268,6 +318,18 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   const [imgFailed, setImgFailed] = useState(false);
   const [achievementsOpen, setAchievementsOpen] = useState(false);
   const [collectionOpen, setCollectionOpen] = useState(false);
+  const { canInstall, install } = useInstallPrompt();
+  // Tick once a second while a life is on its way back.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (lives.lives >= MAX_LIVES) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [lives.lives]);
+  const livesNow = settleLives(lives, now);
+  const outOfLives = mode === 'campaign' && livesNow.lives <= 0;
+  const seasonNow = season ? seasonProgress(rewardState, season.key) : { progress: 0, claimed: false };
+  const nextSeason = getNextSeason();
   const weekly = weeklyProgress(rewardState, weeklyQuest.weekKey);
   const weeklyShown = Math.min(weeklyQuest.target, weekly.progress);
   const streak = currentStreak(rewardState, todayKey);
@@ -368,10 +430,27 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
 
       <main className="relative z-10 w-full min-h-[100dvh] overflow-x-hidden bg-transparent flex flex-col justify-between pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
         <div className="flex-1 flex items-center px-3 sm:px-8 lg:px-16 py-3 sm:py-5">
-          <div className="ui-menu-fit w-full max-w-[600px] lg:max-w-[1010px] animate-menu-pop">
+          <div className="ui-menu-fit relative w-full max-w-[600px] lg:max-w-[1010px] animate-menu-pop">
             <h1 className="ui-title relative z-10 mb-3 sm:mb-4 text-center lg:text-left lg:pl-6 text-[clamp(2.6rem,14vw,3.6rem)] sm:text-[4.25rem]">
               AnimalPuzzle
             </h1>
+
+            {/* Lives: campaign levels cost one when you fail */}
+            <div
+              data-testid="lives"
+              role="img"
+              aria-label={t('{n} av {max} liv', { n: livesNow.lives, max: MAX_LIVES })}
+              className="ui-lives relative z-10 mx-auto mb-2 flex w-fit items-center gap-1 border-[3px] border-[#111111] bg-[var(--ui-paper)] px-2 py-1 shadow-[3px_3px_0_#111111] lg:absolute lg:right-12 lg:top-2 lg:mb-0"
+            >
+              {Array.from({ length: MAX_LIVES }, (_, i) => (
+                <HeartIcon key={i} className="h-5 w-5" empty={i >= livesNow.lives} />
+              ))}
+              {livesNow.lives < MAX_LIVES && (
+                <span className="ml-1 font-mono-num text-xs font-extrabold text-[#111111]">
+                  {formatCountdown(msToNextLife(livesNow, now))}
+                </span>
+              )}
+            </div>
 
             <div className="ui-panel relative px-2.5 pb-3 pt-3 sm:px-4 sm:pb-4 sm:pt-4">
               {canFullscreen && onToggleFullscreen && (
@@ -464,6 +543,8 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                           n: formatNumber(chapterId),
                           total: formatNumber(CAMPAIGN_CHAPTER_COUNT),
                         })}
+                        {' · '}
+                        {t(biomeName(biomeOfChapter(chapterId)))}
                       </div>
                       <div className="truncate font-display text-base sm:text-lg leading-tight">
                         {t(chapter.nameSv)}
@@ -605,8 +686,42 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
 
               </div>
               <div className="min-w-0">
+              {/* Seasonal event: a big hunt with its own skin */}
+              {season ? (
+                <div data-testid="season-event" className="mt-2.5 mb-2.5 lg:mt-0 border-[3px] border-[#111111] bg-[var(--ui-yellow)] px-2.5 py-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate font-display text-base leading-tight tracking-wide">
+                      {t(season.season.nameSv)}
+                    </span>
+                    <span className="shrink-0 font-mono-num text-[11px] font-extrabold">
+                      {formatNumber(Math.min(SEASON_TARGET, seasonNow.progress))}/{formatNumber(SEASON_TARGET)}
+                    </span>
+                  </div>
+                  <span className="mt-0.5 block h-2.5 w-full border-2 border-[#111111] bg-[#FFFFFF]/60">
+                    <span
+                      className="block h-full bg-[#FF2E4D]"
+                      style={{ width: `${Math.round((Math.min(SEASON_TARGET, seasonNow.progress) / SEASON_TARGET) * 100)}%` }}
+                    />
+                  </span>
+                  <div className="mt-0.5 truncate text-[10px] font-bold">
+                    {seasonNow.claimed
+                      ? t('Klar! Skinnet {name} är ditt.', { name: t(getSkinMeta(season.season.skin).nameSv) })
+                      : t('Samla djur i valfritt läge · {days} dagar kvar · pris: {name}', {
+                          days: season.daysLeft,
+                          name: t(getSkinMeta(season.season.skin).nameSv),
+                        })}
+                  </div>
+                </div>
+              ) : (
+                <div data-testid="season-next" className="mt-2.5 mb-1 lg:mt-0 truncate text-[10px] font-extrabold uppercase tracking-wider text-[#4B4B4B]">
+                  {t('Nästa event: {name} om {days} dagar', {
+                    name: t(nextSeason.season.nameSv),
+                    days: nextSeason.startsInDays,
+                  })}
+                </div>
+              )}
               {/* Weekly hunt: collected in every mode, new animal each Monday */}
-              <div data-testid="weekly-hunt" className="ui-inset mt-2.5 lg:mt-0 flex items-center gap-2.5 px-2.5 py-1.5">
+              <div data-testid="weekly-hunt" className="ui-inset flex items-center gap-2.5 px-2.5 py-1.5">
                 <span className="h-10 w-10 shrink-0">
                   <GemSvg color={weeklyQuest.color} special="none" animationSeed={21} />
                 </span>
@@ -658,7 +773,9 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                   )}
                 </div>
                 <div className="mt-1.5 grid grid-cols-2 gap-1.5" role="group" aria-label={t('Välj djur-skin')}>
-                  {ANIMAL_SKINS.map((s) => {
+                  {ANIMAL_SKINS.filter(
+                    (s) => !SEASONAL_SKINS.includes(s.id) || unlockedSkins.includes(s.id)
+                  ).map((s) => {
                     const unlocked = unlockedSkins.includes(s.id);
                     const equipped = equippedSkin === s.id;
                     return (
@@ -738,16 +855,45 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                   type="button"
                   data-start="true"
                   onClick={onStart}
-                  className="ui-btn ui-btn-green w-full sm:w-auto sm:flex-1 px-4 py-1.5 font-display text-lg sm:text-xl tracking-wide"
+                  disabled={outOfLives}
+                  className="ui-btn ui-btn-green w-full sm:w-auto sm:flex-1 px-4 py-1.5 font-display text-lg sm:text-xl tracking-wide disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <UiIcon name="right" className="w-5 h-5" />
-                  {mode === 'daily'
+                  {outOfLives
+                    ? t('Nytt liv om {time}', { time: formatCountdown(msToNextLife(livesNow, now)) })
+                    : mode === 'daily'
                     ? t('Kör dagens!')
                     : mode === 'endless'
                     ? t('Kör oändligt!')
                     : t('Spela nu')}
                 </button>
+                {outOfLives && (
+                  <button
+                    type="button"
+                    data-testid="buy-lives-btn"
+                    onClick={onBuyLives}
+                    disabled={bonusEnergyBank < REFILL_COST}
+                    title={t('Fyll på alla liv för {n} bonusenergi', { n: REFILL_COST })}
+                    className="ui-btn ui-btn-yellow w-full sm:w-auto px-2.5 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <HeartIcon className="h-4 w-4" />
+                    {t('Fyll på · {n} energi', { n: REFILL_COST })}
+                  </button>
+                )}
+
                 <div className="flex w-full sm:w-auto gap-2.5">
+                  {canInstall && (
+                    <button
+                      type="button"
+                      data-testid="install-btn"
+                      onClick={install}
+                      title={t('Installera som app')}
+                      aria-label={t('Installera som app')}
+                      className="ui-btn ui-btn-yellow px-2.5 py-2 text-sm"
+                    >
+                      <UiIcon name="down" className="w-4 h-4" />
+                    </button>
+                  )}
                   <button
                     type="button"
                     data-testid="title-guide-btn"

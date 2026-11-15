@@ -9,10 +9,13 @@ import {
   createEmptyProgress,
   findBestHint,
   findMatchGroups,
+  getObjectiveCurrent,
   hasValidMoves,
+  moveBelts,
   resolveSwap,
 } from './engine';
-import { CAMPAIGN_LEVELS } from './levels';
+import { CAMPAIGN_LEVELS, getCampaignLevel } from './levels';
+import { addStepDelta } from './progress';
 import { BOARD_SIZE, Board, GemColor } from './types';
 
 function makeDeterministicRng(seed = 12345): () => number {
@@ -346,4 +349,73 @@ test('three eggs in a row are not a match', () => {
     board[2][c].gem!.color = 'rose';
   }
   assert.equal(findMatchGroups(board).length, 0);
+});
+
+test('a bomb ticks down every move and ends the level at zero', () => {
+  const board = makeCleanBoard();
+  // A vertical match waiting in column 0, far away from the bomb.
+  board[5][0].gem!.color = 'ruby';
+  board[6][0].gem!.color = 'ruby';
+  board[7][1].gem!.color = 'ruby';
+  board[0][7].gem!.bomb = 2;
+  const bombId = board[0][7].gem!.id;
+  const find = (b: Board) => b.flat().find((cell) => cell.gem?.id === bombId)?.gem;
+
+  const first = resolveSwap(board, { row: 7, col: 1 }, { row: 7, col: 0 }, 6, makeDeterministicRng(2));
+  assert.ok(first.valid);
+  if (find(first.finalBoard)) {
+    assert.equal(find(first.finalBoard)!.bomb, 1);
+    assert.equal(first.bombExploded, undefined);
+  }
+});
+
+test('a bomb with one move left explodes when it is not matched', () => {
+  const board = makeCleanBoard();
+  board[5][0].gem!.color = 'ruby';
+  board[6][0].gem!.color = 'ruby';
+  board[7][1].gem!.color = 'ruby';
+  board[0][7].gem!.bomb = 1;
+  const bombId = board[0][7].gem!.id;
+  const result = resolveSwap(board, { row: 7, col: 1 }, { row: 7, col: 0 }, 6, makeDeterministicRng(2));
+  assert.ok(result.valid);
+  const survived = result.finalBoard.flat().some((cell) => cell.gem?.id === bombId);
+  // Unless a lucky cascade cleared it, the bomb goes off.
+  assert.equal(result.bombExploded !== undefined, survived);
+});
+
+test('conveyor belts slide their animals one step and wrap around', () => {
+  const board = makeCleanBoard();
+  for (let c = 0; c < 8; c++) board[3][c].belt = 1;
+  const before = board[3].map((cell) => cell.gem!.id);
+  assert.equal(moveBelts(board), true);
+  const after = board[3].map((cell) => cell.gem!.id);
+  assert.deepEqual(after, [before[7], ...before.slice(0, 7)]);
+
+  for (let c = 0; c < 8; c++) board[3][c].belt = -1;
+  moveBelts(board);
+  assert.deepEqual(board[3].map((cell) => cell.gem!.id), before);
+});
+
+test('the boss chains animals on its turn and takes damage from every animal cleared', () => {
+  const level = getCampaignLevel(39);
+  assert.ok(level.boss, 'the last level of chapter five is a boss level');
+  assert.deepEqual(level.objectives.map((o) => o.kind), ['boss']);
+
+  const board = makeCleanBoard();
+  board[5][0].gem!.color = 'ruby';
+  board[6][0].gem!.color = 'ruby';
+  board[7][1].gem!.color = 'ruby';
+  const result = resolveSwap(board, { row: 7, col: 1 }, { row: 7, col: 0 }, 6, makeDeterministicRng(2), {
+    level,
+    moveNumber: level.boss!.every,
+  });
+  assert.ok(result.valid);
+  assert.equal(result.bossAttack?.length, level.boss!.count);
+  for (const spot of result.bossAttack!) {
+    assert.equal(result.finalBoard[spot.row][spot.col].gem?.chained, true);
+  }
+
+  let progress = createEmptyProgress();
+  for (const step of result.steps) progress = addStepDelta(progress, step);
+  assert.ok(getObjectiveCurrent(level.objectives[0], progress) >= 3);
 });

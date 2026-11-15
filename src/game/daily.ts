@@ -42,7 +42,25 @@ export const ANIMAL_SKINS: AnimalSkinMeta[] = [
     nameSv: 'Upptäckare',
     descSv: 'Upptäckarhattar (Kapitelkistor)',
   },
+  {
+    id: 'santa',
+    nameSv: 'Tomteluvor',
+    descSv: 'Röda tomteluvor (Julfesten)',
+  },
+  {
+    id: 'easter',
+    nameSv: 'Påskharar',
+    descSv: 'Långa haröron (Påskjakten)',
+  },
+  {
+    id: 'summer',
+    nameSv: 'Solbrillor',
+    descSv: 'Coola solglasögon (Sommarlovet)',
+  },
 ];
+
+/** Skins from seasonal events: only listed in the menu once they are owned. */
+export const SEASONAL_SKINS: AnimalSkinId[] = ['santa', 'easter', 'summer'];
 
 /** Where each skin comes from, shown on locked skins. */
 export const SKIN_SOURCE: Record<AnimalSkinId, { text: string }> = {
@@ -52,6 +70,9 @@ export const SKIN_SOURCE: Record<AnimalSkinId, { text: string }> = {
   starlight: { text: 'Lås upp i daglig' },
   party: { text: 'Veckans jakt' },
   explorer: { text: 'Tredje kapitelkistan' },
+  santa: { text: 'Julfesten' },
+  easter: { text: 'Påskjakten' },
+  summer: { text: 'Sommarlovet' },
 };
 
 /** Adds a skin and energy to the save (used by weekly hunt and chapter chests). */
@@ -99,7 +120,17 @@ export function createInitialDailyState(): DailySaveState {
   };
 }
 
-const VALID_SKINS: AnimalSkinId[] = ['classic', 'royal', 'winter', 'starlight', 'party', 'explorer'];
+const VALID_SKINS: AnimalSkinId[] = [
+  'classic',
+  'royal',
+  'winter',
+  'starlight',
+  'party',
+  'explorer',
+  'santa',
+  'easter',
+  'summer',
+];
 
 /** Turns anything read from storage into a valid daily save state. */
 export function sanitizeDailyState(raw: unknown): DailySaveState {

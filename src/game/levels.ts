@@ -1033,6 +1033,7 @@ const RATE = {
   score: 800,
   honey: 0.8,
   egg: 0.25,
+  boss: 9,
   oneColor: 3.0,
   twoColors: 2.5,
 };
@@ -1287,6 +1288,49 @@ function generateLevel(levelIdx: number): LevelConfig {
   if (holeCells.length > 0) level.holeCells = holeCells;
   if (honeyCells.length > 0) level.honeyCells = honeyCells;
   if (eggCells.length > 0 && objectives.some((o) => o.kind === 'egg')) level.eggCells = eggCells;
+
+  // --- Boss, bombs and conveyor belts ---------------------------------------
+  // Own random stream again, so older levels keep their boards.
+  const featRng = seededRng(id * 7919 + 31);
+  if (pos === LEVELS_PER_CHAPTER - 1 && chapter >= FIRST_CHAPTER.boss) {
+    // The chapter ends with a boss: every animal cleared hurts it, and it
+    // fights back by chaining animals.
+    level.boss = { every: rank >= 3 ? 3 : 4, count: 2 };
+    level.objectives = [
+      {
+        id: `g${id}-boss`,
+        kind: 'boss',
+        label: 'Bossen',
+        target: Math.round((moves * share * RATE.boss * boost) / 5) * 5,
+      },
+    ];
+    level.subtitle = GENERATED_SUBTITLES.boss.text;
+    delete level.eggCells;
+    return level;
+  }
+  const feat = featRng();
+  if (chapter >= FIRST_CHAPTER.bombs && feat < 0.22) {
+    level.bombEvery = 7;
+    level.bombTimer = rank >= 2 ? 13 : 10;
+    if (objectives.length <= 2 && !kinds.has('egg') && !kinds.has('honey')) {
+      level.subtitle = GENERATED_SUBTITLES.bombs.text;
+    }
+  } else if (chapter >= FIRST_CHAPTER.belts && feat < 0.44) {
+    const blocked = new Set<number>();
+    for (const cells of [holeCells, honeyCells, crateCells]) for (const cell of cells) blocked.add(cell.row);
+    const freeRows = [1, 2, 3, 4, 5, 6].filter((row) => !blocked.has(row));
+    if (freeRows.length > 0) {
+      const first = freeRows[Math.floor(featRng() * freeRows.length)];
+      level.beltRows = [{ row: first, dir: featRng() < 0.5 ? 1 : -1 }];
+      const others = freeRows.filter((row) => Math.abs(row - first) >= 2);
+      if (others.length > 0 && featRng() < 0.5) {
+        level.beltRows.push({
+          row: others[Math.floor(featRng() * others.length)],
+          dir: level.beltRows[0].dir === 1 ? -1 : 1,
+        });
+      }
+    }
+  }
   return level;
 }
 
@@ -1301,11 +1345,13 @@ const GENERATED_SUBTITLES = {
   cascades: { text: 'Bygg långa kaskader för att nå målet' },
   score: { text: 'Jaga poäng – stora matchningar ger mest' },
   honey: { text: 'Rensa honungen – annars sprider den sig' },
+  boss: { text: 'Bossnivå – varje djur du rensar skadar bossen' },
+  bombs: { text: 'Matcha bombdjuren innan nedräkningen når noll' },
   eggs: { text: 'Matcha under äggen så att de når botten' },
 };
 
 /** Chapter in which each newer ingredient first shows up. */
-export const FIRST_CHAPTER = { holes: 6, honey: 9, eggs: 12 };
+export const FIRST_CHAPTER = { boss: 5, holes: 6, honey: 9, eggs: 12, bombs: 15, belts: 18 };
 
 function cellList(mask: Mask): Array<{ row: number; col: number }> {
   return Array.from(mask)

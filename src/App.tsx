@@ -159,6 +159,9 @@ export default function App() {
           rewardState={game.rewardState}
           weeklyQuest={game.weeklyQuest}
           todayKey={game.todayKey}
+          lives={game.lives}
+          onBuyLives={game.buyLives}
+          season={game.season}
           isFullscreen={isFullscreen}
           canFullscreen={canFullscreen}
           guideOpen={showGuide || settingsOpen}
@@ -271,6 +274,8 @@ export default function App() {
             specialBonus={game.endSnapshot.specialBonus}
             stars={game.endSnapshot.stars}
             chest={game.endSnapshot.chest}
+            lostToBomb={game.endSnapshot.lostToBomb}
+            livesLeft={game.lives.lives}
             totalMoves={activeLevel.moves}
             dailyReward={game.dailyReward}
             shareNotice={game.shareNotice}
