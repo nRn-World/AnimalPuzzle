@@ -1,3 +1,5 @@
+import { biomeOfChapter } from './biomes';
+import { BOSSES } from './bosses';
 import { Coord, GemColor, LevelConfig, LevelDifficulty } from './types';
 
 interface CellSpec {
@@ -1295,16 +1297,24 @@ function generateLevel(levelIdx: number): LevelConfig {
   if (pos === LEVELS_PER_CHAPTER - 1 && chapter >= FIRST_CHAPTER.boss) {
     // The chapter ends with a boss: every animal cleared hurts it, and it
     // fights back by chaining animals.
-    level.boss = { every: rank >= 3 ? 3 : 4, count: 2 };
+    const bossDef = BOSSES[biomeOfChapter(chapter)];
+    level.boss = {
+      every: rank >= 3 ? bossDef.every - 1 : bossDef.every,
+      count: bossDef.count,
+      attack: bossDef.attack,
+      ...(bossDef.timer ? { timer: bossDef.timer } : {}),
+    };
+    // A boss that steals moves gets them added up front, so the level stays fair.
+    if (bossDef.attack === 'steal') level.moves += Math.ceil(level.moves / level.boss.every);
     level.objectives = [
       {
         id: `g${id}-boss`,
         kind: 'boss',
-        label: 'Bossen',
+        label: bossDef.nameSv,
         target: Math.round((moves * share * RATE.boss * boost) / 5) * 5,
       },
     ];
-    level.subtitle = GENERATED_SUBTITLES.boss.text;
+    level.subtitle = bossDef.introSv;
     delete level.eggCells;
     return level;
   }
@@ -1363,7 +1373,6 @@ const GENERATED_SUBTITLES = {
   cascades: { text: 'Bygg långa kaskader för att nå målet' },
   score: { text: 'Jaga poäng – stora matchningar ger mest' },
   honey: { text: 'Rensa honungen – annars sprider den sig' },
-  boss: { text: 'Bossnivå – varje djur du rensar skadar bossen' },
   bombs: { text: 'Matcha bombdjuren innan nedräkningen når noll' },
   eggs: { text: 'Matcha under äggen så att de når botten' },
 };

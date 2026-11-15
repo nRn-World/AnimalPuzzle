@@ -37,6 +37,8 @@ interface GameModalsProps {
   chest?: { energy: number; skin: AnimalSkinId | null };
   /** The level was lost to a bomb rather than running out of moves. */
   lostToBomb?: boolean;
+  /** Time mode: place on this week's list (0 = outside it). */
+  blitzRank?: number;
   /** Lives left (campaign only). */
   livesLeft?: number;
   onEquipSkin: (skin: AnimalSkinId) => void;
@@ -167,6 +169,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
   dailyReward,
   chest,
   lostToBomb = false,
+  blitzRank,
   livesLeft,
   onEquipSkin,
   shareNotice,
@@ -233,6 +236,8 @@ export const GameModals: React.FC<GameModalsProps> = ({
                   ? t('Nivå {n} · {name}', { n: levelNumber, name: t(levelName) })
                   : mode === 'daily'
                   ? t(levelName)
+                  : mode === 'blitz'
+                  ? t('Tidsläge')
                   : t('Oändligt läge')}
               </div>
               <h2 id="modal-heading" className="font-display text-2xl font-extrabold">
@@ -460,7 +465,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
           <>
             <div className="space-y-1">
               <div className="text-xs font-extrabold uppercase tracking-wider text-[#D4002A]">
-                {lostToBomb ? t('Bomben smällde') : t('Slut på drag')}
+                {mode === 'blitz' ? t('Tiden är ute') : lostToBomb ? t('Bomben smällde') : t('Slut på drag')}
               </div>
               <h2 id="modal-heading" className="font-display text-2xl font-extrabold">
                 {mode === 'campaign' || mode === 'daily'
@@ -495,6 +500,16 @@ export const GameModals: React.FC<GameModalsProps> = ({
                 </div>
               </div>
             </div>
+
+            {mode === 'blitz' && blitzRank !== undefined && (
+              <div data-testid="blitz-rank" className="ui-inset px-3 py-2 text-sm font-extrabold">
+                {blitzRank === 1
+                  ? t('Veckans bästa omgång!')
+                  : blitzRank > 1
+                  ? t('Plats {n} på veckans lista', { n: blitzRank })
+                  : t('Utanför veckans topp fem – försök igen!')}
+              </div>
+            )}
 
             {mode === 'endless' && <ShareButton notice={shareNotice} onShare={onShare} />}
 

@@ -781,22 +781,126 @@ export const HoneySvg: React.FC<{ className?: string }> = ({ className = 'w-full
   </svg>
 );
 
-/** The chapter boss: a grumpy storm cloud that chains animals. */
-export const BossSvg: React.FC<{ className?: string }> = ({ className = 'w-full h-full' }) => (
-  <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+const INK = { stroke: '#111111', strokeWidth: 3, strokeLinejoin: 'round' as const, strokeLinecap: 'round' as const };
+
+/** Angry eyes shared by every boss. */
+const BossEyes: React.FC<{ y?: number; gap?: number }> = ({ y = 30, gap = 8 }) => (
+  <>
     <path
-      d="M14 46 C6 46 3 40 5 34 C6 29 10 26 15 27 C15 18 22 12 31 12 C39 12 45 17 47 24 C54 23 60 28 60 35 C60 42 55 46 49 46 Z"
-      fill="#6B5B95"
+      d={`M${32 - gap - 6} ${y - 7} L${32 - gap + 3} ${y - 3} M${32 + gap + 6} ${y - 7} L${32 + gap - 3} ${y - 3}`}
       stroke="#111111"
-      strokeWidth="3"
-      strokeLinejoin="round"
+      strokeWidth="3.2"
+      strokeLinecap="round"
     />
-    <path d="M20 27 L29 31 M44 27 L35 31" stroke="#111111" strokeWidth="3.2" strokeLinecap="round" />
-    <circle cx="25" cy="34" r="3" fill="#FFFFFF" stroke="#111111" strokeWidth="1.6" />
-    <circle cx="39" cy="34" r="3" fill="#FFFFFF" stroke="#111111" strokeWidth="1.6" />
-    <circle cx="25.6" cy="34.4" r="1.2" fill="#111111" />
-    <circle cx="38.4" cy="34.4" r="1.2" fill="#111111" />
-    <path d="M26 42 Q32 38 38 42" fill="none" stroke="#111111" strokeWidth="2.6" strokeLinecap="round" />
-    <path d="M30 46 L24 55 H31 L27 62 L40 51 H33 L37 46 Z" fill="#F2CD1C" stroke="#111111" strokeWidth="2.2" strokeLinejoin="round" />
+    <circle cx={32 - gap} cy={y} r="3.4" fill="#FFFFFF" stroke="#111111" strokeWidth="1.6" />
+    <circle cx={32 + gap} cy={y} r="3.4" fill="#FFFFFF" stroke="#111111" strokeWidth="1.6" />
+    <circle cx={32 - gap + 0.8} cy={y + 0.4} r="1.4" fill="#111111" />
+    <circle cx={32 + gap - 0.8} cy={y + 0.4} r="1.4" fill="#111111" />
+  </>
+);
+
+const Dragon: React.FC<{ skin: string; belly: string; horn: string; breath: string }> = ({
+  skin,
+  belly,
+  horn,
+  breath,
+}) => (
+  <>
+    <path d="M17 18 L10 4 L25 13 Z M47 18 L54 4 L39 13 Z" fill={horn} {...INK} />
+    <path
+      d="M12 30 C12 17 21 11 32 11 C43 11 52 17 52 30 C52 38 48 42 46 46 C44 52 39 56 32 56 C25 56 20 52 18 46 C16 42 12 38 12 30 Z"
+      fill={skin}
+      {...INK}
+    />
+    <path d="M22 44 C22 39 27 37 32 37 C37 37 42 39 42 44 C42 50 38 53 32 53 C26 53 22 50 22 44 Z" fill={belly} {...INK} strokeWidth={2.4} />
+    <circle cx="28.5" cy="43" r="1.6" fill="#111111" />
+    <circle cx="35.5" cy="43" r="1.6" fill="#111111" />
+    <path d="M26 49 Q32 52 38 49" fill="none" stroke="#111111" strokeWidth="2.2" strokeLinecap="round" />
+    <path d="M30 57 q-3 4 2 6 q5 -2 2 -6 Z" fill={breath} {...INK} strokeWidth={2} />
+    <BossEyes y={28} gap={9} />
+  </>
+);
+
+const BOSS_ART: Record<string, React.ReactNode> = {
+  // Kapten Krake: an octopus with a captain's hat.
+  skargard: (
+    <>
+      <path
+        d="M10 44 q-6 8 2 12 M20 48 q-4 9 4 11 M32 49 v11 M44 48 q4 9 -4 11 M54 44 q6 8 -2 12"
+        fill="none"
+        stroke="#111111"
+        strokeWidth="9"
+        strokeLinecap="round"
+      />
+      <path
+        d="M10 44 q-6 8 2 12 M20 48 q-4 9 4 11 M32 49 v11 M44 48 q4 9 -4 11 M54 44 q6 8 -2 12"
+        fill="none"
+        stroke="#8E5BD0"
+        strokeWidth="4.5"
+        strokeLinecap="round"
+      />
+      <path d="M11 34 C11 20 20 13 32 13 C44 13 53 20 53 34 C53 44 45 50 32 50 C19 50 11 44 11 34 Z" fill="#8E5BD0" {...INK} />
+      <path d="M17 16 H47 L44 7 H20 Z" fill="#1F2A44" {...INK} strokeWidth={2.6} />
+      <rect x="14" y="15" width="36" height="5" rx="2" fill="#F2CD1C" {...INK} strokeWidth={2.2} />
+      <path d="M25 42 Q32 37 39 42" fill="none" stroke="#111111" strokeWidth="2.6" strokeLinecap="round" />
+      <BossEyes y={32} />
+    </>
+  ),
+  // Getingdrottningen: a striped wasp with a crown.
+  ang: (
+    <>
+      <ellipse cx="14" cy="27" rx="11" ry="7" fill="#DDF3FF" {...INK} strokeWidth={2.4} transform="rotate(-24 14 27)" />
+      <ellipse cx="50" cy="27" rx="11" ry="7" fill="#DDF3FF" {...INK} strokeWidth={2.4} transform="rotate(24 50 27)" />
+      <path d="M22 13 L24 4 L29 10 L32 3 L35 10 L40 4 L42 13 Z" fill="#F2CD1C" {...INK} strokeWidth={2.4} />
+      <path d="M16 34 C16 20 23 13 32 13 C41 13 48 20 48 34 C48 47 41 56 32 60 C23 56 16 47 16 34 Z" fill="#F2CD1C" {...INK} />
+      <path d="M18 41 H46 M21 49 H43" stroke="#111111" strokeWidth="5" strokeLinecap="round" />
+      <path d="M27 36 Q32 33 37 36" fill="none" stroke="#111111" strokeWidth="2.6" strokeLinecap="round" />
+      <BossEyes y={27} gap={7} />
+    </>
+  ),
+  // Sandormen: a segmented worm with a round, toothy mouth.
+  oken: (
+    <>
+      <path d="M14 60 C8 48 10 30 18 20 C24 12 40 12 46 20 C54 30 56 48 50 60 Z" fill="#D9A45B" {...INK} />
+      <path d="M12 47 H52 M12.5 56 H51.5" stroke="#111111" strokeWidth="2.4" strokeLinecap="round" opacity="0.7" />
+      <circle cx="32" cy="35" r="10" fill="#5B2A1A" {...INK} strokeWidth={2.6} />
+      <path
+        d="M24 31 l4 4 l-5 1 Z M40 31 l-4 4 l5 1 Z M28 26.5 l4 5 l4 -5 Z M27 43 l5 -5 l5 5 Z"
+        fill="#FFFFFF"
+        stroke="#111111"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+      <BossEyes y={19} gap={8} />
+    </>
+  ),
+  vinter: <Dragon skin="#8FD3F4" belly="#E6F7FF" horn="#FFFFFF" breath="#DFF4FF" />,
+  // Kapten Blip: a one-eyed alien in a saucer.
+  rymden: (
+    <>
+      <path d="M32 12 V5" stroke="#111111" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="32" cy="5" r="3.2" fill="#FF4FA3" {...INK} strokeWidth={2.2} />
+      <path d="M17 36 C17 21 23 12 32 12 C41 12 47 21 47 36 Z" fill="#7CE36B" {...INK} />
+      <circle cx="32" cy="25" r="7" fill="#FFFFFF" {...INK} strokeWidth={2.4} />
+      <circle cx="32.6" cy="25.6" r="3" fill="#111111" />
+      <path d="M23 17 L41 17" stroke="#111111" strokeWidth="3.2" strokeLinecap="round" />
+      <ellipse cx="32" cy="42" rx="28" ry="10" fill="#B9C2CC" {...INK} />
+      <circle cx="14" cy="43" r="2.6" fill="#F2CD1C" stroke="#111111" strokeWidth="1.6" />
+      <circle cx="26" cy="46.5" r="2.6" fill="#F2CD1C" stroke="#111111" strokeWidth="1.6" />
+      <circle cx="38" cy="46.5" r="2.6" fill="#F2CD1C" stroke="#111111" strokeWidth="1.6" />
+      <circle cx="50" cy="43" r="2.6" fill="#F2CD1C" stroke="#111111" strokeWidth="1.6" />
+      <path d="M24 52 L20 61 H44 L40 52" fill="#FDF3A6" opacity="0.6" />
+    </>
+  ),
+  vulkan: <Dragon skin="#E5482F" belly="#FFC857" horn="#3A2A2A" breath="#FF9F1C" />,
+};
+
+/** The boss of a landscape. Without `biome` it shows the archipelago's Kapten Krake. */
+export const BossSvg: React.FC<{ className?: string; biome?: string }> = ({
+  className = 'w-full h-full',
+  biome = 'skargard',
+}) => (
+  <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+    {BOSS_ART[biome] ?? BOSS_ART.skargard}
   </svg>
 );

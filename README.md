@@ -92,6 +92,16 @@ language — you can switch at any time in the settings.
 | **Campaign** | 24,000 levels in 3,000 chapters: 32 handcrafted levels to start, then levels generated deterministically from the level number. Complete the objectives before your moves run out and collect stars for better rewards. |
 | **Daily Challenge** | A new, date-locked challenge every day. Complete it for bonus energy and a chance at exclusive animal skins. |
 | **Endless** | No level objectives — just you, the board, and the hunt for your next personal best. |
+| **Time mode** | 60 seconds on the clock and no move limit. Your best rounds of the week go on a weekly list that starts over every Monday. |
+
+## A world of its own
+
+- **Companions** – bring one animal along. Its power charges from the animals you clear and costs no move; each of the twelve animals has a power of its own, and animals level up as you collect them.
+- **A story** – short comic pages tell how the animals were scattered by a storm and travel through six landscapes to gather the pack.
+- **A boss per landscape** – Captain Kraken, the Wasp Queen, the Sandworm, the Ice Dragon, Captain Blip and the Lava Dragon each fight back in their own way.
+- **Your island** – spend the stars you win on twelve buildings and rebuild the animals' home.
+- **Daily missions** – three small goals every day that pay bonus energy.
+- **Statistics** – time played, favourite animal, longest chain and more.
 
 ## Getting started
 

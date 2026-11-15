@@ -3,6 +3,9 @@ import { formatNumber, t } from '../i18n';
 import { getObjectiveCurrent } from '../game/engine';
 import { CAMPAIGN_LEVEL_COUNT } from '../game/levels';
 import { UiIcon } from './UiIcon';
+import { biomeOfChapter } from '../game/biomes';
+import { getCompanion } from '../game/companions';
+import { GemColor } from '../game/types';
 import {
   AnimalSkinId,
   GameMode,
@@ -38,6 +41,12 @@ interface GameHudProps {
   isFullscreen?: boolean;
   canFullscreen?: boolean;
   busy: boolean;
+  /** Seconds left in the time mode; shown instead of the moves. */
+  timeLeft?: number;
+  companion: GemColor;
+  powerCharge: number;
+  powerNeeded: number;
+  onFirePower: () => void;
   onSelectTool: (tool: ToolType) => void;
   onHint: () => void;
   onToggleMute: () => void;
@@ -61,6 +70,11 @@ export const GameHud: React.FC<GameHudProps> = ({
   isFullscreen = false,
   canFullscreen = false,
   busy,
+  timeLeft,
+  companion,
+  powerCharge,
+  powerNeeded,
+  onFirePower,
   onSelectTool,
   onHint,
   onToggleMute,
@@ -70,7 +84,11 @@ export const GameHud: React.FC<GameHudProps> = ({
   onBackToTitle,
 }) => {
   const energyPct = Math.min(100, Math.round((energy / maxEnergy) * 100));
-  const lowMoves = movesLeft <= 4;
+  const timed = timeLeft !== undefined;
+  const lowMoves = timed ? timeLeft <= 10 : movesLeft <= 4;
+  const powerDef = getCompanion(companion);
+  const powerReady = powerCharge >= powerNeeded;
+  const powerPct = Math.min(100, Math.round((powerCharge / powerNeeded) * 100));
 
   const blurAfterClick = (e: React.MouseEvent<HTMLButtonElement>, fn: () => void) => {
     e.currentTarget.blur();
@@ -110,6 +128,8 @@ export const GameHud: React.FC<GameHudProps> = ({
                 ? t('Nivå {n}/{total}', { n: formatNumber(level.id), total: formatNumber(CAMPAIGN_LEVEL_COUNT) })
                 : mode === 'daily'
                 ? t('Daglig')
+                : mode === 'blitz'
+                ? t('60 sekunder')
                 : t('Oändligt')}
             </div>
             <h1 className="font-display text-2xl lg:text-3xl truncate leading-tight">
@@ -150,17 +170,17 @@ export const GameHud: React.FC<GameHudProps> = ({
             className={`ui-moves shrink-0 w-[5.5rem] h-[5.5rem] sm:w-24 sm:h-24 lg:w-32 lg:h-32 ${
               lowMoves ? 'ui-moves-low' : ''
             }`}
-            title={t('Drag kvar')}
+            title={timed ? t('Sekunder kvar') : t('Drag kvar')}
           >
             <span
               data-testid="moves-left"
-              aria-label={t('Drag kvar')}
+              aria-label={timed ? t('Sekunder kvar') : t('Drag kvar')}
               className="font-display text-5xl lg:text-7xl leading-none"
             >
-              {Math.round(movesLeft)}
+              {Math.round(timed ? timeLeft : movesLeft)}
             </span>
             <span className="text-[9px] sm:text-[10px] lg:text-xs font-extrabold uppercase tracking-wider leading-none">
-              {t('Drag kvar')}
+              {timed ? t('Sekunder') : t('Drag kvar')}
             </span>
           </div>
 
@@ -195,7 +215,9 @@ export const GameHud: React.FC<GameHudProps> = ({
                     {obj.kind === 'chain' && <ChainBadgeIcon className="w-6 h-6 lg:w-8 lg:h-8" />}
                     {obj.kind === 'honey' && <HoneySvg className="w-7 h-7 lg:w-9 lg:h-9" />}
                     {obj.kind === 'egg' && <EggSvg className="w-7 h-7 lg:w-9 lg:h-9" />}
-                    {obj.kind === 'boss' && <BossSvg className="w-8 h-8 lg:w-10 lg:h-10" />}
+                    {obj.kind === 'boss' && (
+                      <BossSvg biome={biomeOfChapter(level.chapter ?? 1)} className="w-9 h-9 lg:w-10 lg:h-10" />
+                    )}
                     {(obj.kind === 'score' || obj.kind === 'specials') && (
                       <UiIcon name="star" className="w-6 h-6 lg:w-8 lg:h-8 text-[#E09A00]" />
                     )}
@@ -241,7 +263,7 @@ export const GameHud: React.FC<GameHudProps> = ({
       </div>
 
       {/* Boosters: below the board in portrait, right of it in landscape */}
-      <div className="order-3 w-full max-w-[640px] self-center lg:w-[104px] lg:max-w-none shrink-0 flex flex-wrap items-start justify-center gap-x-5 gap-y-2 px-2 pb-1.5 lg:flex-col lg:flex-nowrap lg:items-center lg:gap-5 lg:px-0 lg:pb-0">
+      <div className="order-3 w-full max-w-[640px] self-center lg:w-[104px] lg:max-w-none shrink-0 flex flex-wrap items-start justify-center gap-x-3 gap-y-2 px-2 pb-1.5 lg:flex-col lg:flex-nowrap lg:items-center lg:gap-5 lg:px-0 lg:pb-0">
         <div className="ui-onscene w-full max-w-[19rem] lg:max-w-none">
           <div className="flex items-center justify-between gap-1 lg:flex-col lg:gap-0.5">
             <span
@@ -265,6 +287,35 @@ export const GameHud: React.FC<GameHudProps> = ({
           </div>
         </div>
 
+        {/* The companion: charges as animals are cleared, then strikes for free */}
+        <div className="flex flex-col items-center gap-1">
+          <button
+            type="button"
+            data-testid="power-btn"
+            data-ready={powerReady}
+            disabled={!powerReady || busy}
+            onClick={(e) => blurAfterClick(e, onFirePower)}
+            title={`${t(powerDef.powerSv)} – ${t(powerDef.descSv)}`}
+            aria-label={t('{power} ({pct} % laddad): {desc}', {
+              power: t(powerDef.powerSv),
+              pct: powerPct,
+              desc: t(powerDef.descSv),
+            })}
+            className={`ui-power relative shrink-0 w-[4.5rem] h-[4.5rem] lg:w-20 lg:h-20 ${
+              powerReady ? 'ui-power-ready' : ''
+            }`}
+            style={{ '--charge': `${powerPct}%` } as React.CSSProperties}
+          >
+            <span className="ui-power-face">
+              <GemSvg color={companion} special="none" skin={skin} animationSeed={5} className="h-full w-full" />
+            </span>
+            <span className="ui-booster-cost font-mono-num">{powerReady ? t('Klar') : `${powerPct}%`}</span>
+          </button>
+          <span className="ui-onscene max-w-[5rem] truncate text-[11px] font-extrabold leading-none">
+            {t(powerDef.powerSv)}
+          </span>
+        </div>
+
         {tools.map((tool) => {
           const cost = TOOL_COSTS[tool.id];
           const ready = energy >= cost && !busy;
@@ -278,7 +329,7 @@ export const GameHud: React.FC<GameHudProps> = ({
               aria-pressed={selected}
               title={`${tool.title} – ${tool.desc}`}
               aria-label={t('{tool} ({cost} energi): {desc}', { tool: tool.title, cost, desc: tool.desc })}
-              className={`ui-booster relative shrink-0 w-[4.75rem] h-[4.75rem] lg:w-20 lg:h-20 ${
+              className={`ui-booster relative shrink-0 w-[4.5rem] h-[4.5rem] lg:w-20 lg:h-20 ${
                 selected ? 'ui-booster-active' : ''
               }`}
             >

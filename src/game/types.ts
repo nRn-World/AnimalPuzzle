@@ -68,7 +68,7 @@ export interface Coord {
   col: number;
 }
 
-export type GameMode = 'campaign' | 'endless' | 'daily';
+export type GameMode = 'campaign' | 'endless' | 'daily' | 'blitz';
 
 export type AnimalSkinId =
   | 'classic'
@@ -158,8 +158,12 @@ export interface LevelConfig {
   beltRows?: Array<{ row: number; dir: 1 | -1 }>;
   /** Pairs of portal cells that trade animals after every move. */
   portalPairs?: Array<[Coord, Coord]>;
-  /** Boss level: every `every` moves the boss chains `count` animals. */
-  boss?: { every: number; count: number };
+  /**
+   * Boss level: every `every` moves the boss strikes `count` animals. The
+   * attack chains them (default), buries them in crates, plants bombs with
+   * `timer` moves on the clock, or steals `count` moves.
+   */
+  boss?: { every: number; count: number; attack?: 'chain' | 'crate' | 'bomb' | 'steal'; timer?: number };
 }
 
 export interface BlastEvent {
@@ -218,8 +222,10 @@ export interface SwapResult {
   bombExploded?: Coord;
   /** Animals that got a new bomb this move. */
   bombsPlanted?: Coord[];
-  /** Animals the boss chained this move. */
+  /** Cells the boss struck this move (empty when it stole moves instead). */
   bossAttack?: Coord[];
+  /** Moves the boss took away this move. */
+  bossStole?: number;
 }
 
 /** What the engine needs to know about the level to run end-of-move events. */

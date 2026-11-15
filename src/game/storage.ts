@@ -25,6 +25,12 @@ export const STORAGE_KEYS = {
   savedGame: `${STORAGE_PREFIX}saved_game_v1`,
   rewards: `${STORAGE_PREFIX}rewards_v1`,
   lives: `${STORAGE_PREFIX}lives_v1`,
+  companion: `${STORAGE_PREFIX}companion_v1`,
+  missions: `${STORAGE_PREFIX}missions_v1`,
+  island: `${STORAGE_PREFIX}island_v1`,
+  story: `${STORAGE_PREFIX}story_v1`,
+  stats: `${STORAGE_PREFIX}stats_v1`,
+  blitz: `${STORAGE_PREFIX}blitz_v1`,
 } as const;
 
 /** The subset of the Storage API this module relies on (easy to fake in tests). */

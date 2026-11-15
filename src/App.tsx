@@ -161,6 +161,18 @@ export default function App() {
           todayKey={game.todayKey}
           lives={game.lives}
           onBuyLives={game.buyLives}
+            missions={game.missions}
+            missionState={game.missionState}
+            companion={game.companion}
+            onSelectCompanion={game.selectCompanion}
+            island={game.island}
+            onBuild={game.buildNext}
+            stats={game.stats}
+            blitz={game.blitz}
+            storyPage={game.storyPage}
+            onCloseStory={game.closeStory}
+            onReadStory={game.readStory}
+            seenPages={game.seenPages}
           season={game.season}
           isFullscreen={isFullscreen}
           canFullscreen={canFullscreen}
@@ -206,6 +218,11 @@ export default function App() {
               isFullscreen={isFullscreen}
               canFullscreen={canFullscreen}
               busy={busy}
+              timeLeft={mode === 'blitz' ? game.blitzLeft : undefined}
+              companion={game.companion}
+              powerCharge={game.powerCharge}
+              powerNeeded={game.powerNeeded}
+              onFirePower={game.firePower}
               onSelectTool={selectTool}
               onHint={showHint}
               onToggleMute={toggleMute}
@@ -239,6 +256,7 @@ export default function App() {
                   activeTool={game.activeTool}
                   shaking={game.shaking}
                   busy={busy}
+                  cheering={phase === 'VICTORY'}
                   fxRef={game.fxRef}
                   onCellClick={game.clickCell}
                   onSwipeSwap={game.attemptSwap}
@@ -275,6 +293,7 @@ export default function App() {
             stars={game.endSnapshot.stars}
             chest={game.endSnapshot.chest}
             lostToBomb={game.endSnapshot.lostToBomb}
+            blitzRank={game.endSnapshot.blitzRank}
             livesLeft={game.lives.lives}
             totalMoves={activeLevel.moves}
             dailyReward={game.dailyReward}

@@ -23,6 +23,7 @@ const MODE_LABELS = {
   campaign: { text: 'Kampanj' },
   daily: { text: 'Daglig' },
   endless: { text: 'Oändligt' },
+  blitz: { text: 'Tidsläge' },
 };
 
 /** The animal album (a card per animal that levels up) and the top list. */

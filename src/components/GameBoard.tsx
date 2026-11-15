@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { prefersReducedMotion } from '../game/settings';
 import { TutorialPrompt } from '../game/tutorial';
 import { useSettings } from '../hooks/useSettings';
@@ -42,6 +42,8 @@ interface GameBoardProps {
   onCellClick: (coord: Coord) => void;
   onSwipeSwap: (from: Coord, to: Coord) => void;
   onBoardTilt?: (nx: number, ny: number) => void;
+  /** The level is won: every animal jumps for joy. */
+  cheering?: boolean;
   /** Pixel width of the board, measured from the available viewport space. */
   size?: number;
   /** Pixel height; defaults to the width (square board). */
@@ -157,7 +159,27 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   onBoardTilt,
   size,
   height,
+  cheering = false,
 }) => {
+  // A little life on the board: now and then a random animal hops in place.
+  const [hopId, setHopId] = useState<number | null>(null);
+  const boardRef = useRef(board);
+  boardRef.current = board;
+  useEffect(() => {
+    if (busy || cheering) {
+      setHopId(null);
+      return;
+    }
+    const timer = window.setInterval(() => {
+      const gems = boardRef.current
+        .flat()
+        .filter((cell) => cell.crate === 0 && cell.gem && !cell.gem.chained && !cell.gem.egg);
+      const pickOne = gems[Math.floor(Math.random() * gems.length)];
+      setHopId(pickOne?.gem?.id ?? null);
+    }, 2400);
+    return () => window.clearInterval(timer);
+  }, [busy, cheering]);
+
   const dragStartRef = useRef<{ coord: Coord; x: number; y: number } | null>(null);
   const swipeTriggeredRef = useRef(false);
   const prevBoardPositionsRef = useRef<Map<number, Coord>>(new Map());
@@ -553,7 +575,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                             chained={cell.gem.chained}
                             skin={skin}
                             animationSeed={cell.gem.id}
-                            className="relative z-10 w-full h-full drop-shadow-[0_3px_4px_rgba(0,0,0,0.68)]"
+                            className={`relative z-10 w-full h-full drop-shadow-[0_3px_4px_rgba(0,0,0,0.68)] ${
+                              cheering
+                                ? `animate-gem-cheer gem-cheer-${(r + c) % 4}`
+                                : hopId === cell.gem.id
+                                ? 'animate-gem-hop'
+                                : ''
+                            }`}
                           />
                         )}
                         {cell.gem.bomb !== undefined && (
