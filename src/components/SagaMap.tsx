@@ -40,7 +40,7 @@ const TinyStars: React.FC<{ stars: number }> = ({ stars }) => (
       <svg key={n} viewBox="0 0 24 24" className="h-2.5 w-2.5">
         <polygon
           points="12,2.4 15.1,8.9 22.2,9.8 17,14.7 18.3,21.7 12,18.3 5.7,21.7 7,14.7 1.8,9.8 8.9,8.9"
-          fill={n <= stars ? '#FFC61A' : '#3A4170'}
+          fill={n <= stars ? '#FFC61A' : '#FFFFFF'}
           stroke="#111111"
           strokeWidth="2.4"
           strokeLinejoin="round"
@@ -49,6 +49,57 @@ const TinyStars: React.FC<{ stars: number }> = ({ stars }) => (
     ))}
   </span>
 );
+
+/** The island a level sits on. `kind` varies what grows on it. */
+const Island: React.FC<{ big: boolean; locked: boolean; kind: number }> = ({ big, locked, kind }) => {
+  const sand = locked ? '#B9C2CC' : '#F1D58A';
+  const green = locked ? '#8E9AA6' : '#4FAE5A';
+  const trunk = locked ? '#6F7780' : '#7A4B12';
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 100 80"
+      className={`pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[46%] overflow-visible ${
+        big ? 'h-[5.6rem] w-[7rem]' : 'h-[4.5rem] w-[5.6rem]'
+      }`}
+    >
+      {/* Shallow water around the shore */}
+      <ellipse cx="50" cy="50" rx="48" ry="27" fill="#7FD6F7" opacity="0.55" />
+      <path
+        d="M8 50 C8 34 26 26 50 26 C76 26 92 35 92 50 C92 65 74 72 50 72 C24 72 8 64 8 50 Z"
+        fill={sand}
+        stroke="#111111"
+        strokeWidth="3"
+        strokeLinejoin="round"
+      />
+      {kind === 0 && (
+        <g transform="translate(80 40)">
+          <path d="M0 6 q4 -14 -1 -26" fill="none" stroke="#111111" strokeWidth="6.5" strokeLinecap="round" />
+          <path d="M0 6 q4 -14 -1 -26" fill="none" stroke={trunk} strokeWidth="3.5" strokeLinecap="round" />
+          <path
+            d="M-1 -20 q-13 -8 -21 2 q11 -2 21 -2 q12 -10 23 0 q-13 -2 -23 0 q2 -12 -6 -17 q10 3 6 17 Z"
+            fill={green}
+            stroke="#111111"
+            strokeWidth="2.2"
+            strokeLinejoin="round"
+          />
+        </g>
+      )}
+      {kind === 1 && (
+        <g stroke="#111111" strokeWidth="2.2" strokeLinejoin="round">
+          <path d="M12 46 a7 7 0 0 1 12 -4 a6 6 0 0 1 9 5 Z" fill={green} />
+          <path d="M78 58 l5 -6 l7 2 l1 6 Z" fill="#9AA3AD" />
+        </g>
+      )}
+      {kind === 2 && (
+        <g stroke="#111111" strokeWidth="2.2" strokeLinejoin="round">
+          <path d="M14 56 l4 -8 l8 1 l3 7 Z" fill="#9AA3AD" />
+          <path d="M76 44 a6 6 0 0 1 11 -3 a5 5 0 0 1 6 5 Z" fill={green} />
+        </g>
+      )}
+    </svg>
+  );
+};
 
 /**
  * The saga as one long winding trail. Only the chapters near the visible
@@ -155,8 +206,8 @@ export const SagaMap: React.FC<SagaMapProps> = ({
                 <polyline
                   points={points.join(' ')}
                   fill="none"
-                  stroke="#111111"
-                  strokeWidth="13"
+                  stroke="#0E5A9C"
+                  strokeWidth="9"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   vectorEffect="non-scaling-stroke"
@@ -164,11 +215,11 @@ export const SagaMap: React.FC<SagaMapProps> = ({
                 <polyline
                   points={points.join(' ')}
                   fill="none"
-                  stroke={chapterLocked ? '#6B7191' : '#E2DBB2'}
-                  strokeWidth="7"
+                  stroke={chapterLocked ? '#8FC3E6' : '#FFFFFF'}
+                  strokeWidth="4"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeDasharray="2 13"
+                  strokeDasharray="7 9"
                   vectorEffect="non-scaling-stroke"
                 />
               </svg>
@@ -214,6 +265,7 @@ export const SagaMap: React.FC<SagaMapProps> = ({
                     className="absolute -translate-x-1/2 -translate-y-1/2"
                     style={{ top: nodeY(pos), left: `${trailX(idx)}%` }}
                   >
+                    <Island big={finale} locked={locked} kind={idx % 3} />
                     <button
                       type="button"
                       disabled={locked}

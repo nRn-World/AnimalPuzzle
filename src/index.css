@@ -745,9 +745,10 @@ html[data-reduce-motion="true"] .animate-combo-banner {
 
 /* Saga map: night-blue map sheet with halftone dots. */
 .ui-saga {
+  /* Archipelago: waves and a sailing boat drift past; every level is an island. */
   background:
-    radial-gradient(circle, rgba(255, 255, 255, 0.07) 0 2.5px, transparent 3px) 0 0 / 16px 16px local,
-    linear-gradient(180deg, #23307a 0%, #1a2360 100%);
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'200'%20height%3D'200'%20viewBox%3D'0%200%20200%20200'%3E%3Cpath%20d%3D'M10%2030%20q8%20-7%2016%200%20t16%200%20t16%200%20M120%2070%20q8%20-7%2016%200%20t16%200%20M30%20120%20q8%20-7%2016%200%20t16%200%20t16%200%20M130%20170%20q8%20-7%2016%200%20t16%200%20M96%2016%20q8%20-7%2016%200%20t16%200%20M14%20176%20q8%20-7%2016%200%20t16%200'%20fill%3D'none'%20stroke%3D'%23bfe9ff'%20stroke-width%3D'3'%20stroke-linecap%3D'round'%2F%3E%3Cg%20transform%3D'translate(168%20118)'%3E%3Cpath%20d%3D'M-14%200%20h28%20l-5%208%20h-18%20Z'%20fill%3D'%23ff2e4d'%20stroke%3D'%23111111'%20stroke-width%3D'2'%20stroke-linejoin%3D'round'%2F%3E%3Cpath%20d%3D'M0%200%20V-18%20l11%2014%20Z'%20fill%3D'%23ffffff'%20stroke%3D'%23111111'%20stroke-width%3D'2'%20stroke-linejoin%3D'round'%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 0 0 / 200px 200px local,
+    linear-gradient(180deg, #2faae4 0%, #1a7bc6 100%);
   scrollbar-width: thin;
   scrollbar-color: #111111 transparent;
 }
