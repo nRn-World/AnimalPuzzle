@@ -164,10 +164,6 @@ export const en: Record<string, string> = {
     "Moves left: {n} × 120",
   "Sparade specialdjur: +{n}":
     "Saved special animals: +{n}",
-  "Dina kvarvarande drag och specialdjur är redan inräknade i poängen.":
-    "Your remaining moves and special animals are already included in the score.",
-  "Du klarade målet på sista draget. Dina sparade specialdjur är inräknade.":
-    "You reached the goal on your very last move. Your saved special animals are included.",
   "Dagens belöning redan hämtad":
     "Today's reward already claimed",
   "Belöning upplåst":

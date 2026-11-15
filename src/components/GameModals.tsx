@@ -42,16 +42,21 @@ interface GameModalsProps {
 
 const PRIMARY_CTA_CLASS = 'ui-btn ui-btn-green w-full px-4 py-1.5 font-display text-lg tracking-wide';
 
-const ShareButton: React.FC<{ notice: string | null; onShare: () => void }> = ({
+const ShareButton: React.FC<{ notice: string | null; onShare: () => void; plain?: boolean }> = ({
   notice,
   onShare,
+  plain = false,
 }) => (
   <div className="space-y-1">
     <button
       type="button"
       data-testid="share-result-btn"
       onClick={onShare}
-      className="ui-btn ui-btn-yellow w-full px-3 py-1 text-sm"
+      className={
+        plain
+          ? 'inline-flex cursor-pointer items-center gap-1.5 bg-transparent px-2 py-1 text-sm font-bold text-[#4B4B4B] underline underline-offset-2 hover:text-[#111111]'
+          : 'ui-btn ui-btn-yellow w-full px-3 py-1 text-sm'
+      }
     >
       <UiIcon name="share2" className="w-4 h-4" />
       {t('Dela resultat')}
@@ -108,7 +113,23 @@ export const GameModals: React.FC<GameModalsProps> = ({
       aria-labelledby="modal-heading"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111111]/70"
     >
-      <div className="ui-panel w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-5">
+      <div className={`relative w-full max-w-md ${phase === 'VICTORY' ? 'pt-11' : ''}`}>
+      {phase === 'VICTORY' && (
+        <div className="ui-medal" aria-hidden="true" data-testid="victory-medal">
+          <span className="ui-medal-tail ui-medal-tail-left" />
+          <span className="ui-medal-tail ui-medal-tail-right" />
+          <span className="ui-medal-disc">
+            <span className="font-display">{Math.max(0, Math.min(3, Math.round(stars)))}</span>
+          </span>
+        </div>
+      )}
+      <div
+        className={`ui-panel w-full overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-5 ${
+          phase === 'VICTORY'
+            ? 'max-h-[calc(100dvh-4.75rem)] pt-[5.75rem] sm:pt-[5.75rem] text-center space-y-3.5'
+            : 'max-h-[calc(100dvh-2rem)]'
+        }`}
+      >
         {phase === 'PAUSED' && (
           <>
             <div className="space-y-1">
@@ -157,22 +178,16 @@ export const GameModals: React.FC<GameModalsProps> = ({
 
         {phase === 'VICTORY' && (
           <>
-            <div className="space-y-1">
-              <div className="text-xs font-extrabold uppercase tracking-wider text-[#0B6B2B]">
+            <div className="flex flex-col items-center gap-1.5">
+              <StarRating stars={stars} size="lg" animated tone="comic" />
+              <div className="mt-1 text-xs font-extrabold uppercase tracking-wider text-[#0B6B2B]">
                 {mode === 'daily'
                   ? t('Daglig utmaning avklarad')
                   : t('Nivå {n} avklarad', { n: levelNumber })}
               </div>
-              <h2 id="modal-heading" className="font-display text-2xl font-extrabold">
+              <h2 id="modal-heading" className="font-display text-3xl leading-none tracking-wide">
                 {t('{name} löst!', { name: t(levelName) })}
               </h2>
-            </div>
-
-            <div className="flex flex-col items-center gap-1.5 -mt-2">
-              <StarRating stars={stars} size="lg" animated tone="parchment" />
-              <div className="text-xs font-extrabold uppercase tracking-wider text-[#D4002A]">
-                {t('{n} av 3 stjärnor', { n: stars })}
-              </div>
               {nextStarGoal(movesLeft, totalMoves) && (
                 <div className="text-[11px] font-semibold text-[#4B4B4B]" data-testid="next-star-goal">
                   {nextStarGoal(movesLeft, totalMoves)}
@@ -180,8 +195,8 @@ export const GameModals: React.FC<GameModalsProps> = ({
               )}
             </div>
 
-            <div className="grid grid-cols-3 gap-2.5">
-              <div className="ui-inset p-2.5">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="ui-inset px-1 py-2">
                 <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#4B4B4B]">
                   {t('Poäng')}
                 </div>
@@ -189,15 +204,15 @@ export const GameModals: React.FC<GameModalsProps> = ({
                   {formatNumber(snapshotScore)}
                 </div>
               </div>
-              <div className="ui-inset p-2.5">
+              <div className="ui-inset px-1 py-2">
                 <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#4B4B4B]">
                   {t('Drag kvar')}
                 </div>
-                <div className="font-mono-num text-lg font-bold text-[#D4002A] mt-0.5">
+                <div className="font-mono-num text-lg font-bold text-[#111111] mt-0.5">
                   {Math.round(movesLeft)}
                 </div>
               </div>
-              <div className="ui-inset p-2.5">
+              <div className="ui-inset px-1 py-2">
                 <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#4B4B4B]">
                   {t('Max kedja')}
                 </div>
@@ -209,34 +224,24 @@ export const GameModals: React.FC<GameModalsProps> = ({
 
             <div
               data-testid="victory-finale"
-              className="rounded border-2 border-[#111111] bg-[#F2D23C] p-3"
+              title={`${t('Drag kvar: {n} × 120', { n: movesLeft })} · ${t('Sparade specialdjur: +{n}', {
+                n: formatNumber(specialBonus),
+              })}`}
+              className="flex items-center justify-between gap-2 border-[3px] border-[#111111] bg-[var(--ui-yellow)] px-2.5 py-1.5 text-left"
             >
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-xs font-extrabold uppercase tracking-wider text-[#D4002A]">
-                  {t('Skördefest')}
-                </div>
-                <div className="font-mono-num text-sm font-bold text-[#111111]">
-                  {t('+{n} p', { n: formatNumber(bonusScore) })}
-                </div>
-              </div>
-              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] font-bold text-[#4B4B4B]">
-                <span>{t('Drag kvar: {n} × 120', { n: movesLeft })}</span>
-                <span>
-                  {t('Sparade specialdjur: +{n}', { n: formatNumber(specialBonus) })}
-                </span>
-              </div>
-              <div className="mt-1 text-xs font-semibold text-[#111111]">
-                {movesLeft > 0
-                  ? t('Dina kvarvarande drag och specialdjur är redan inräknade i poängen.')
-                  : t('Du klarade målet på sista draget. Dina sparade specialdjur är inräknade.')}
-              </div>
+              <span className="text-xs font-extrabold uppercase tracking-wider text-[#111111]">
+                {t('Skördefest')}
+              </span>
+              <span className="font-mono-num text-sm font-bold text-[#111111]">
+                {t('+{n} p', { n: formatNumber(bonusScore) })}
+              </span>
             </div>
 
             {/* Daily Challenge Reward Box */}
             {mode === 'daily' && dailyReward && (
               <div
                 data-testid="daily-reward-summary"
-                className="ui-inset p-3 space-y-2.5"
+                className="ui-inset p-3 space-y-2.5 text-left"
               >
                 <div className="text-xs font-extrabold uppercase tracking-wider text-[#D4002A]">
                   {dailyReward.alreadyClaimed
@@ -287,8 +292,6 @@ export const GameModals: React.FC<GameModalsProps> = ({
               </div>
             )}
 
-            <ShareButton notice={shareNotice} onShare={onShare} />
-
             <div className="flex flex-col gap-2.5">
               {hasNextLevel ? (
                 <button
@@ -320,6 +323,8 @@ export const GameModals: React.FC<GameModalsProps> = ({
                 </button>
               </div>
             </div>
+
+            <ShareButton notice={shareNotice} onShare={onShare} plain />
           </>
         )}
 
@@ -380,6 +385,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
             </div>
           </>
         )}
+      </div>
       </div>
     </div>
   );

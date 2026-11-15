@@ -7,13 +7,18 @@ const sizes = {
   lg: 'w-10 h-10 sm:w-12 sm:h-12',
 } as const;
 
-const StarIcon: React.FC<{ filled: boolean; className: string }> = ({ filled, className }) => (
+const StarIcon: React.FC<{ filled: boolean; className: string; inked?: boolean }> = ({
+  filled,
+  className,
+  inked = false,
+}) => (
   <svg
     viewBox="0 0 24 24"
     className={className}
-    fill={filled ? 'currentColor' : 'none'}
-    stroke="currentColor"
-    strokeWidth={filled ? 0 : 1.8}
+    overflow="visible"
+    fill={filled || inked ? 'currentColor' : 'none'}
+    stroke={inked ? '#111111' : 'currentColor'}
+    strokeWidth={inked ? 1.9 : filled ? 0 : 1.8}
     strokeLinejoin="round"
     aria-hidden="true"
   >
@@ -28,7 +33,7 @@ export interface StarRatingProps {
   className?: string;
   label?: string;
   /** Background the stars sit on; picks an empty-star colour with enough contrast. */
-  tone?: 'dark' | 'parchment';
+  tone?: 'dark' | 'parchment' | 'comic';
 }
 
 export const StarRating: React.FC<StarRatingProps> = ({
@@ -52,7 +57,11 @@ export const StarRating: React.FC<StarRatingProps> = ({
           <span
             key={index}
             className={
-              filled
+              tone === 'comic'
+                ? filled
+                  ? 'text-[#FFC61A]'
+                  : 'text-[#9AA0AB]'
+                : filled
                 ? tone === 'parchment'
                   ? 'text-[#FFB300]'
                   : 'text-[#F5B841]'
@@ -68,7 +77,14 @@ export const StarRating: React.FC<StarRatingProps> = ({
           >
             <StarIcon
               filled={filled}
-              className={`${sizes[size]} ${filled ? 'drop-shadow-[0_2px_4px_rgba(245,184,65,0.45)]' : ''} ${
+              inked={tone === 'comic'}
+              className={`${sizes[size]} ${
+                tone === 'comic'
+                  ? 'drop-shadow-[2px_2px_0_#111111]'
+                  : filled
+                  ? 'drop-shadow-[0_2px_4px_rgba(245,184,65,0.45)]'
+                  : ''
+              } ${
                 animated ? 'animate-star-pop' : ''
               }`}
             />
