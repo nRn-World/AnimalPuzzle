@@ -1,4 +1,6 @@
 import React, { useEffect } from 'react';
+import { formatNumber, t } from '../i18n';
+import { UiIcon } from './UiIcon';
 import {
   ACHIEVEMENTS,
   AchievementDef,
@@ -12,8 +14,8 @@ export const AchievementIconSvg: React.FC<{
   unlocked: boolean;
   className?: string;
 }> = ({ kind, unlocked, className = 'w-5 h-5' }) => {
-  const stroke = unlocked ? '#FDE047' : '#94A3B8';
-  const accent = unlocked ? '#F59E0B' : '#475569';
+  const stroke = unlocked ? '#9A4A12' : '#8C7453';
+  const accent = unlocked ? '#E8A317' : '#B79A6C';
 
   switch (kind) {
     case 'trophy':
@@ -179,23 +181,24 @@ export const TitleAchievementsSummary: React.FC<TitleAchievementsSummaryProps> =
 
   return (
     <section
-      aria-label="Utmärkelser"
+      aria-label={t('Utmärkelser')}
       data-testid="title-achievements-card"
-      className="bg-[#161C29]/95 border border-white/15 border-b-[4px] border-b-[#0A0E16] rounded-xl p-3 space-y-2.5 shadow-lg"
+      className="ui-inset p-2.5 space-y-2"
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#FDE047]">
-            Utmärkelser
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-[#D4002A]">
+            <UiIcon name="trophy" className="w-3.5 h-3.5" />
+            {t('Utmärkelser')}
           </span>
-          <span aria-hidden="true" className="text-[#64748B]">
+          <span aria-hidden="true" className="text-[#6B6F76]">
             ·
           </span>
           <span
             data-testid="achievements-count"
-            className="text-xs font-mono-num font-semibold text-[#E2E8F0]"
+            className="text-[11px] font-mono-num font-bold text-[#4B4B4B]"
           >
-            {unlockedCount}/{totalCount} upplåsta
+            {t('{n}/{total} upplåsta', { n: unlockedCount, total: totalCount })}
           </span>
         </div>
 
@@ -203,9 +206,9 @@ export const TitleAchievementsSummary: React.FC<TitleAchievementsSummaryProps> =
           type="button"
           data-testid="open-achievements-btn"
           onClick={onOpenModal}
-          className="px-2.5 py-1 text-xs font-bold text-white bg-[#232D42] hover:bg-[#2E3B56] rounded-lg border border-white/15 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+          className="ui-btn shrink-0 px-1.5 py-0.5 text-[11px]"
         >
-          Visa alla ({totalCount})
+          {t('Visa alla ({n})', { n: totalCount })}
         </button>
       </div>
 
@@ -216,31 +219,31 @@ export const TitleAchievementsSummary: React.FC<TitleAchievementsSummaryProps> =
             <div
               key={def.id}
               data-testid={`achievement-preview-${def.id}`}
-              className={`rounded-lg px-2.5 py-2 border ${
+              className={`rounded px-2 py-1.5 border-2 ${
                 prog.unlocked
-                  ? 'bg-[#262116] border-[#F5B841]/55'
-                  : 'bg-[#111622] border-white/10'
+                  ? 'bg-[#F2D23C] border-[#111111]'
+                  : 'bg-[#DDE1E7] border-[#111111]'
               }`}
             >
               <div className="flex items-center justify-between gap-2 mb-1">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <AchievementIconSvg kind={def.icon} unlocked={prog.unlocked} className="w-4 h-4 shrink-0" />
-                  <span className="text-xs font-bold text-white truncate">{def.titleSv}</span>
+                  <span className="text-xs font-extrabold text-[#111111] truncate">{t(def.titleSv)}</span>
                 </div>
                 <span
                   className={`text-[11px] font-mono-num font-bold shrink-0 ${
-                    prog.unlocked ? 'text-[#34D399]' : 'text-[#CBD5E1]'
+                    prog.unlocked ? 'text-[#0B6B2B]' : 'text-[#4B4B4B]'
                   }`}
                 >
                   {prog.unlocked
-                    ? 'Klar'
-                    : `${prog.current.toLocaleString('sv-SE')}/${prog.target.toLocaleString('sv-SE')}`}
+                    ? t('Klar')
+                    : `${formatNumber(prog.current)}/${formatNumber(prog.target)}`}
                 </span>
               </div>
-              <div className="h-1.5 w-full rounded-full bg-[#090D16] overflow-hidden">
+              <div className="h-2 w-full rounded-sm border-2 border-[#111111] bg-[#DDE1E7] overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-300 ${
-                    prog.unlocked ? 'bg-[#10B981]' : 'bg-[#F59E0B]'
+                  className={`h-full transition-all duration-300 ${
+                    prog.unlocked ? 'bg-[#7CFC6A]' : 'bg-[#FFD91A]'
                   }`}
                   style={{ width: `${prog.pct}%` }}
                 />
@@ -287,19 +290,19 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
       aria-modal="true"
       aria-labelledby="achievements-modal-title"
       data-testid="achievements-modal"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#070A10]/85"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111111]/70"
     >
-      <div className="w-full max-w-2xl max-h-[86vh] flex flex-col bg-gradient-to-b from-[#1A2233] to-[#121723] border border-white/15 border-b-[6px] border-b-[#080B12] rounded-2xl shadow-[0_28px_64px_rgba(0,0,0,0.85)] overflow-hidden">
-        <div className="flex items-center justify-between gap-4 px-5 py-4 border-b border-white/10">
+      <div className="ui-panel w-full max-w-2xl max-h-[86vh] flex flex-col">
+        <div className="flex items-center justify-between gap-4 px-2 pb-2 sm:px-3 border-b-2 border-[#111111]">
           <div>
-            <div className="text-xs font-bold uppercase tracking-wider text-[#FDE047]">
-              Progression · {unlockedCount} av {totalCount} upplåsta
+            <div className="text-[11px] font-extrabold uppercase tracking-wider text-[#D4002A]">
+              {t('Progression · {n} av {total} upplåsta', { n: unlockedCount, total: totalCount })}
             </div>
             <h2
               id="achievements-modal-title"
-              className="font-display text-xl font-bold text-white"
+              className="font-display text-xl font-extrabold"
             >
-              Alla utmärkelser
+              {t('Alla utmärkelser')}
             </h2>
           </div>
 
@@ -307,13 +310,13 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
             type="button"
             data-testid="close-achievements-btn"
             onClick={onClose}
-            className="px-4 py-2 text-xs sm:text-sm font-bold text-white bg-[#253047] hover:bg-[#31405E] rounded-lg border border-white/15 border-b-[3px] border-b-[#0D1320] transition-colors cursor-pointer whitespace-nowrap shrink-0"
+            className="ui-btn ui-btn-red shrink-0 px-2 py-1 text-xs sm:text-sm"
           >
-            Stäng
+            {t('Stäng')}
           </button>
         </div>
 
-        <div className="p-4 sm:p-5 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="px-2 pt-3 pb-1 sm:px-3 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           {ACHIEVEMENTS.map((def) => {
             const prog = getAchievementProgress(def, achievementState);
             return (
@@ -321,48 +324,48 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
                 key={def.id}
                 data-testid={`achievement-item-${def.id}`}
                 data-unlocked={prog.unlocked ? 'true' : 'false'}
-                className={`rounded-xl p-3.5 border border-b-[3px] flex flex-col justify-between gap-2.5 ${
+                className={`rounded p-3 border-2 flex flex-col justify-between gap-2.5 ${
                   prog.unlocked
-                    ? 'bg-[#262116] border-[#F5B841]/70 border-b-[#785109]'
-                    : 'bg-[#141A27] border-white/12 border-b-[#090C14]'
+                    ? 'bg-[#F2D23C] border-[#111111]'
+                    : 'bg-[#E2DBB2] border-[#111111]'
                 }`}
               >
                 <div className="flex items-start gap-3">
                   <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border ${
+                    className={`w-10 h-10 rounded flex items-center justify-center shrink-0 border-2 ${
                       prog.unlocked
-                        ? 'bg-[#362B16] border-[#F5B841]/60'
-                        : 'bg-[#1B2335] border-white/10'
+                        ? 'bg-[#DDE1E7] border-[#111111]'
+                        : 'bg-[#DDE1E7] border-[#111111]'
                     }`}
                   >
                     <AchievementIconSvg kind={def.icon} unlocked={prog.unlocked} className="w-5 h-5" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <h3 className="text-sm font-bold text-white truncate">{def.titleSv}</h3>
+                      <h3 className="text-sm font-extrabold text-[#111111] truncate">{t(def.titleSv)}</h3>
                       <span
                         className={`text-[11px] font-bold shrink-0 ${
-                          prog.unlocked ? 'text-[#34D399]' : 'text-[#FDE047]'
+                          prog.unlocked ? 'text-[#0B6B2B]' : 'text-[#D4002A]'
                         }`}
                       >
-                        {prog.unlocked ? 'Upplåst' : `+${def.rewardEnergy} energi`}
+                        {prog.unlocked ? t('Upplåst') : t('+{n} energi', { n: def.rewardEnergy })}
                       </span>
                     </div>
-                    <p className="text-xs text-[#CBD5E1] leading-snug mt-0.5">{def.descSv}</p>
+                    <p className="text-xs font-medium text-[#4B4B4B] leading-snug mt-0.5">{t(def.descSv)}</p>
                   </div>
                 </div>
 
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-[11px] font-mono-num">
-                    <span className="text-[#CBD5E1]">Framsteg</span>
-                    <span className={prog.unlocked ? 'text-[#34D399] font-bold' : 'text-white font-semibold'}>
-                      {prog.current.toLocaleString('sv-SE')} / {prog.target.toLocaleString('sv-SE')}
+                    <span className="text-[#4B4B4B]">{t('Framsteg')}</span>
+                    <span className={prog.unlocked ? 'text-[#0B6B2B] font-bold' : 'text-[#111111] font-bold'}>
+                      {formatNumber(prog.current)} / {formatNumber(prog.target)}
                     </span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-[#090D16] overflow-hidden">
+                  <div className="h-2 w-full rounded-sm border-2 border-[#111111] bg-[#DDE1E7] overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-300 ${
-                        prog.unlocked ? 'bg-[#10B981]' : 'bg-[#F59E0B]'
+                      className={`h-full transition-all duration-300 ${
+                        prog.unlocked ? 'bg-[#7CFC6A]' : 'bg-[#FFD91A]'
                       }`}
                       style={{ width: `${prog.pct}%` }}
                     />
@@ -387,16 +390,16 @@ export const AchievementUnlockToast: React.FC<{
       role="status"
       aria-live="polite"
       data-testid="achievement-toast"
-      className="pointer-events-none fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(92vw,380px)] bg-gradient-to-b from-[#292214] to-[#1A160E] border-2 border-[#F5B841] border-b-[4px] border-b-[#785109] rounded-xl px-4 py-3 shadow-[0_18px_40px_rgba(0,0,0,0.85)] flex items-center gap-3"
+      className="ui-panel pointer-events-none fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(92vw,380px)] px-1 flex items-center gap-3"
     >
-      <div className="w-10 h-10 rounded-lg bg-[#3A2E17] border border-[#F5B841]/60 flex items-center justify-center shrink-0">
+      <div className="w-10 h-10 rounded bg-[#F2D23C] border-2 border-[#111111] flex items-center justify-center shrink-0">
         <AchievementIconSvg kind={achievement.icon} unlocked={true} className="w-5 h-5" />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-[#FDE047]">
-          Utmärkelse upplåst · +{achievement.rewardEnergy} energi
+        <div className="text-[11px] font-extrabold uppercase tracking-wider text-[#D4002A]">
+          {t('Utmärkelse upplåst · +{n} energi', { n: achievement.rewardEnergy })}
         </div>
-        <div className="text-sm font-bold text-white truncate">{achievement.titleSv}</div>
+        <div className="text-sm font-extrabold text-[#111111] truncate">{t(achievement.titleSv)}</div>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { STORAGE_KEYS } from './storage';
 import { CascadeStep } from './types';
 
 export type AchievementId =
@@ -121,7 +122,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   },
 ];
 
-export const ACHIEVEMENTS_STORAGE_KEY = 'kromatik_achievements_v1';
+export const ACHIEVEMENTS_STORAGE_KEY = STORAGE_KEYS.achievements;
 
 export function createInitialAchievementState(): AchievementSaveState {
   return {

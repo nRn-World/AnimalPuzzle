@@ -15,7 +15,7 @@ cascade can become a small legend.
 ![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&labelColor=0F1219&logo=react&logoColor=61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square&labelColor=0F1219&logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&labelColor=0F1219&logo=vite&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-34%20passing-10B981?style=flat-square&labelColor=0F1219)
+![Tests](https://img.shields.io/badge/tests-58%20passing-10B981?style=flat-square&labelColor=0F1219)
 ![License](https://img.shields.io/badge/license-MIT-F5B841?style=flat-square&labelColor=0F1219)
 
 </div>
@@ -32,7 +32,8 @@ frost, chains and wooden crates.
 
 The game is designed to be easy to pick up but hard to put down: short moves,
 clear goals, and a reward loop that feels just as good on mobile as on desktop.
-The in-game interface is currently in Swedish.
+The interface is available in Swedish and English and follows your browser
+language — you can switch at any time in the settings.
 
 <table>
   <tr>
@@ -47,7 +48,7 @@ The in-game interface is currently in Swedish.
   </tr>
   <tr>
     <td valign="top">
-      <h3>🏆 Four chapters, 32 levels</h3>
+      <h3>🏆 3,000 chapters, 24,000 levels</h3>
       <p>From Skogsgläntan to Stjärnvalvet. Every level has its own objectives, star requirements and a clear difficulty curve.</p>
     </td>
     <td valign="top">
@@ -62,7 +63,7 @@ The in-game interface is currently in Swedish.
     </td>
     <td valign="top">
       <h3>📱 Play anywhere</h3>
-      <p>Responsive layout, touch and mouse controls, fullscreen and PWA support with the Prism Butterfly on your home screen.</p>
+      <p>Responsive layout, touch and mouse controls, fullscreen, haptics and a real offline PWA. Your current game is saved after every move, so you can always continue where you left off.</p>
     </td>
   </tr>
 </table>
@@ -88,7 +89,7 @@ The in-game interface is currently in Swedish.
 
 | Mode | What awaits |
 | :--- | :--- |
-| **Campaign** | 32 handcrafted levels across four chapters. Complete the objectives before your moves run out and collect stars for better rewards. |
+| **Campaign** | 24,000 levels in 3,000 chapters: 32 handcrafted levels to start, then levels generated deterministically from the level number. Complete the objectives before your moves run out and collect stars for better rewards. |
 | **Daily Challenge** | A new, date-locked challenge every day. Complete it for bonus energy and a chance at exclusive animal skins. |
 | **Endless** | No level objectives — just you, the board, and the hunt for your next personal best. |
 
@@ -131,17 +132,20 @@ bun run preview
 | Interface | React 19 + TypeScript |
 | Build | Vite 8 + Tailwind CSS 4 |
 | Game engine | Plain TypeScript in `src/game` |
-| Effects | Canvas, Web Audio and Three.js |
+| Effects | Canvas and Web Audio (generated sound effects and music, no audio files) |
 | Quality | `bun test` + `tsc --noEmit` |
-| Installation | PWA manifest with 192px and 512px icons |
-| Language | Swedish in-game interface |
+| Installation | PWA manifest + service worker (works offline), self-hosted fonts |
+| Language | Swedish and English (`src/i18n`) |
 
 ```text
 src/
-├─ components/     Board, HUD, modals and guides
-├─ game/           Engine, levels, daily challenges and tests
+├─ components/     Board, HUD, modals, settings and guides
+├─ game/           Engine, levels, daily challenges, saves, audio and tests
+├─ hooks/          useGameSession (the game flow), settings, board size
+├─ i18n/           Swedish source strings + English dictionary
 ├─ assets/         Backgrounds and artwork
-└─ App.tsx         Game phases and state
+└─ App.tsx         Thin shell that wires the pieces together
+tools/             Vite plugin that generates the service worker
 public/
 ├─ manifest.webmanifest
 ├─ icon-192.png
@@ -152,20 +156,46 @@ docs/screenshots/  Images used by this README
 
 ## Quality
 
-The project has **34 tests across 8 files**, covering the engine, levels,
-daily records, achievements and tutorial limits.
+The project has **58 tests across 14 files**, covering the engine, levels,
+scoring, saved games, storage migration, sharing, translations, daily records,
+achievements and tutorial limits. The same three commands run in CI before
+every deploy and on every pull request.
 
 ```bash
-bun test        # 34 tests
+bun test        # 58 tests
 bun run lint    # TypeScript check
 bun run build   # production build
 ```
+
+## Settings and accessibility
+
+Open the gear icon in the menu or the pause screen:
+
+- **Sound** — mute, plus separate volume for sound effects and music. Audio
+  pauses automatically when the tab is hidden.
+- **Vibration** — short haptic feedback on supported phones.
+- **Reduced motion** — turns off shake, tilt and menu animations (the system
+  setting is always respected).
+- **Symbols on the animals** — a unique shape per animal, so color is never the
+  only cue.
+- **Language** — Swedish or English.
+
+Pinch-zoom is enabled. Adding a language means adding one dictionary next to
+`src/i18n/en.ts`; a test fails if any string is missing.
 
 ## Install as an app
 
 AnimalPuzzle can be added to your home screen. Open the game in a modern
 browser and choose **Install** or **Add to Home Screen**. Android uses the
-192px and 512px manifest icons; iOS uses the Apple touch icon.
+192px and 512px manifest icons; iOS uses the Apple touch icon. Once it has
+been opened online, the game also works without a connection.
+
+## Credits
+
+The menus use a comic-book look built in plain CSS. Icons are from
+[Kenney](https://www.kenney.nl)'s *Game Icons* (CC0), see
+`src/assets/ui/LICENSE.txt`. Fonts are *Bangers* and *Grandstander*
+(SIL Open Font License), bundled through Fontsource.
 
 ## License
 

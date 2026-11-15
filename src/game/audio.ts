@@ -1,20 +1,44 @@
 import { planCrystalBellChimes } from './crystalBells';
+import { MUSIC_BAR_SECONDS, MusicNote, planMusicBar } from './music';
+import { getSettings, subscribeSettings, updateSettings } from './settings';
 import { SpecialType } from './types';
 
 // Pentatonic C-major scale frequencies for satisfying ascending cascade chimes
 const CASCADE_FREQS = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.51];
 
+// The effect gains below were tuned with the bus at 1.0; the default effects
+// volume (0.8) maps back to exactly that level.
+const SFX_BUS_SCALE = 1.25;
+const MUSIC_BUS_SCALE = 1.0;
+/** How far ahead of the audio clock music bars are scheduled. */
+const MUSIC_LOOKAHEAD_SECONDS = 1.5;
+const MUSIC_TICK_MS = 400;
+
 class SoundEngine {
   private ctx: AudioContext | null = null;
-  private muted: boolean = false;
+  private sfxBus: GainNode | null = null;
+  private musicBus: GainNode | null = null;
+  private musicPadInput: AudioNode | null = null;
+  private musicMelodyInput: AudioNode | null = null;
+
+  private musicWanted = false;
+  private musicTimer: number | null = null;
+  private nextBarTime = 0;
+  private barIndex = 0;
 
   constructor() {
-    try {
-      const saved = typeof window !== 'undefined' ? window.localStorage.getItem('kromatik_muted') : null;
-      if (saved === '1') this.muted = true;
-    } catch {
-      // ignore storage errors
+    subscribeSettings(() => this.applySettings());
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => this.handleVisibility());
     }
+  }
+
+  private get muted(): boolean {
+    return getSettings().muted;
+  }
+
+  private isHidden(): boolean {
+    return typeof document !== 'undefined' && document.visibilityState === 'hidden';
   }
 
   private ensureContext(): AudioContext | null {
@@ -24,14 +48,81 @@ class SoundEngine {
       if (!AudioCtx) return null;
       try {
         this.ctx = new AudioCtx();
+        this.buildGraph(this.ctx);
       } catch {
+        this.ctx = null;
         return null;
       }
     }
-    if (this.ctx.state === 'suspended') {
+    if (this.ctx.state === 'suspended' && !this.isHidden()) {
       this.ctx.resume().catch(() => {});
     }
     return this.ctx;
+  }
+
+  private buildGraph(ctx: AudioContext): void {
+    const settings = getSettings();
+
+    this.sfxBus = ctx.createGain();
+    this.sfxBus.gain.value = settings.sfxVolume * SFX_BUS_SCALE;
+    this.sfxBus.connect(ctx.destination);
+
+    this.musicBus = ctx.createGain();
+    this.musicBus.gain.value = 0;
+    this.musicBus.connect(ctx.destination);
+
+    // Pads go through a low-pass so they sit behind the effects.
+    const padFilter = ctx.createBiquadFilter();
+    padFilter.type = 'lowpass';
+    padFilter.frequency.value = 1300;
+    padFilter.Q.value = 0.4;
+    padFilter.connect(this.musicBus);
+    this.musicPadInput = padFilter;
+
+    // Melody gets a soft feedback echo for a sense of space.
+    const melodyIn = ctx.createGain();
+    melodyIn.connect(this.musicBus);
+    const delay = ctx.createDelay(1.5);
+    delay.delayTime.value = 0.45;
+    const feedback = ctx.createGain();
+    feedback.gain.value = 0.32;
+    const wet = ctx.createGain();
+    wet.gain.value = 0.35;
+    melodyIn.connect(delay);
+    delay.connect(feedback);
+    feedback.connect(delay);
+    delay.connect(wet);
+    wet.connect(this.musicBus);
+    this.musicMelodyInput = melodyIn;
+  }
+
+  /** Where one-shot effects connect: the effects bus, or the raw output as a fallback. */
+  private sfxOut(ctx: AudioContext): AudioNode {
+    return this.sfxBus ?? ctx.destination;
+  }
+
+  private applySettings(): void {
+    const settings = getSettings();
+    if (this.ctx && this.sfxBus) {
+      this.sfxBus.gain.setTargetAtTime(
+        settings.sfxVolume * SFX_BUS_SCALE,
+        this.ctx.currentTime,
+        0.03
+      );
+    }
+    this.syncMusic();
+  }
+
+  private handleVisibility(): void {
+    if (!this.ctx) return;
+    if (this.isHidden()) {
+      // Stop everything (effects mid-flight and music) while the tab is in the background.
+      this.stopMusicScheduler(0.05);
+      this.ctx.suspend().catch(() => {});
+    } else {
+      if (!this.muted) this.ctx.resume().catch(() => {});
+      this.syncMusic();
+    }
   }
 
   isMuted(): boolean {
@@ -39,18 +130,129 @@ class SoundEngine {
   }
 
   setMuted(next: boolean): void {
-    this.muted = next;
-    try {
-      window.localStorage.setItem('kromatik_muted', next ? '1' : '0');
-    } catch {
-      // ignore
-    }
+    updateSettings({ muted: next });
   }
 
   toggleMute(): boolean {
     this.setMuted(!this.muted);
     if (!this.muted) this.playClick();
     return this.muted;
+  }
+
+  /**
+   * Call from a user gesture (browsers block audio before one). Creates the
+   * audio context and starts the background music if it is enabled.
+   */
+  unlock(): void {
+    this.musicWanted = true;
+    this.syncMusic();
+  }
+
+  private syncMusic(): void {
+    const settings = getSettings();
+    const shouldPlay =
+      this.musicWanted && !settings.muted && settings.musicVolume > 0 && !this.isHidden();
+    if (!shouldPlay) {
+      this.stopMusicScheduler(0.4);
+      return;
+    }
+    const ctx = this.ensureContext();
+    if (!ctx || !this.musicBus) return;
+    this.musicBus.gain.setTargetAtTime(
+      settings.musicVolume * MUSIC_BUS_SCALE,
+      ctx.currentTime,
+      0.25
+    );
+    if (this.musicTimer === null) {
+      this.nextBarTime = ctx.currentTime + 0.15;
+      this.musicTimer = window.setInterval(() => this.scheduleMusic(), MUSIC_TICK_MS);
+      this.scheduleMusic();
+    }
+  }
+
+  private stopMusicScheduler(fadeSeconds: number): void {
+    if (this.musicTimer !== null) {
+      window.clearInterval(this.musicTimer);
+      this.musicTimer = null;
+    }
+    if (this.ctx && this.musicBus) {
+      // Already-scheduled notes fade out with the bus instead of being cut.
+      this.musicBus.gain.setTargetAtTime(0, this.ctx.currentTime, Math.max(0.01, fadeSeconds / 3));
+    }
+  }
+
+  private scheduleMusic(): void {
+    const ctx = this.ctx;
+    if (!ctx || ctx.state !== 'running') return;
+    // After a long pause, skip ahead instead of stacking missed bars.
+    if (this.nextBarTime < ctx.currentTime) this.nextBarTime = ctx.currentTime + 0.1;
+    while (this.nextBarTime < ctx.currentTime + MUSIC_LOOKAHEAD_SECONDS) {
+      const bar = planMusicBar(this.barIndex);
+      for (const note of bar.pad) this.playPadNote(ctx, note, this.nextBarTime);
+      for (const note of bar.melody) this.playMelodyNote(ctx, note, this.nextBarTime);
+      this.nextBarTime += MUSIC_BAR_SECONDS;
+      this.barIndex += 1;
+    }
+  }
+
+  private playPadNote(ctx: AudioContext, note: MusicNote, barStart: number): void {
+    if (!this.musicPadInput) return;
+    const at = barStart + note.start;
+    const end = at + note.duration;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, at);
+    gain.gain.linearRampToValueAtTime(note.gain, at + 1.8);
+    gain.gain.setValueAtTime(note.gain, Math.max(at + 1.8, end - 2.6));
+    gain.gain.linearRampToValueAtTime(0.0001, end);
+    gain.connect(this.musicPadInput);
+
+    // Two slightly detuned voices give the pad a slow, warm shimmer.
+    for (const [type, detune, level] of [
+      ['sine', -4, 1],
+      ['triangle', 5, 0.45],
+    ] as Array<[OscillatorType, number, number]>) {
+      const osc = ctx.createOscillator();
+      osc.type = type;
+      osc.frequency.setValueAtTime(note.freq, at);
+      osc.detune.setValueAtTime(detune, at);
+      const voice = ctx.createGain();
+      voice.gain.value = level;
+      osc.connect(voice);
+      voice.connect(gain);
+      osc.start(at);
+      osc.stop(end + 0.05);
+    }
+  }
+
+  private playMelodyNote(ctx: AudioContext, note: MusicNote, barStart: number): void {
+    if (!this.musicMelodyInput) return;
+    const at = barStart + note.start;
+    const end = at + note.duration;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, at);
+    gain.gain.linearRampToValueAtTime(note.gain, at + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, end);
+    gain.connect(this.musicMelodyInput);
+
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(note.freq, at);
+    osc.connect(gain);
+    osc.start(at);
+    osc.stop(end + 0.05);
+
+    // Quiet octave partial for a glassy, music-box colour.
+    const partial = ctx.createOscillator();
+    const partialGain = ctx.createGain();
+    partial.type = 'sine';
+    partial.frequency.setValueAtTime(note.freq * 2, at);
+    partialGain.gain.setValueAtTime(0.0001, at);
+    partialGain.gain.linearRampToValueAtTime(note.gain * 0.18, at + 0.02);
+    partialGain.gain.exponentialRampToValueAtTime(0.0001, at + note.duration * 0.5);
+    partial.connect(partialGain);
+    partialGain.connect(this.musicMelodyInput);
+    partial.start(at);
+    partial.stop(at + note.duration * 0.5 + 0.05);
   }
 
   private playTone(
@@ -78,7 +280,7 @@ class SoundEngine {
     gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.sfxOut(ctx));
     osc.start(now);
     osc.stop(now + duration + 0.02);
   }
@@ -95,15 +297,16 @@ class SoundEngine {
     if (!ctx) return;
 
     const now = ctx.currentTime + delay;
+    const out = this.sfxOut(ctx);
     const destination: AudioNode =
       typeof ctx.createStereoPanner === 'function'
         ? (() => {
             const panner = ctx.createStereoPanner();
             panner.pan.setValueAtTime(pan, now);
-            panner.connect(ctx.destination);
+            panner.connect(out);
             return panner;
           })()
-        : ctx.destination;
+        : out;
 
     // 1. Pure glassy crystal fundamental
     const fundamentalOsc = ctx.createOscillator();
@@ -191,13 +394,22 @@ class SoundEngine {
         ? [523.25, 659.25, 783.99, 1046.5, 1318.51]
         : special === 'nova'
         ? [440, 554.37, 659.25, 880]
+        : special === 'scout'
+        ? [659.25, 987.77, 1318.51]
         : [587.33, 880];
     notes.forEach((n, i) => {
       this.playTone(n, 0.22, 'sine', 0.09, i * 0.04);
     });
   }
 
-  playBlast(kind: 'beam' | 'nova' | 'prism' | 'crack'): void {
+  playBlast(kind: 'beam' | 'nova' | 'prism' | 'crack' | 'scout'): void {
+    if (kind === 'scout') {
+      // A quick upward whoosh followed by two chirps as the scout lands.
+      this.playTone(420, 0.2, 'sine', 0.07, 0, 1500);
+      this.playTone(1760, 0.06, 'triangle', 0.06, 0.17);
+      this.playTone(2093, 0.08, 'triangle', 0.06, 0.24);
+      return;
+    }
     if (kind === 'crack') {
       this.playTone(260, 0.09, 'square', 0.06, 0, 110);
       return;

@@ -234,3 +234,41 @@ test('findBestHint finds valid move and objective checker evaluates completion',
   progress.clearedColors.cobalt = 16;
   assert.equal(areObjectivesComplete(CAMPAIGN_LEVELS[0].objectives, progress), true);
 });
+
+test('four animals in a 2x2 square make a scout', () => {
+  const board = makeCleanBoard();
+  for (const [r, c] of [[3, 3], [3, 4], [4, 3], [4, 4]]) board[r][c].gem!.color = 'rose';
+  const groups = findMatchGroups(board).filter((g) => g.color === 'rose');
+  assert.equal(groups.length, 1);
+  assert.equal(groups[0].special, 'scout');
+  assert.equal(groups[0].cells.length, 4);
+});
+
+test('a scout flies to a crate before anything else', () => {
+  const board = makeCleanBoard();
+  board[7][7].crate = 1;
+  board[7][7].gem = null;
+  // Row 0: rose rose _ rose, with a scout among them once the gap is filled.
+  board[0][0].gem!.color = 'rose';
+  board[0][1].gem!.color = 'rose';
+  board[0][1].gem!.special = 'scout';
+  board[0][3].gem!.color = 'rose';
+  board[0][2].gem!.color = 'mint';
+  board[1][2].gem!.color = 'rose';
+  const result = resolveSwap(board, { row: 1, col: 2 }, { row: 0, col: 2 }, 6, makeDeterministicRng(3));
+  assert.equal(result.valid, true);
+  const flight = result.steps[0].blasts.find((b) => b.type === 'scout');
+  assert.ok(flight, 'the scout took off');
+  assert.deepEqual([flight!.row, flight!.col], [7, 7]);
+  assert.equal(result.steps[0].deltaProgress.clearedCrates, 1);
+});
+
+test('two scouts swapped together send out a flock of three', () => {
+  const board = makeCleanBoard();
+  board[4][4].gem!.special = 'scout';
+  board[4][5].gem!.special = 'scout';
+  const result = resolveSwap(board, { row: 4, col: 4 }, { row: 4, col: 5 }, 6, makeDeterministicRng(5));
+  assert.equal(result.valid, true);
+  assert.equal(result.combo, 'scout_flock');
+  assert.equal(result.steps[0].blasts.filter((b) => b.type === 'scout').length, 3);
+});

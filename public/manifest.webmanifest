@@ -5,7 +5,7 @@
   "lang": "sv",
   "start_url": "./",
   "scope": "./",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#0F1219",
   "theme_color": "#0F1219",
   "icons": [

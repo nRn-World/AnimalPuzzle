@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '../i18n';
 
 const sizes = {
   sm: 'w-3.5 h-3.5',
@@ -26,6 +27,8 @@ export interface StarRatingProps {
   animated?: boolean;
   className?: string;
   label?: string;
+  /** Background the stars sit on; picks an empty-star colour with enough contrast. */
+  tone?: 'dark' | 'parchment';
 }
 
 export const StarRating: React.FC<StarRatingProps> = ({
@@ -34,12 +37,13 @@ export const StarRating: React.FC<StarRatingProps> = ({
   animated = false,
   className = '',
   label,
+  tone = 'dark',
 }) => {
   const clamped = Math.max(0, Math.min(3, Math.round(stars)));
   return (
     <div
       role="img"
-      aria-label={label ?? `${clamped} av 3 stjärnor`}
+      aria-label={label ?? t('{n} av 3 stjärnor', { n: clamped })}
       className={`inline-flex items-center gap-1 ${className}`}
     >
       {[1, 2, 3].map((index) => {
@@ -47,7 +51,15 @@ export const StarRating: React.FC<StarRatingProps> = ({
         return (
           <span
             key={index}
-            className={filled ? 'text-[#F5B841]' : 'text-[#5B6A80]'}
+            className={
+              filled
+                ? tone === 'parchment'
+                  ? 'text-[#FFB300]'
+                  : 'text-[#F5B841]'
+                : tone === 'parchment'
+                ? 'text-[#6B6F76]'
+                : 'text-[#5B6A80]'
+            }
             style={
               animated
                 ? { animationDelay: `${index * 120}ms` }

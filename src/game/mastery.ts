@@ -1,6 +1,9 @@
+import { t } from '../i18n';
+import { STORAGE_KEYS } from './storage';
+
 export const MAX_STARS = 3;
 export type StarCount = 1 | 2 | 3;
-export const STARS_STORAGE_KEY = 'kromatik_stars_v1';
+export const STARS_STORAGE_KEY = STORAGE_KEYS.stars;
 
 export interface StarThresholds {
   two: number;
@@ -69,10 +72,13 @@ export function writeBestStars(stars: Record<number, number>): void {
 export function nextStarGoal(movesLeft: number, totalMoves: number): string | null {
   const thresholds = getStarThresholds(totalMoves);
   if (movesLeft < thresholds.two) {
-    return `2 stjärnor vid ${thresholds.two} drag kvar · 3 vid ${thresholds.three}`;
+    return t('2 stjärnor vid {two} drag kvar · 3 vid {three}', {
+      two: thresholds.two,
+      three: thresholds.three,
+    });
   }
   if (movesLeft < thresholds.three) {
-    return `3 stjärnor vid ${thresholds.three} drag kvar`;
+    return t('3 stjärnor vid {three} drag kvar', { three: thresholds.three });
   }
   return null;
 }

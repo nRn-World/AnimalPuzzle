@@ -1,6 +1,0 @@
-{
-  "name": "AnimalPuzzle",
-  "description": "Ett taktiskt kristallpussel med kaskader, prismareaktioner, hinder och laddade verktyg.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

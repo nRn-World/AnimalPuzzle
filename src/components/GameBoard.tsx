@@ -1,10 +1,30 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { prefersReducedMotion } from '../game/settings';
 import { TutorialPrompt } from '../game/tutorial';
-import { AnimalSkinId, BOARD_SIZE, Board, Coord, GEM_META, ToolType } from '../game/types';
+import { useSettings } from '../hooks/useSettings';
+import { t } from '../i18n';
+import {
+  AnimalSkinId,
+  BOARD_SIZE,
+  Board,
+  Coord,
+  GEM_META,
+  SpecialType,
+  ToolType,
+} from '../game/types';
 import { CrateSvg, GemSvg } from './GemSvg';
 import { ParticleCanvas, ParticleCanvasHandle } from './ParticleCanvas';
 
 export type BoardTransitionMode = 'none' | 'swap' | 'fall';
+
+/** Screen-reader names for the special pieces (Swedish source strings). */
+const SPECIAL_LABELS: Record<Exclude<SpecialType, 'none'>, string> = {
+  beam_h: 'Vågrät stråle',
+  beam_v: 'Lodrät stråle',
+  nova: 'Nova',
+  scout: 'Flygare',
+  prism: 'Prisma',
+};
 
 interface GameBoardProps {
   board: Board;
@@ -22,8 +42,10 @@ interface GameBoardProps {
   onCellClick: (coord: Coord) => void;
   onSwipeSwap: (from: Coord, to: Coord) => void;
   onBoardTilt?: (nx: number, ny: number) => void;
-  /** Pixel size of the square pedestal, measured from the available viewport space. */
+  /** Pixel width of the board, measured from the available viewport space. */
   size?: number;
+  /** Pixel height; defaults to the width (square board). */
+  height?: number;
 }
 
 interface GemMotionProps {
@@ -54,12 +76,7 @@ const GemMotion: React.FC<GemMotionProps> = ({
     const el = elRef.current;
     if (!el) return;
     if (dxCols === 0 && dyRows === 0) return;
-    if (
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    ) {
-      return;
-    }
+    if (prefersReducedMotion()) return;
 
     el.style.transition = 'none';
     el.style.transform = `translate3d(calc(${dxCols} * (100% + 5px)), calc(${dyRows} * (100% + 5px)), 14px)`;
@@ -139,6 +156,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   onSwipeSwap,
   onBoardTilt,
   size,
+  height,
 }) => {
   const dragStartRef = useRef<{ coord: Coord; x: number; y: number } | null>(null);
   const swipeTriggeredRef = useRef(false);
@@ -147,15 +165,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const sheenRef = useRef<HTMLDivElement | null>(null);
   const tiltTargetRef = useRef({ rx: 0, ry: 0, sx: 50, sy: 50 });
   const tiltCurrRef = useRef({ rx: 0, ry: 0, sx: 50, sy: 50 });
+  const { reduceMotion } = useSettings();
 
   // Smoothly interpolate 3D pedestal tilt at 60fps without React re-renders
   useEffect(() => {
-    if (
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    ) {
-      return;
-    }
+    if (prefersReducedMotion()) return;
 
     let rafId = 0;
     const step = () => {
@@ -175,8 +189,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       rafId = requestAnimationFrame(step);
     };
     rafId = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(rafId);
-  }, []);
+    return () => {
+      cancelAnimationFrame(rafId);
+      // Level the pedestal again if the tilt is switched off mid-game.
+      if (tiltRef.current) tiltRef.current.style.transform = '';
+    };
+  }, [reduceMotion]);
 
   // Compute per-gem entry offsets relative to previous rendered board
   const gemOffsets = useMemo(() => {
@@ -314,10 +332,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   return (
     <div className="perspective-stage relative w-full flex flex-col items-center justify-center">
       {activeTool && (
-        <div className="mb-1.5 text-center text-[11px] sm:text-sm font-semibold text-[#F5B841] px-2">
+        <div className="mb-1.5 text-center text-[11px] sm:text-sm font-bold text-[#FDE047] px-2">
           {activeTool === 'hammer'
-            ? 'Välj en ruta på brädet att spräcka med Hammaren'
-            : 'Välj en ruta för att utlösa Korspuls längs rad & kolumn'}
+            ? t('Välj en ruta på brädet att spräcka med Hammaren')
+            : t('Välj en ruta för att utlösa Korspuls längs rad & kolumn')}
         </div>
       )}
 
@@ -328,12 +346,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         onPointerLeave={handleBoardPointerLeave}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        style={size ? { width: size, height: size } : undefined}
-        className={`preserve-3d relative p-1.5 sm:p-3 lg:p-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-b from-[#232B3E] to-[#151A28] border-2 border-b-[6px] sm:border-b-[8px] ${
+        style={size ? { width: size, height: height ?? size } : undefined}
+        className={`preserve-3d relative p-1.5 sm:p-3 lg:p-3.5 rounded-lg bg-[#0B1030]/75 backdrop-blur-[2px] border-[3px] sm:border-4 ${
           activeTool
-            ? 'border-[#F5B841]/75 border-b-[#9A6A12]'
-            : 'border-[#333E58] border-b-[#090D16]'
-        } shadow-[0_24px_48px_rgba(0,0,0,0.75)] select-none ${
+            ? 'border-[#FF2E4D] shadow-[6px_6px_0_#FF2E4D]'
+            : 'border-[#C9CED6] shadow-[6px_6px_0_#111111]'
+        } select-none ${
           shaking ? 'animate-board-shake' : ''
         }`}
       >
@@ -348,9 +366,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         <div
           data-testid="game-board"
           role="grid"
-          aria-label="AnimalPuzzle spelbräde 8 gånger 8"
+          aria-label={t('AnimalPuzzle spelbräde 8 gånger 8')}
           style={{ gridTemplateRows: 'repeat(8, minmax(0, 1fr))' }}
-          className="relative overflow-hidden rounded-lg sm:rounded-xl p-1 bg-[#0C101A] shadow-[inset_0_3px_10px_rgba(0,0,0,0.85)] grid grid-cols-8 gap-0.5 sm:gap-1.5 w-full h-full"
+          className="relative overflow-hidden rounded sm:rounded-md p-1 bg-[#111111] border-2 border-[#111111] grid grid-cols-8 gap-0.5 sm:gap-1.5 w-full h-full"
         >
           {board.map((row, r) =>
             row.map((cell, c) => {
@@ -360,15 +378,15 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               const invalid = isInvalid(r, c);
               const clearing = clearingKeys.has(key);
 
-              const labelParts = [`Rad ${r + 1} kolumn ${c + 1}`];
+              const labelParts = [t('Rad {row} kolumn {col}', { row: r + 1, col: c + 1 })];
               if (cell.crate > 0) {
-                labelParts.push(`Trälåda nivå ${cell.crate}`);
+                labelParts.push(t('Trälåda nivå {n}', { n: cell.crate }));
               } else if (cell.gem) {
-                labelParts.push(GEM_META[cell.gem.color].nameSv);
-                if (cell.gem.special !== 'none') labelParts.push(`Special ${cell.gem.special}`);
-                if (cell.gem.chained) labelParts.push('Kedjad');
+                labelParts.push(t(GEM_META[cell.gem.color].nameSv));
+                if (cell.gem.special !== 'none') labelParts.push(t(SPECIAL_LABELS[cell.gem.special]));
+                if (cell.gem.chained) labelParts.push(t('Kedjad'));
               }
-              if (cell.ice > 0) labelParts.push(`Is nivå ${cell.ice}`);
+              if (cell.ice > 0) labelParts.push(t('Is nivå {n}', { n: cell.ice }));
 
               const checkerboardDark = (r + c) % 2 === 0;
               const delta = cell.gem ? gemOffsets.get(cell.gem.id) : undefined;
@@ -418,12 +436,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     onCellClick({ row: r, col: c });
                   }}
                   className={`group relative min-w-0 min-h-0 w-full h-full rounded-md sm:rounded-lg flex items-center justify-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B841] cursor-pointer touch-none shadow-[inset_0_2px_4px_rgba(0,0,0,0.65)] ${
-                    checkerboardDark ? 'bg-[#121622]' : 'bg-[#171D2C]'
+                    checkerboardDark ? 'bg-[#22307A]' : 'bg-[#2B3B91]'
                   } ${
                     isSelected
-                      ? 'ring-2 ring-inset ring-[#F5B841] bg-[#2C261B] z-10'
+                      ? 'ring-2 ring-inset ring-[#F5B841] bg-[#3F52C4] z-10'
                       : isTutTarget
-                      ? 'ring-2 ring-inset ring-[#FDE047] bg-[#2D2512] z-10'
+                      ? 'ring-2 ring-inset ring-[#FDE047] bg-[#3F52C4] z-10'
                       : hinted
                       ? 'ring-2 ring-inset ring-[#38BDF8] bg-[#182B42] z-10'
                       : activeTool

@@ -809,3 +809,439 @@ export const ENDLESS_CONFIG: LevelConfig = {
     { id: 'endless-score', kind: 'score', label: 'Målpoäng (bonus +5 drag)', target: 2500 },
   ],
 };
+
+// ---------------------------------------------------------------------------
+// The long campaign
+//
+// The first 32 levels above are hand-made and teach every mechanic. Everything
+// after that is generated from the level number alone, so the same level is
+// identical on every device and nothing has to be stored or downloaded.
+// ---------------------------------------------------------------------------
+
+export const LEVELS_PER_CHAPTER = 8;
+export const CAMPAIGN_CHAPTER_COUNT = 3000;
+export const CAMPAIGN_LEVEL_COUNT = CAMPAIGN_CHAPTER_COUNT * LEVELS_PER_CHAPTER;
+
+/** Chapter names are "<adjective> <place>", e.g. "Dimmiga dalen". */
+const CHAPTER_ADJECTIVES: Array<{ nameSv: string }> = [
+  { nameSv: 'Dimmiga' }, { nameSv: 'Gyllene' }, { nameSv: 'Tysta' }, { nameSv: 'Frusna' },
+  { nameSv: 'Soliga' }, { nameSv: 'Glittrande' }, { nameSv: 'Gömda' }, { nameSv: 'Vilda' },
+  { nameSv: 'Blommande' }, { nameSv: 'Stormiga' }, { nameSv: 'Lugna' }, { nameSv: 'Förtrollade' },
+  { nameSv: 'Mossiga' }, { nameSv: 'Snöiga' }, { nameSv: 'Varma' }, { nameSv: 'Djupa' },
+  { nameSv: 'Höga' }, { nameSv: 'Gröna' }, { nameSv: 'Blå' }, { nameSv: 'Röda' },
+  { nameSv: 'Silvriga' }, { nameSv: 'Skimrande' }, { nameSv: 'Viskande' }, { nameSv: 'Sjungande' },
+  { nameSv: 'Dansande' }, { nameSv: 'Sovande' }, { nameSv: 'Glömda' }, { nameSv: 'Hemliga' },
+  { nameSv: 'Regniga' }, { nameSv: 'Blåsiga' }, { nameSv: 'Kyliga' }, { nameSv: 'Ljusa' },
+  { nameSv: 'Mörka' }, { nameSv: 'Gamla' }, { nameSv: 'Unga' }, { nameSv: 'Stora' },
+  { nameSv: 'Lilla' }, { nameSv: 'Lekfulla' }, { nameSv: 'Modiga' }, { nameSv: 'Busiga' },
+  { nameSv: 'Kluriga' }, { nameSv: 'Glada' }, { nameSv: 'Stjärnklara' }, { nameSv: 'Månljusa' },
+  { nameSv: 'Daggiga' }, { nameSv: 'Frostiga' }, { nameSv: 'Doftande' }, { nameSv: 'Porlande' },
+  { nameSv: 'Brusande' }, { nameSv: 'Kristallklara' }, { nameSv: 'Bärnstensgula' }, { nameSv: 'Smaragdgröna' },
+  { nameSv: 'Rosa' }, { nameSv: 'Violetta' }, { nameSv: 'Magiska' }, { nameSv: 'Eviga' },
+];
+
+const CHAPTER_PLACES: Array<{ nameSv: string }> = [
+  { nameSv: 'dalen' }, { nameSv: 'ängen' }, { nameSv: 'skogen' }, { nameSv: 'sjön' },
+  { nameSv: 'berget' }, { nameSv: 'stranden' }, { nameSv: 'ön' }, { nameSv: 'floden' },
+  { nameSv: 'grottan' }, { nameSv: 'lunden' }, { nameSv: 'kullen' }, { nameSv: 'heden' },
+  { nameSv: 'viken' }, { nameSv: 'träsket' }, { nameSv: 'savannen' }, { nameSv: 'djungeln' },
+  { nameSv: 'tundran' }, { nameSv: 'öknen' }, { nameSv: 'oasen' }, { nameSv: 'revet' },
+  { nameSv: 'lagunen' }, { nameSv: 'klippan' }, { nameSv: 'forsen' }, { nameSv: 'bäcken' },
+  { nameSv: 'dammen' }, { nameSv: 'hagen' }, { nameSv: 'trädgården' }, { nameSv: 'gläntan' },
+  { nameSv: 'stigen' }, { nameSv: 'bron' }, { nameSv: 'ravinen' }, { nameSv: 'glaciären' },
+  { nameSv: 'fjorden' }, { nameSv: 'udden' }, { nameSv: 'holmen' }, { nameSv: 'myren' },
+  { nameSv: 'backen' }, { nameSv: 'toppen' }, { nameSv: 'slätten' }, { nameSv: 'kusten' },
+  { nameSv: 'bukten' }, { nameSv: 'källan' }, { nameSv: 'fallet' }, { nameSv: 'parken' },
+  { nameSv: 'bambuskogen' }, { nameSv: 'korallrevet' }, { nameSv: 'isfältet' }, { nameSv: 'höglandet' },
+  { nameSv: 'äppellunden' }, { nameSv: 'vassen' }, { nameSv: 'sanddynen' }, { nameSv: 'bergspasset' },
+  { nameSv: 'blomsterfältet' }, { nameSv: 'tallskogen' }, { nameSv: 'björkhagen' }, { nameSv: 'vattenhålet' },
+];
+
+export interface CampaignChapter {
+  id: number;
+  nameSv: string;
+}
+
+export function getChapter(id: number): CampaignChapter {
+  const chapter = Math.min(CAMPAIGN_CHAPTER_COUNT, Math.max(1, Math.round(id)));
+  const handMade = CAMPAIGN_CHAPTERS.find((ch) => ch.id === chapter);
+  if (handMade) return handMade;
+  const idx = chapter - CAMPAIGN_CHAPTERS.length - 1;
+  const places = CHAPTER_PLACES.length;
+  const adjectives = CHAPTER_ADJECTIVES.length;
+  const place = idx % places;
+  // The shift makes neighbouring chapters differ in both words while still
+  // giving every (adjective, place) pair exactly once before any repeat.
+  const adjective = (Math.floor(idx / places) + place * 17) % adjectives;
+  return {
+    id: chapter,
+    nameSv: `${CHAPTER_ADJECTIVES[adjective].nameSv} ${CHAPTER_PLACES[place].nameSv}`,
+  };
+}
+
+export function chapterOfLevelIdx(levelIdx: number): number {
+  return Math.floor(Math.max(0, levelIdx) / LEVELS_PER_CHAPTER) + 1;
+}
+
+function seededRng(seed: number): () => number {
+  let a = (seed ^ 0x9e3779b9) >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let x = a;
+    x = Math.imul(x ^ (x >>> 15), x | 1);
+    x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** One animal from each colour family, so a crew never has two look-alikes. */
+const COLOR_FAMILIES: GemColor[][] = [
+  ['ruby', 'rose'],
+  ['amber', 'tangerine'],
+  ['emerald', 'lime', 'mint'],
+  ['cobalt', 'sky'],
+  ['amethyst', 'violet'],
+  ['quartz'],
+];
+
+function chapterCrew(chapter: number): GemColor[] {
+  const rng = seededRng(chapter * 7919 + 13);
+  const crew = COLOR_FAMILIES.map((family) => family[Math.floor(rng() * family.length)]);
+  for (let i = crew.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [crew[i], crew[j]] = [crew[j], crew[i]];
+  }
+  return crew;
+}
+
+type Mask = Set<string>;
+const key = (row: number, col: number) => `${row},${col}`;
+
+function maskOf(specs: Array<{ row: number; col: number }>): Mask {
+  return new Set(specs.map((s) => key(s.row, s.col)));
+}
+
+/** A random pattern mirrored left-right, top-bottom or both. */
+function mirroredMask(rng: () => number, density: number): Mask {
+  const mode = Math.floor(rng() * 3);
+  const mask: Mask = new Set();
+  const rows = mode === 1 ? 8 : 4;
+  const cols = mode === 2 ? 8 : 4;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (rng() >= density) continue;
+      mask.add(key(r, c));
+      if (mode !== 2) mask.add(key(r, 7 - c));
+      if (mode !== 1) mask.add(key(7 - r, c));
+      if (mode === 0) mask.add(key(7 - r, 7 - c));
+    }
+  }
+  return mask;
+}
+
+function shapeMask(rng: () => number, density: number): Mask {
+  const pick = Math.floor(rng() * 10);
+  switch (pick) {
+    case 0:
+      return maskOf(ring(1 + Math.floor(rng() * 2)));
+    case 1:
+      return maskOf(cross(3 + Math.floor(rng() * 2), 3 + Math.floor(rng() * 2)));
+    case 2:
+      return maskOf(checker(1, 6, 1, 6));
+    case 3:
+      return maskOf(corners());
+    case 4: {
+      const top = 2 + Math.floor(rng() * 3);
+      return maskOf(cells(top, top + 1, 0, 7));
+    }
+    case 5: {
+      const left = 2 + Math.floor(rng() * 3);
+      return maskOf(cells(1, 7, left, left + 1));
+    }
+    case 6:
+      return maskOf(cells(2, 5, 2, 5));
+    case 7: {
+      // Diamond
+      const out: Mask = new Set();
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const d = Math.abs(r - 3.5) + Math.abs(c - 3.5);
+          if (d <= 3 && d >= 2) out.add(key(r, c));
+        }
+      }
+      return out;
+    }
+    default:
+      return mirroredMask(rng, density);
+  }
+}
+
+function trimMask(mask: Mask, rng: () => number, max: number, maxPerRow = 8, skipTopRow = false): Mask {
+  let list = Array.from(mask).filter((k) => !(skipTopRow && k.startsWith('0,')));
+  // Deterministic shuffle, then keep at most `maxPerRow` per row and `max` in total.
+  for (let i = list.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [list[i], list[j]] = [list[j], list[i]];
+  }
+  const perRow = new Map<string, number>();
+  list = list.filter((k) => {
+    const row = k.split(',')[0];
+    const n = perRow.get(row) ?? 0;
+    if (n >= maxPerRow) return false;
+    perRow.set(row, n + 1);
+    return true;
+  });
+  return new Set(list.slice(0, max));
+}
+
+function specsOf(mask: Mask, hp: (row: number, col: number) => number): CellSpec[] {
+  return Array.from(mask)
+    .map((k) => k.split(',').map(Number))
+    .sort((a, b) => a[0] - b[0] || a[1] - b[1])
+    .map(([row, col]) => ({ row, col, hp: hp(row, col) }));
+}
+
+/** Difficulty curve inside a chapter: a gentle start, a hard finale. */
+const CHAPTER_CURVE: LevelDifficulty[] = [
+  'easy', 'easy', 'medium', 'medium', 'hard', 'medium', 'hard', 'extreme',
+];
+
+/**
+ * Share of the move budget that a focused player needs, per difficulty: the
+ * rest is the margin. Tuned with `tools/simulateLevels.ts`, a bot that looks
+ * one move ahead and never uses tools.
+ */
+const EFFORT_SHARE: Record<LevelDifficulty, number> = {
+  easy: 0.46,
+  medium: 0.6,
+  hard: 0.76,
+  extreme: 0.92,
+};
+
+/**
+ * What one focused move achieves on average with six animals on the board
+ * (measured with the same bot). With only five animals, matches chain into
+ * much longer cascades, so everything goes about 1.8 times faster.
+ */
+const FIVE_ANIMAL_BOOST = 1.8;
+const RATE = {
+  ice: 2.4,
+  crateHp: 1.3,
+  chain: 1.2,
+  special: 0.9,
+  cascade3: 0.55,
+  score: 800,
+  oneColor: 3.0,
+  twoColors: 2.5,
+};
+
+const BASE_MOVES: Record<LevelDifficulty, [number, number]> = {
+  easy: [18, 22],
+  medium: [21, 26],
+  hard: [24, 30],
+  extreme: [27, 34],
+};
+
+function generateLevel(levelIdx: number): LevelConfig {
+  const id = levelIdx + 1;
+  const chapter = chapterOfLevelIdx(levelIdx);
+  const pos = levelIdx % LEVELS_PER_CHAPTER;
+  const rng = seededRng(id * 2654435761);
+  const difficulty = CHAPTER_CURVE[pos];
+  const rank = { easy: 0, medium: 1, hard: 2, extreme: 3 }[difficulty];
+
+  const colorCount = rank >= 2 ? (rng() < 0.75 ? 6 : 5) : rng() < 0.2 ? 6 : 5;
+  const palette = chapterCrew(chapter);
+
+  // --- Obstacles ---------------------------------------------------------
+  let useIce = false;
+  let useCrates = false;
+  let useChains = false;
+  const roll = rng();
+  if (rank === 0) {
+    useIce = roll < 0.45;
+  } else if (rank === 1) {
+    if (roll < 0.3) useIce = true;
+    else if (roll < 0.55) useCrates = true;
+    else if (roll < 0.75) useChains = true;
+    else if (roll < 0.9) useIce = useChains = true;
+  } else if (rank === 2) {
+    if (roll < 0.3) useIce = useCrates = true;
+    else if (roll < 0.55) useIce = useChains = true;
+    else if (roll < 0.8) useCrates = useChains = true;
+    else useIce = true;
+  } else {
+    useIce = roll < 0.85;
+    useCrates = roll > 0.25;
+    useChains = roll < 0.4 || roll > 0.7;
+  }
+
+  const deepHp = rank >= 2;
+  const crateMask = useCrates
+    ? trimMask(shapeMask(rng, 0.3), rng, 6 + rank * 3, 4, true)
+    : new Set<string>();
+  const iceMask = useIce ? trimMask(shapeMask(rng, 0.45), rng, 12 + rank * 6) : new Set<string>();
+  for (const k of crateMask) iceMask.delete(k);
+  const chainMask = useChains
+    ? trimMask(shapeMask(rng, 0.25), rng, 4 + rank * 2)
+    : new Set<string>();
+  for (const k of crateMask) chainMask.delete(k);
+
+  const crateCells = specsOf(crateMask, () => (deepHp && rng() < 0.4 ? 2 : 1));
+  const iceCells = specsOf(iceMask, (r, c) => (deepHp && (r + c) % 3 === 0 ? 2 : 1));
+  const chainCells = specsOf(chainMask, () => 1).map(({ row, col }) => ({ row, col }));
+
+  const iceHp = iceCells.reduce((sum, c) => sum + c.hp, 0);
+  const crateHp = crateCells.reduce((sum, c) => sum + c.hp, 0);
+
+  // --- Move budget ---------------------------------------------------------
+  // Moves a focused player needs for the obstacles alone. They overlap (one
+  // blast often hits several kinds), so only the biggest counts in full.
+  const boost = colorCount === 5 ? FIVE_ANIMAL_BOOST : 1;
+  const obstacleCosts = [
+    iceHp / (RATE.ice * boost),
+    crateHp / (RATE.crateHp * boost),
+    chainCells.length / (RATE.chain * boost),
+  ].filter((n) => n > 0);
+  obstacleCosts.sort((a, b) => b - a);
+  const obstacleCost = obstacleCosts.reduce((sum, n, i) => sum + n * (i === 0 ? 1 : 0.5), 0);
+
+  const [lo, hi] = BASE_MOVES[difficulty];
+  const share = EFFORT_SHARE[difficulty];
+  let moves = lo + Math.floor(rng() * (hi - lo + 1));
+  moves = Math.min(42, Math.max(moves, Math.ceil(obstacleCost / share)));
+  const effort = moves * share;
+  // Effort left for the "collect" style goal that runs alongside the obstacles.
+  const spare = Math.max(effort * 0.45, effort - obstacleCost * 0.6);
+
+  // --- Objectives ----------------------------------------------------------
+  const objectives: LevelConfig['objectives'] = [];
+  if (iceHp > 0) objectives.push({ id: `g${id}-ice`, kind: 'ice', label: 'Isrutor', target: iceHp });
+  if (crateCells.length > 0) {
+    objectives.push({ id: `g${id}-crate`, kind: 'crate', label: 'Trälådor', target: crateCells.length });
+  }
+  if (chainCells.length > 0) {
+    objectives.push({ id: `g${id}-chain`, kind: 'chain', label: 'Kedjor', target: chainCells.length });
+  }
+
+  const extra = rng();
+  if (objectives.length < 3) {
+    if (extra < 0.12 && rank >= 1) {
+      objectives.push({
+        id: `g${id}-specials`,
+        kind: 'specials',
+        label: 'Specialare',
+        target: Math.max(2, Math.round(spare * RATE.special * boost)),
+      });
+    } else if (extra < 0.2 && rank >= 1) {
+      objectives.push({
+        id: `g${id}-cascade`,
+        kind: 'cascade3',
+        label: 'Kaskad ×3+',
+        target: Math.max(1, Math.round(spare * RATE.cascade3 * boost)),
+      });
+    } else if (extra < 0.32) {
+      objectives.push({
+        id: `g${id}-score`,
+        kind: 'score',
+        label: 'Poäng',
+        target: Math.max(1500, Math.round((spare * RATE.score * boost) / 500) * 500),
+      });
+    } else {
+      const wanted = objectives.length === 0 ? 2 : extra < 0.6 && objectives.length === 1 ? 2 : 1;
+      const perMove = (wanted === 2 ? RATE.twoColors : RATE.oneColor) * boost;
+      const start = Math.floor(rng() * colorCount);
+      for (let i = 0; i < wanted && objectives.length < 3; i++) {
+        const color = palette[(start + i * 2) % colorCount];
+        objectives.push({
+          id: `g${id}-${color}`,
+          kind: 'color',
+          color,
+          label: ANIMAL_LABELS[color],
+          target: Math.max(10, Math.round((spare * perMove) / 2) * 2),
+        });
+      }
+    }
+  }
+
+  // The hint describes what the level actually asks for, obstacles first.
+  const kinds = new Set(objectives.map((objective) => objective.kind));
+  const subtitleKey: keyof typeof GENERATED_SUBTITLES =
+    pos === LEVELS_PER_CHAPTER - 1
+      ? 'finale'
+      : objectives.length >= 3
+      ? 'mixed'
+      : kinds.has('crate')
+      ? 'crates'
+      : kinds.has('chain')
+      ? 'chains'
+      : kinds.has('ice')
+      ? 'ice'
+      : kinds.has('color')
+      ? 'collect'
+      : kinds.has('specials')
+      ? 'specials'
+      : kinds.has('cascade3')
+      ? 'cascades'
+      : 'score';
+  const subtitle = GENERATED_SUBTITLES[subtitleKey].text;
+
+  const level: LevelConfig = {
+    id,
+    chapter,
+    difficulty,
+    name: getChapter(chapter).nameSv,
+    subtitle,
+    moves,
+    colorCount,
+    palette,
+    objectives,
+  };
+  if (iceCells.length > 0) level.iceCells = iceCells;
+  if (crateCells.length > 0) level.crateCells = crateCells;
+  if (chainCells.length > 0) level.chainCells = chainCells;
+  return level;
+}
+
+const GENERATED_SUBTITLES = {
+  finale: { text: 'Kapitlets final – allt på en gång' },
+  mixed: { text: 'Blandade hinder – planera varje drag' },
+  crates: { text: 'Spräck trälådorna genom att matcha intill dem' },
+  chains: { text: 'Befria de kedjade djuren med matchningar' },
+  ice: { text: 'Tina all is innan dragen tar slut' },
+  collect: { text: 'Samla djuren innan dragen tar slut' },
+  specials: { text: 'Skapa specialdjur med stora matchningar' },
+  cascades: { text: 'Bygg långa kaskader för att nå målet' },
+  score: { text: 'Jaga poäng – stora matchningar ger mest' },
+};
+
+/** Objective labels for "collect this animal" goals. */
+const ANIMAL_LABELS: Record<GemColor, string> = {
+  ruby: 'Räv',
+  amber: 'Lejon',
+  emerald: 'Groda',
+  cobalt: 'Pingvin',
+  amethyst: 'Kanin',
+  quartz: 'Isbjörn',
+  tangerine: 'Tiger',
+  lime: 'Sköldpadda',
+  sky: 'Delfin',
+  violet: 'Panda',
+  rose: 'Uggla',
+  mint: 'Säl',
+};
+
+const generatedCache = new Map<number, LevelConfig>();
+
+/** Returns any campaign level by index (0-based); out-of-range indexes are clamped. */
+export function getCampaignLevel(levelIdx: number): LevelConfig {
+  const idx = Math.min(CAMPAIGN_LEVEL_COUNT - 1, Math.max(0, Math.floor(levelIdx) || 0));
+  if (idx < CAMPAIGN_LEVELS.length) return CAMPAIGN_LEVELS[idx];
+  let level = generatedCache.get(idx);
+  if (!level) {
+    level = generateLevel(idx);
+    if (generatedCache.size > 400) generatedCache.clear();
+    generatedCache.set(idx, level);
+  }
+  return level;
+}
