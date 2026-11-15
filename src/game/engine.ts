@@ -849,6 +849,11 @@ export function plantBeams(board: Board, count: number, rng: RngFn = Math.random
   return { board: next, spots };
 }
 
+/** Moves between boss attacks: one fewer once the boss is enraged (never below three). */
+export function bossEvery(every: number, enraged = false): number {
+  return enraged ? Math.max(3, every - 1) : every;
+}
+
 /** Plain animals that can be given a bomb or a chain. */
 function plainSpots(board: Board): Coord[] {
   const spots: Coord[] = [];
@@ -1227,7 +1232,7 @@ export function resolveSwap(
         currentBoard[spot.row][spot.col].gem!.bomb = level.bombTimer ?? 9;
       }
     }
-    if (level.boss && moveNumber % level.boss.every === 0) {
+    if (level.boss && moveNumber % bossEvery(level.boss.every, turn.enraged) === 0) {
       const attack = level.boss.attack ?? 'chain';
       if (attack === 'steal') {
         bossStole = level.boss.count;

@@ -25,7 +25,8 @@ import { IslandState, totalStars } from '../game/island';
 import { Mission, MissionState, missionsDone } from '../game/missions';
 import { BLITZ_SECONDS, BlitzState, PlayStats } from '../game/stats';
 import { StoryPage } from '../game/story';
-import { GemColor } from '../game/types';
+import { WEEKLY_LEVEL_ENERGY, WeeklyLevelState } from '../game/weeklyLevel';
+import { GemColor, LevelConfig } from '../game/types';
 import { biomeName, biomeOfChapter } from '../game/biomes';
 import { HeartIcon } from './GameModals';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
@@ -76,6 +77,10 @@ interface TitleScreenProps {
   onSelectCompanion: (color: GemColor) => void;
   island: IslandState;
   onBuild: () => void;
+  onCollectGift: () => void;
+  weeklyLevel: LevelConfig;
+  weeklyLevelState: WeeklyLevelState;
+  onStartWeekly: () => void;
   stats: PlayStats;
   blitz: BlitzState;
   storyPage: StoryPage | null;
@@ -327,6 +332,10 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   onSelectCompanion,
   island,
   onBuild,
+  onCollectGift,
+  weeklyLevel,
+  weeklyLevelState,
+  onStartWeekly,
   stats,
   blitz,
   storyPage,
@@ -464,7 +473,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
       <main className="relative z-10 w-full min-h-[100dvh] overflow-x-hidden bg-transparent flex flex-col justify-between pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
         <div className="flex-1 flex items-center px-3 sm:px-8 lg:px-16 py-3 sm:py-5">
           <div className="ui-menu-fit relative w-full max-w-[600px] lg:max-w-[1010px] animate-menu-pop">
-            <h1 className="ui-title relative z-10 mb-3 sm:mb-4 text-center lg:text-left lg:pl-6 text-[clamp(2.6rem,14vw,3.6rem)] sm:text-[4.25rem]">
+            <h1 lang="en" className="ui-title relative z-10 mb-3 sm:mb-4 text-center lg:text-left lg:pl-6 text-[clamp(2.6rem,14vw,3.6rem)] sm:text-[4.25rem]">
               AnimalPuzzle
             </h1>
 
@@ -698,6 +707,43 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                         {t('Nästa dag: +{n} extra', { n: nextStreakBonus })}
                       </span>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {mode === 'daily' && (
+                <div data-testid="weekly-level-panel" className="ui-inset mt-2.5 px-3 py-2 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-[#D4002A]">
+                      <UiIcon name="warning" className="w-3.5 h-3.5" />
+                      {t('Veckans specialnivå')}
+                    </span>
+                    <span
+                      className={`rounded border-2 border-[#111111] px-1.5 py-0.5 text-[10px] font-extrabold ${
+                        weeklyLevelState.won ? 'bg-[#A6EC98]' : 'bg-[#F2CD1C]'
+                      }`}
+                    >
+                      {weeklyLevelState.won ? t('Klarad') : `+${WEEKLY_LEVEL_ENERGY}`}
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-[13px] font-semibold leading-snug">
+                    {t('En extra svår nivå som är densamma hela veckan. {moves} drag, och första vinsten ger {n} bonusenergi.', {
+                      moves: weeklyLevel.moves,
+                      n: WEEKLY_LEVEL_ENERGY,
+                    })}
+                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-bold text-[#4B4B4B]">
+                      {t('Försök den här veckan: {n}', { n: weeklyLevelState.attempts })}
+                    </span>
+                    <button
+                      type="button"
+                      data-testid="start-weekly-btn"
+                      onClick={onStartWeekly}
+                      className="ui-btn ui-btn-yellow px-3 py-1 text-sm"
+                    >
+                      {t('Anta utmaningen')}
+                    </button>
                   </div>
                 </div>
               )}
@@ -1021,6 +1067,8 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
         island={island}
         stars={totalStars(bestStars)}
         onBuild={onBuild}
+        onCollectGift={onCollectGift}
+        todayKey={todayKey}
         stats={stats}
         achievementStats={achievementState.stats}
         blitz={blitz}

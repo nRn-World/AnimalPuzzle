@@ -24,6 +24,7 @@ const MODE_LABELS = {
   daily: { text: 'Daglig' },
   endless: { text: 'Oändligt' },
   blitz: { text: 'Tidsläge' },
+  weekly: { text: 'Veckans nivå' },
 };
 
 /** The animal album (a card per animal that levels up) and the top list. */

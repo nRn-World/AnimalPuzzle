@@ -1,3 +1,5 @@
+import { StoryModal } from './components/StoryModal';
+import { useReminders } from './hooks/useReminders';
 import titleBackdrop from './assets/images/title-backdrop.webp';
 import { useCallback, useEffect, useState } from 'react';
 import { AchievementUnlockToast } from './components/AchievementsSection';
@@ -20,6 +22,7 @@ export default function App() {
   // Subscribing here re-renders the whole tree when the language changes.
   const settings = useSettings();
   const game = useGameSession(settings.language);
+  useReminders(settings.reminders, game.lives);
   const { isFullscreen, canFullscreen, toggleFullscreen } = useFullscreen();
 
   // Phones and tablets: go true full screen as soon as a round starts.
@@ -167,10 +170,14 @@ export default function App() {
             onSelectCompanion={game.selectCompanion}
             island={game.island}
             onBuild={game.buildNext}
+            onCollectGift={game.collectIslandGift}
+            weeklyLevel={game.weeklyLevel}
+            weeklyLevelState={game.weeklyLevelState}
+            onStartWeekly={game.startWeekly}
             stats={game.stats}
             blitz={game.blitz}
-            storyPage={game.storyPage}
-            onCloseStory={game.closeStory}
+            storyPage={game.bossStoryPage ?? game.storyPage}
+            onCloseStory={game.bossStoryPage ? game.closeBossStory : game.closeStory}
             onReadStory={game.readStory}
             seenPages={game.seenPages}
           season={game.season}
@@ -219,6 +226,7 @@ export default function App() {
               canFullscreen={canFullscreen}
               busy={busy}
               timeLeft={mode === 'blitz' ? game.blitzLeft : undefined}
+              bossEnraged={game.bossEnraged}
               companion={game.companion}
               powerCharge={game.powerCharge}
               powerNeeded={game.powerNeeded}
@@ -278,6 +286,11 @@ export default function App() {
             </div>
           </div>
 
+          <StoryModal
+            page={game.bossStoryPage}
+            skin={game.dailyState.equippedSkin}
+            onClose={game.closeBossStory}
+          />
           <GameModals
             phase={phase}
             mode={mode}
@@ -294,6 +307,7 @@ export default function App() {
             chest={game.endSnapshot.chest}
             lostToBomb={game.endSnapshot.lostToBomb}
             blitzRank={game.endSnapshot.blitzRank}
+            weeklyEnergy={game.endSnapshot.weeklyEnergy}
             livesLeft={game.lives.lives}
             totalMoves={activeLevel.moves}
             dailyReward={game.dailyReward}

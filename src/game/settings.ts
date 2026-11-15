@@ -1,4 +1,4 @@
-import { detectLanguage, isLang, Lang, setLanguage } from '../i18n';
+import { detectLanguage, isLang, Lang, loadLanguage, setLanguage } from '../i18n';
 import { readJson, readString, STORAGE_KEYS, writeJson } from './storage';
 
 export interface Settings {
@@ -13,6 +13,8 @@ export interface Settings {
   reduceMotion: boolean;
   /** Draws a unique shape on every animal so colour is never the only cue. */
   symbols: boolean;
+  /** Show a notification when the lives are full again. */
+  reminders: boolean;
   language: Lang;
 }
 
@@ -23,6 +25,7 @@ export const DEFAULT_SETTINGS: Settings = {
   haptics: true,
   reduceMotion: false,
   symbols: false,
+  reminders: false,
   language: 'sv',
 };
 
@@ -46,6 +49,7 @@ export function sanitizeSettings(raw: unknown, defaults: Settings = DEFAULT_SETT
     haptics: bool(src.haptics, defaults.haptics),
     reduceMotion: bool(src.reduceMotion, defaults.reduceMotion),
     symbols: bool(src.symbols, defaults.symbols),
+    reminders: bool(src.reminders, defaults.reminders),
     language: isLang(src.language) ? src.language : defaults.language,
   };
 }
@@ -81,6 +85,11 @@ function applyToDocument(settings: Settings): void {
 }
 
 applyToDocument(current);
+
+/** Loads the dictionary of the saved language; call before the first render. */
+export function prepareLanguage(): Promise<boolean> {
+  return loadLanguage(current.language);
+}
 
 export function getSettings(): Settings {
   return current;

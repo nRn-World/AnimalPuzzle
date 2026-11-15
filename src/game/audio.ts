@@ -488,6 +488,30 @@ class SoundEngine {
     });
   }
 
+  /** A short call for each animal: pitch and shape follow its place in the roster. */
+  playAnimalVoice(index: number): void {
+    const i = ((index % 12) + 12) % 12;
+    const base = [660, 196, 330, 880, 990, 147, 233, 262, 1175, 294, 587, 440][i];
+    const shape: OscillatorType = i % 3 === 0 ? 'triangle' : i % 3 === 1 ? 'sawtooth' : 'square';
+    const low = base < 400;
+    if (low) {
+      // Big animals growl: a falling tone with a rough second voice.
+      this.playTone(base * 1.5, 0.34, shape, 0.1, 0, base * 0.8);
+      this.playTone(base * 0.75, 0.38, 'sawtooth', 0.05, 0.02, base * 0.5);
+    } else {
+      // Small animals chirp twice, the second time a little higher.
+      this.playTone(base, 0.1, shape, 0.08, 0, base * 1.35);
+      this.playTone(base * 1.2, 0.14, shape, 0.08, 0.13, base * 1.7);
+    }
+  }
+
+  /** A deep, wobbling growl when the boss strikes or loses its temper. */
+  playBossGrowl(): void {
+    this.playTone(110, 0.5, 'sawtooth', 0.12, 0, 55);
+    this.playTone(165, 0.42, 'square', 0.05, 0.03, 70);
+    this.playTone(82, 0.3, 'triangle', 0.12, 0.28, 49);
+  }
+
   playVictory(): void {
     const chord = [523.25, 659.25, 783.99, 1046.5, 1318.51];
     chord.forEach((f, i) => {

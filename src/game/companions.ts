@@ -102,6 +102,16 @@ export function writeCompanion(active: GemColor): void {
   writeJson(STORAGE_KEYS.companion, { active });
 }
 
+/** Powers grow at level 5 and again at level 10. */
+export function powerTier(level: number): 1 | 2 | 3 {
+  return level >= 10 ? 3 : level >= 5 ? 2 : 1;
+}
+
+/** Extra random cells a clearing power hits per tier above the first. */
+export const TIER_EXTRA_CELLS = 5;
+/** Extra moves (turtle) and beams (rabbit) per tier above the first. */
+export const TIER_EXTRA_COUNT = 1;
+
 // --- Where a power strikes ----------------------------------------------------
 
 type Rng = () => number;
@@ -151,7 +161,16 @@ const all = (): Coord[] => {
  * the line or spot where they do the most good. `specials` and `moves` do
  * not clear anything and return an empty list.
  */
-export function powerTargets(board: Board, power: PowerKind, rng: Rng = Math.random): Coord[] {
+export function powerTargets(board: Board, power: PowerKind, rng: Rng = Math.random, tier = 1): Coord[] {
+  const base = baseTargets(board, power, rng);
+  if (base.length === 0 || tier <= 1) return base;
+  // Higher tiers strike extra cells on top of the usual ones.
+  const taken = new Set(base.map((p) => `${p.row},${p.col}`));
+  const rest = all().filter((p) => worth(board, p.row, p.col) > 0 && !taken.has(`${p.row},${p.col}`));
+  return [...base, ...pick(rest, (tier - 1) * TIER_EXTRA_CELLS, rng)];
+}
+
+function baseTargets(board: Board, power: PowerKind, rng: Rng): Coord[] {
   const hittable = all().filter((p) => worth(board, p.row, p.col) > 0);
   const scatter = (n: number) => pick(hittable, n, rng);
   switch (power) {

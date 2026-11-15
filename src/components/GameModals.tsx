@@ -39,6 +39,8 @@ interface GameModalsProps {
   lostToBomb?: boolean;
   /** Time mode: place on this week's list (0 = outside it). */
   blitzRank?: number;
+  /** Weekly special level: energy paid for this win (0 = already won this week). */
+  weeklyEnergy?: number;
   /** Lives left (campaign only). */
   livesLeft?: number;
   onEquipSkin: (skin: AnimalSkinId) => void;
@@ -170,6 +172,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
   chest,
   lostToBomb = false,
   blitzRank,
+  weeklyEnergy,
   livesLeft,
   onEquipSkin,
   shareNotice,
@@ -238,6 +241,8 @@ export const GameModals: React.FC<GameModalsProps> = ({
                   ? t(levelName)
                   : mode === 'blitz'
                   ? t('Tidsläge')
+                  : mode === 'weekly'
+                  ? t(levelName)
                   : t('Oändligt läge')}
               </div>
               <h2 id="modal-heading" className="font-display text-2xl font-extrabold">
@@ -359,6 +364,14 @@ export const GameModals: React.FC<GameModalsProps> = ({
               </div>
             )}
 
+            {mode === 'weekly' && weeklyEnergy !== undefined && (
+              <div data-testid="weekly-reward" className="ui-inset px-3 py-2 text-sm font-extrabold">
+                {weeklyEnergy > 0
+                  ? t('Veckans specialnivå klarad! +{n} bonusenergi', { n: weeklyEnergy })
+                  : t('Klarad igen – veckans pris är redan hämtat')}
+              </div>
+            )}
+
             {/* Daily Challenge Reward Box */}
             {mode === 'daily' && dailyReward && (
               <div
@@ -468,7 +481,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
                 {mode === 'blitz' ? t('Tiden är ute') : lostToBomb ? t('Bomben smällde') : t('Slut på drag')}
               </div>
               <h2 id="modal-heading" className="font-display text-2xl font-extrabold">
-                {mode === 'campaign' || mode === 'daily'
+                {mode === 'campaign' || mode === 'daily' || mode === 'weekly'
                   ? t('{name} — Försök igen', { name: t(levelName) })
                   : t('Omgången avslutad')}
               </h2>

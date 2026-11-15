@@ -4,12 +4,23 @@ import { AchievementStats } from '../game/achievements';
 import {
   COMPANIONS,
   MAX_LEVEL,
+  TIER_EXTRA_CELLS,
   UNLOCK_AT,
+  powerTier,
   animalLevel,
   chargeNeeded,
   isCompanionUnlocked,
 } from '../game/companions';
-import { BUILDINGS, BUILD_GIFT, IslandState, nextBuilding, starsAvailable } from '../game/island';
+import {
+  BUILDINGS,
+  BUILD_GIFT,
+  DAILY_GIFT_PER_BUILDING,
+  IslandState,
+  canCollectGift,
+  dailyGift,
+  nextBuilding,
+  starsAvailable,
+} from '../game/island';
 import { ALL_DONE_BONUS, Mission, MissionState, missionsDone } from '../game/missions';
 import { RewardState } from '../game/rewards';
 import { BlitzState, PlayStats, formatPlayTime } from '../game/stats';
@@ -41,6 +52,8 @@ interface HubModalProps {
   island: IslandState;
   stars: number;
   onBuild: () => void;
+  onCollectGift: () => void;
+  todayKey: string;
   stats: PlayStats;
   achievementStats: AchievementStats;
   blitz: BlitzState;
@@ -106,6 +119,8 @@ export const HubModal: React.FC<HubModalProps> = ({
   island,
   stars,
   onBuild,
+  onCollectGift,
+  todayKey,
   stats,
   achievementStats,
   blitz,
@@ -223,6 +238,11 @@ export const HubModal: React.FC<HubModalProps> = ({
               <p className="text-xs font-semibold text-[#4B4B4B]">
                 {t('Välj ett djur som följer med. Kraften laddas av djuren du rensar, tre gånger snabbare av kompisens egen sort, och kostar inget drag. Ju fler du samlat av ett djur, desto högre nivå och snabbare laddning.')}
               </p>
+              <p className="text-xs font-semibold text-[#4B4B4B]">
+                {t('Kraften växer på nivå 5 och nivå 10: varje steg träffar {n} rutor till, eller ger ett drag eller en stråle extra.', {
+                  n: TIER_EXTRA_CELLS,
+                })}
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {COMPANIONS.map((def, i) => {
                   const collected = rewardState.album[def.color];
@@ -273,6 +293,8 @@ export const HubModal: React.FC<HubModalProps> = ({
                         {unlocked && (
                           <span className="block text-[10px] font-semibold text-[#4B4B4B]">
                             {t('Laddas av {n} djur', { n: chargeNeeded(lvl.level) })}
+                            {' · '}
+                            {t('Styrka {n} av 3', { n: powerTier(lvl.level) })}
                           </span>
                         )}
                       </span>
@@ -290,7 +312,26 @@ export const HubModal: React.FC<HubModalProps> = ({
                   n: BUILD_GIFT,
                 })}
               </p>
-              <IslandScene built={island.built} className="w-full border-[3px] border-[#111111]" />
+              <IslandScene built={island.built} skin={skin} className="w-full border-[3px] border-[#111111]" />
+              {island.built > 0 && (
+                <div className="ui-inset flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+                  <span className="min-w-0 text-xs font-bold leading-snug">
+                    {t('Öns invånare samlar {n} bonusenergi om dagen ({per} per bygge).', {
+                      n: dailyGift(island),
+                      per: DAILY_GIFT_PER_BUILDING,
+                    })}
+                  </span>
+                  <button
+                    type="button"
+                    data-testid="island-gift-btn"
+                    onClick={onCollectGift}
+                    disabled={!canCollectGift(island, todayKey)}
+                    className="ui-btn ui-btn-yellow px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {canCollectGift(island, todayKey) ? t('Hämta dagens gåva') : t('Hämtad i dag')}
+                  </button>
+                </div>
+              )}
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="inline-flex items-center gap-1.5 text-sm font-extrabold">
                   <UiIcon name="star" className="h-4 w-4 text-[#E09A00]" />
@@ -318,7 +359,14 @@ export const HubModal: React.FC<HubModalProps> = ({
                       i < island.built ? '!bg-[#CFF5D2]' : i === island.built ? '' : 'opacity-55'
                     }`}
                   >
-                    <div className="truncate">{t(building.nameSv)}</div>
+                    <div className="flex items-center justify-center gap-1">
+                      {i < island.built && (
+                        <span className="h-4 w-4 shrink-0">
+                          <GemSvg color={building.resident} special="none" skin={skin} animationSeed={i + 1} />
+                        </span>
+                      )}
+                      <span className="truncate">{t(building.nameSv)}</span>
+                    </div>
                     <div className="font-mono-num text-[10px] font-bold text-[#4B4B4B]">
                       {i < island.built ? t('Byggd') : `${building.cost} ★`}
                     </div>
