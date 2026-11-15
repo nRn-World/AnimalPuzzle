@@ -309,6 +309,23 @@ const SkinEmblem: React.FC<{ skin: AnimalSkinId; className?: string }> = ({
   return <PrismButterflyMark className={className} />;
 };
 
+/** True on screens narrower than the two-column menu (phones and tablets). */
+function useCompactMenu(): boolean {
+  const query = '(max-width: 1023px)';
+  const [compact, setCompact] = useState(
+    () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(query).matches
+  );
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const media = window.matchMedia(query);
+    const update = () => setCompact(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+  return compact;
+}
+
 export const TitleScreen: React.FC<TitleScreenProps> = ({
   mode,
   selectedLevelIdx,
@@ -427,6 +444,43 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
     onSelectLevel(Math.min(highestUnlockedIdx, firstIdx + LEVELS_PER_CHAPTER - 1));
   };
 
+  const compact = useCompactMenu();
+  const playCta = (
+    <>
+      <button
+        type="button"
+        data-start="true"
+        onClick={onStart}
+        disabled={outOfLives}
+        className="ui-btn ui-btn-green w-full sm:w-auto sm:flex-1 px-4 py-1.5 font-display text-lg sm:text-xl tracking-wide disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <UiIcon name="right" className="w-5 h-5" />
+        {outOfLives
+          ? t('Nytt liv om {time}', { time: formatCountdown(msToNextLife(livesNow, now)) })
+          : mode === 'daily'
+          ? t('Kör dagens!')
+          : mode === 'endless'
+          ? t('Kör oändligt!')
+          : mode === 'blitz'
+          ? t('Starta klockan!')
+          : t('Spela nu')}
+      </button>
+      {outOfLives && (
+        <button
+          type="button"
+          data-testid="buy-lives-btn"
+          onClick={onBuyLives}
+          disabled={bonusEnergyBank < REFILL_COST}
+          title={t('Fyll på alla liv för {n} bonusenergi', { n: REFILL_COST })}
+          className="ui-btn ui-btn-yellow w-full sm:w-auto px-2.5 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <HeartIcon className="h-4 w-4" />
+          {t('Fyll på · {n} energi', { n: REFILL_COST })}
+        </button>
+      )}
+    </>
+  );
+
   return (
     <>
       {/* Key art with animated fire plus drifting fireflies */}
@@ -512,6 +566,12 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               {/* Wide screens: two columns so the whole menu fits without scrolling */}
               <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-4">
               <div className="min-w-0">
+              {/* Phones and tablets: the play button comes first, so starting never needs a scroll */}
+              {compact && (
+                <div data-testid="play-top" className="mb-2.5 flex flex-wrap items-stretch gap-2.5">
+                  {playCta}
+                </div>
+              )}
               {savedGame && (
                 <button
                   type="button"
@@ -982,37 +1042,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
 
               {/* CTA */}
               <div className="mt-3.5 flex flex-wrap items-stretch gap-2.5">
-                <button
-                  type="button"
-                  data-start="true"
-                  onClick={onStart}
-                  disabled={outOfLives}
-                  className="ui-btn ui-btn-green w-full sm:w-auto sm:flex-1 px-4 py-1.5 font-display text-lg sm:text-xl tracking-wide disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <UiIcon name="right" className="w-5 h-5" />
-                  {outOfLives
-                    ? t('Nytt liv om {time}', { time: formatCountdown(msToNextLife(livesNow, now)) })
-                    : mode === 'daily'
-                    ? t('Kör dagens!')
-                    : mode === 'endless'
-                    ? t('Kör oändligt!')
-                    : mode === 'blitz'
-                    ? t('Starta klockan!')
-                    : t('Spela nu')}
-                </button>
-                {outOfLives && (
-                  <button
-                    type="button"
-                    data-testid="buy-lives-btn"
-                    onClick={onBuyLives}
-                    disabled={bonusEnergyBank < REFILL_COST}
-                    title={t('Fyll på alla liv för {n} bonusenergi', { n: REFILL_COST })}
-                    className="ui-btn ui-btn-yellow w-full sm:w-auto px-2.5 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <HeartIcon className="h-4 w-4" />
-                    {t('Fyll på · {n} energi', { n: REFILL_COST })}
-                  </button>
-                )}
+                {!compact && playCta}
 
                 <div className="flex w-full sm:w-auto gap-2.5">
                   {canInstall && (
