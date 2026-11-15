@@ -1380,4 +1380,104 @@ export const en: Record<string, string> = {
     "One more time?",
   "Is tinas av matchningar på rutan, trälådor spräcks av matchningar intill och kedjor lossar när djuret matchas. Längre fram kommer hål i brädet, honung som sprider sig varje drag du inte rensar någon, och ägg som ska lotsas ner till botten. Sent i sagan dyker bombdjur med nedräkning, rullband och portaler som byter djur med varandra efter varje drag upp, och varje kapitel slutar med en boss. En misslyckad kampanjnivå kostar ett liv; liven fylls på med tiden. Din kompis kraft laddas av djuren du rensar: tryck på kompisen bredvid verktygen när ringen är full.":
     "Ice thaws when you match on the tile, wooden crates break from matches next to them and chains come off when the animal is matched. Later on you meet holes in the board, honey that spreads every move you clear none of it, and eggs to steer down to the bottom. Late in the saga come bomb animals with a countdown, conveyor belts and portals that trade animals with each other after every move, and every chapter ends with a boss. A failed campaign level costs a life; lives refill over time. Your companion's power charges from the animals you clear: tap the companion next to the tools when the ring is full.",
+  "Veckans nivå":
+    "Weekly level",
+  "Veckans utmaning":
+    "Weekly challenge",
+  "Rasande":
+    "Enraged",
+  "Veckans specialnivå klarad! +{n} bonusenergi":
+    "Weekly special level cleared! +{n} bonus energy",
+  "Klarad igen – veckans pris är redan hämtat":
+    "Cleared again – this week's prize is already collected",
+  "Kraften växer på nivå 5 och nivå 10: varje steg träffar {n} rutor till, eller ger ett drag eller en stråle extra.":
+    "The power grows at level 5 and level 10: each step hits {n} more tiles, or gives one extra move or beam.",
+  "Styrka {n} av 3":
+    "Strength {n} of 3",
+  "Öns invånare samlar {n} bonusenergi om dagen ({per} per bygge).":
+    "The islanders gather {n} bonus energy a day ({per} per building).",
+  "Hämta dagens gåva":
+    "Collect today's gift",
+  "Hämtad i dag":
+    "Collected today",
+  "Påminnelser":
+    "Reminders",
+  "Notis när liven är fulla":
+    "Notify me when lives are full",
+  "Fungerar medan spelet ligger öppet i bakgrunden, till exempel som installerad app.":
+    "Works while the game stays open in the background, for example as an installed app.",
+  "Den här enheten eller webbläsaren stöder inte notiser.":
+    "This device or browser does not support notifications.",
+  "Veckans specialnivå":
+    "Weekly special level",
+  "Klarad":
+    "Cleared",
+  "En extra svår nivå som är densamma hela veckan. {moves} drag, och första vinsten ger {n} bonusenergi.":
+    "An extra hard level that stays the same all week. {moves} moves, and the first win gives {n} bonus energy.",
+  "Försök den här veckan: {n}":
+    "Attempts this week: {n}",
+  "Anta utmaningen":
+    "Take the challenge",
+  "Kapten Krake sjönk muttrande tillbaka i djupet, och farleden låg öppen.":
+    "Captain Kraken sank grumbling back into the deep, and the channel lay open.",
+  "Hissa segel!":
+    "Hoist the sails!",
+  "Kraken tappade sin hatt i vågorna. Lejonet bär den nu med stolthet.":
+    "The kraken lost its hat in the waves. The lion now wears it with pride.",
+  "Den klär mig!":
+    "It suits me!",
+  "Getingdrottningen surrade iväg över klövern, och ängen blev stilla igen.":
+    "The Wasp Queen buzzed away over the clover, and the meadow grew calm again.",
+  "Äntligen picknick!":
+    "Picnic at last!",
+  "Bina tackade för hjälpen med en burk av sin bästa honung.":
+    "The bees said thanks with a jar of their finest honey.",
+  "Dela lika nu!":
+    "Share it fairly!",
+  "Sandormen grävde ner sig djupt, och en oas glittrade fram bakom dynen.":
+    "The Sandworm dug itself deep down, and an oasis glittered behind the dune.",
+  "Vatten!":
+    "Water!",
+  "Sköldpaddan kom fram sist av alla, men hade hela tiden rätt om vägen.":
+    "The turtle arrived last of all, but had been right about the way all along.",
+  "Det var ju det jag sa.":
+    "That is what I said.",
+  "Isdraken gäspade, vände sig om och somnade på nytt. Passet var fritt.":
+    "The Ice Dragon yawned, rolled over and fell asleep again. The pass was clear.",
+  "Smyg, smyg...":
+    "Tiptoe, tiptoe...",
+  "Pingvinen åkte kana hela vägen ner från glaciären, till allas förtjusning.":
+    "The penguin slid all the way down the glacier, to everyone's delight.",
+  "En gång till!":
+    "One more time!",
+  "Kapten Blip lämnade tillbaka varenda drag och blev bjuden på te i raketen.":
+    "Captain Blip gave back every single move and was invited to tea in the rocket.",
+  "Socker i?":
+    "Sugar with that?",
+  "Pandan hittade en ny stjärnbild som ser precis ut som en bambu.":
+    "The panda found a new constellation that looks just like bamboo.",
+  "Den är min.":
+    "That one is mine.",
+  "Lavadraken blåste en sista rökring och släppte fram flocken.":
+    "The Lava Dragon blew one last smoke ring and let the pack through.",
+  "Vi klarade det!":
+    "We made it!",
+  "Marken svalnade under tassarna, och långt borta syntes havet.":
+    "The ground cooled under their paws, and far away the sea came into view.",
+  "Hem, hallå!":
+    "Home, ahoy!",
+  "{name} blir rasande!":
+    "{name} is enraged!",
+  "Liven är fulla!":
+    "Lives are full!",
+  "Djuren väntar på dig – dags för en ny nivå.":
+    "The animals are waiting for you – time for a new level.",
+  "Deutsch":
+    "Deutsch",
+  "Español":
+    "Español",
+  "Français":
+    "Français",
+  "Türkçe":
+    "Türkçe",
 };

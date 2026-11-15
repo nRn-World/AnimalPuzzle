@@ -1,5 +1,23 @@
 import React from 'react';
 import { BUILDINGS, BuildingId } from '../game/island';
+import { AnimalSkinId } from '../game/types';
+import { GemSvg } from './GemSvg';
+
+/** Where each building's resident stands (top-left corner of a 26 px animal). */
+const HOME: Record<BuildingId, [number, number]> = {
+  fire: [166, 138],
+  tent: [62, 142],
+  garden: [226, 132],
+  hut: [182, 108],
+  dock: [262, 124],
+  well: [124, 96],
+  boat: [284, 104],
+  treehouse: [70, 112],
+  mill: [228, 104],
+  lighthouse: [36, 146],
+  tower: [262, 94],
+  statue: [132, 60],
+};
 
 const S = { stroke: '#111111', strokeWidth: 2.4, strokeLinejoin: 'round' as const, strokeLinecap: 'round' as const };
 
@@ -113,7 +131,11 @@ const ART: Record<BuildingId, React.ReactNode> = {
 };
 
 /** The player's island with the first `built` buildings standing. */
-export const IslandScene: React.FC<{ built: number; className?: string }> = ({ built, className = '' }) => (
+export const IslandScene: React.FC<{ built: number; skin?: AnimalSkinId; className?: string }> = ({
+  built,
+  skin = 'classic',
+  className = '',
+}) => (
   <svg viewBox="0 0 320 200" className={className} role="img" aria-hidden="true">
     <rect width="320" height="200" fill="#2FAAE4" />
     <path
@@ -142,6 +164,25 @@ export const IslandScene: React.FC<{ built: number; className?: string }> = ({ b
         <g key={building.id} data-building={building.id}>
           {ART[building.id]}
         </g>
+      ) : null
+    )}
+    {/* The animals that have moved in stroll about next to their homes */}
+    {BUILDINGS.map((building, i) =>
+      i < built ? (
+        <svg
+          key={`resident-${building.id}`}
+          data-resident={building.resident}
+          x={HOME[building.id][0]}
+          y={HOME[building.id][1]}
+          width="26"
+          height="26"
+          viewBox="0 0 64 64"
+          overflow="visible"
+        >
+          <g className="ui-island-stroll" style={{ animationDelay: `${-i * 0.7}s` }}>
+            <GemSvg color={building.resident} special="none" skin={skin} animationSeed={i * 5 + 1} />
+          </g>
+        </svg>
       ) : null
     )}
   </svg>

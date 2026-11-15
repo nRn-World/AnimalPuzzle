@@ -46,7 +46,11 @@ function play(level: LevelConfig, seed: number): { won: boolean; used: number } 
     if (moves.length === 0) return { won: false, used: move };
     let best = null as null | { board: typeof board; progress: LevelProgress; value: number; exploded: boolean; stole: number };
     for (const m of moves) {
-      const res = resolveSwap(board, m.from, m.to, pool, rngFrom(seed * 31 + move), { level, moveNumber: move });
+      const res = resolveSwap(board, m.from, m.to, pool, rngFrom(seed * 31 + move), {
+        level,
+        moveNumber: move,
+        enraged: !!level.boss && remaining(level, progress) <= 0.5,
+      });
       if (!res.valid) continue;
       let p = progress;
       for (const step of res.steps) p = addStepDelta(p, step);

@@ -32,7 +32,7 @@ frost, chains and wooden crates.
 
 The game is designed to be easy to pick up but hard to put down: short moves,
 clear goals, and a reward loop that feels just as good on mobile as on desktop.
-The interface is available in Swedish and English and follows your browser
+The interface is available in Swedish, English, German, Spanish, French and Turkish and follows your browser
 language — you can switch at any time in the settings.
 
 <table>
@@ -93,6 +93,7 @@ language — you can switch at any time in the settings.
 | **Daily Challenge** | A new, date-locked challenge every day. Complete it for bonus energy and a chance at exclusive animal skins. |
 | **Endless** | No level objectives — just you, the board, and the hunt for your next personal best. |
 | **Time mode** | 60 seconds on the clock and no move limit. Your best rounds of the week go on a weekly list that starts over every Monday. |
+| **Weekly special level** | One extra hard level that stays the same all week, found under the daily challenge. The first win of the week pays 100 bonus energy. |
 
 ## A world of its own
 
@@ -102,6 +103,14 @@ language — you can switch at any time in the settings.
 - **Your island** – spend the stars you win on twelve buildings and rebuild the animals' home.
 - **Daily missions** – three small goals every day that pay bonus energy.
 - **Statistics** – time played, favourite animal, longest chain and more.
+
+What is new around the journey:
+
+- **Bosses with two phases** — every boss has a health bar, and at half health it becomes enraged and attacks one move sooner.
+- **A page after every boss** — beating a chapter boss for the first time shows a short story scene.
+- **Stronger powers** — a companion's power grows at level 5 and again at level 10.
+- **A living island** — one animal moves into every building, and the islanders hand over a small gift of bonus energy once a day.
+- **Animal voices** — every companion has its own sound when its power fires, and bosses growl when they attack.
 
 ## Getting started
 
@@ -145,14 +154,14 @@ bun run preview
 | Effects | Canvas and Web Audio (generated sound effects and music, no audio files) |
 | Quality | `bun test` + `tsc --noEmit` |
 | Installation | PWA manifest + service worker (works offline), self-hosted fonts |
-| Language | Swedish and English (`src/i18n`) |
+| Language | Swedish, English, German, Spanish, French and Turkish (`src/i18n`) |
 
 ```text
 src/
 ├─ components/     Board, HUD, modals, settings and guides
 ├─ game/           Engine, levels, daily challenges, saves, audio and tests
 ├─ hooks/          useGameSession (the game flow), settings, board size
-├─ i18n/           Swedish source strings + English dictionary
+├─ i18n/           Swedish source strings + one dictionary per language
 ├─ assets/         Backgrounds and artwork
 └─ App.tsx         Thin shell that wires the pieces together
 tools/             Vite plugin that generates the service worker
@@ -188,7 +197,8 @@ Open the gear icon in the menu or the pause screen:
   setting is always respected).
 - **Symbols on the animals** — a unique shape per animal, so color is never the
   only cue.
-- **Language** — Swedish or English.
+- **Language** — Swedish, English, German, Spanish, French or Turkish.
+- **Reminders** — an optional notification when your lives are full again. It works while the game is still open in the background, for example as an installed app.
 
 Pinch-zoom is enabled. Adding a language means adding one dictionary next to
 `src/i18n/en.ts`; a test fails if any string is missing.

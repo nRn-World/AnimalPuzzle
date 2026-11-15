@@ -68,7 +68,7 @@ export interface Coord {
   col: number;
 }
 
-export type GameMode = 'campaign' | 'endless' | 'daily' | 'blitz';
+export type GameMode = 'campaign' | 'endless' | 'daily' | 'blitz' | 'weekly';
 
 export type AnimalSkinId =
   | 'classic'
@@ -233,6 +233,8 @@ export interface TurnContext {
   level: LevelConfig;
   /** 1-based number of the move being played. */
   moveNumber: number;
+  /** The boss has lost half its health and attacks one move sooner. */
+  enraged?: boolean;
 }
 
 export interface HintMove {

@@ -1,10 +1,11 @@
 import React, { useEffect, useId, useRef } from 'react';
 import { soundEngine } from '../game/audio';
 import { isHapticsSupported, vibrate } from '../game/haptics';
+import { remindersSupported, requestReminders } from '../game/reminders';
 import { Settings, updateSettings } from '../game/settings';
 import { GemColor } from '../game/types';
 import { useSettings } from '../hooks/useSettings';
-import { LANGUAGES, t } from '../i18n';
+import { LANGUAGES, loadLanguage, t } from '../i18n';
 import { UiIcon } from './UiIcon';
 import { GemSvg } from './GemSvg';
 
@@ -219,6 +220,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
             />
           </Section>
 
+          <Section title={t('Påminnelser')}>
+            <ToggleRow
+              label={t('Notis när liven är fulla')}
+              description={
+                remindersSupported()
+                  ? t('Fungerar medan spelet ligger öppet i bakgrunden, till exempel som installerad app.')
+                  : t('Den här enheten eller webbläsaren stöder inte notiser.')
+              }
+              checked={remindersSupported() && settings.reminders}
+              disabled={!remindersSupported()}
+              testId="setting-reminders"
+              onChange={(on) => {
+                if (!on) {
+                  set({ reminders: false });
+                  return;
+                }
+                void requestReminders().then((granted) => set({ reminders: granted }));
+              }}
+            />
+          </Section>
+
           <Section title={t('Tillgänglighet')}>
             <ToggleRow
               label={t('Reducerad rörelse')}
@@ -258,7 +280,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
             <div
               role="radiogroup"
               aria-label={t('Språk')}
-              className="grid grid-cols-2 gap-1.5"
+              className="grid grid-cols-3 gap-1.5"
             >
               {LANGUAGES.map((lang) => {
                 const active = settings.language === lang.id;
@@ -270,7 +292,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
                     aria-checked={active}
                     lang={lang.id}
                     data-testid={`setting-language-${lang.id}`}
-                    onClick={() => set({ language: lang.id })}
+                    onClick={() => void loadLanguage(lang.id).then(() => set({ language: lang.id }))}
                     className={`ui-btn px-2 text-xs sm:text-sm ${
                       active ? 'ui-btn-wood py-0.5' : 'py-1.5'
                     }`}

@@ -36,6 +36,7 @@ import {
   resolveSwap,
   clearCells,
   plantBeams,
+  getObjectiveCurrent,
 } from '../game/engine';
 import { vibrate } from '../game/haptics';
 import {
@@ -119,6 +120,7 @@ import {
 } from '../game/seasons';
 import { biomeOfChapter } from '../game/biomes';
 import { BOSSES } from '../game/bosses';
+import { WEEKLY_LEVEL_ENERGY, WeeklyLevelState, getWeeklyLevel, readWeeklyLevel, writeWeeklyLevel } from '../game/weeklyLevel';
 import {
   animalLevel,
   chargeFrom,
@@ -126,10 +128,12 @@ import {
   getCompanion,
   isCompanionUnlocked,
   powerTargets,
+  powerTier,
+  TIER_EXTRA_COUNT,
   readCompanion,
   writeCompanion,
 } from '../game/companions';
-import { BUILD_GIFT, IslandState, build, readIsland, totalStars, writeIsland } from '../game/island';
+import { BUILD_GIFT, IslandState, build, collectGift, readIsland, totalStars, writeIsland } from '../game/island';
 import {
   MissionEvent,
   MissionState,
@@ -149,7 +153,7 @@ import {
   writeBlitz,
   writeStats,
 } from '../game/stats';
-import { STORY_PAGES, StoryPage, nextUnseenPage, readSeenPages, writeSeenPages } from '../game/story';
+import { STORY_PAGES, StoryPage, bossPage, nextUnseenPage, readSeenPages, writeSeenPages } from '../game/story';
 import { formatNumber, Lang, t } from '../i18n';
 
 export const MAX_ENERGY = 100;
@@ -168,6 +172,8 @@ export interface EndSnapshot {
   lostToBomb?: boolean;
   /** Time mode: place on this week's list (0 = outside it). */
   blitzRank?: number;
+  /** Weekly special level: bonus energy paid for the first win of the week. */
+  weeklyEnergy?: number;
 }
 
 const EMPTY_SNAPSHOT: EndSnapshot = {
@@ -179,6 +185,13 @@ const EMPTY_SNAPSHOT: EndSnapshot = {
   specialBonus: 0,
   stars: 1,
 };
+
+/** True once the boss of a boss level has lost half its health. */
+function isBossEnraged(level: LevelConfig, progress: LevelProgress): boolean {
+  if (!level.boss) return false;
+  const goal = level.objectives.find((o) => o.kind === 'boss');
+  return !!goal && getObjectiveCurrent(goal, progress) * 2 >= goal.target;
+}
 
 function waitMs(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -270,7 +283,19 @@ export function useGameSession(language: Lang) {
   const [companion, setCompanion] = useState<GemColor>(() => readCompanion());
   const [powerCharge, setPowerCharge] = useState<number>(0);
   const skipChargeRef = useRef(false);
-  const powerNeeded = chargeNeeded(animalLevel(rewardState.album[companion]).level);
+  const companionLevel = animalLevel(rewardState.album[companion]).level;
+  const powerNeeded = chargeNeeded(companionLevel);
+
+  // The weekly special level and the page shown after a boss falls.
+  const weeklyLevel = useMemo(() => getWeeklyLevel(weekKey), [weekKey, language]);
+  const [weeklyLevelState, setWeeklyLevelState] = useState<WeeklyLevelState>(() => readWeeklyLevel(weekKey));
+  const weeklyLevelRef = useRef(weeklyLevelState);
+  const commitWeeklyLevel = useCallback((next: WeeklyLevelState) => {
+    weeklyLevelRef.current = next;
+    setWeeklyLevelState(next);
+    writeWeeklyLevel(next);
+  }, []);
+  const [bossStory, setBossStory] = useState<StoryPage | null>(null);
 
   const missions = useMemo(() => getDailyMissions(todayKey), [todayKey]);
   const [missionState, setMissionState] = useState<MissionState>(() => readMissionState(todayKey));
@@ -301,6 +326,8 @@ export function useGameSession(language: Lang) {
         ? getCampaignLevel(levelIdx)
         : mode === 'daily'
         ? dailyChallenge.level
+        : mode === 'weekly'
+        ? weeklyLevel.level
         : mode === 'blitz'
         ? {
             ...ENDLESS_CONFIG,
@@ -326,7 +353,7 @@ export function useGameSession(language: Lang) {
               },
             ],
           },
-    [blitz.best, dailyChallenge, endlessTarget, levelIdx, mode]
+    [blitz.best, dailyChallenge, endlessTarget, levelIdx, mode, weeklyLevel]
   );
 
   const [tutorialDone, setTutorialDone] = useState<boolean>(() =>
@@ -412,8 +439,9 @@ export function useGameSession(language: Lang) {
     // Mid-animation state is not a position the player can return to, and the
     // scripted tutorial board is simply replayed instead of restored.
     if (busy || tutorialStep !== 'done') return;
-    // A round against the clock cannot be paused over a restart.
-    if (mode === 'blitz') return;
+    // A round against the clock cannot be paused over a restart, and the
+    // weekly level always starts from its fixed board.
+    if (mode === 'blitz' || mode === 'weekly') return;
     // Nothing worth keeping until the first move has been made.
     if (progress.score <= 0 && movesLeft >= activeLevel.moves) return;
 
@@ -554,7 +582,12 @@ export function useGameSession(language: Lang) {
           ? getCampaignLevel(targetIdx)
           : targetMode === 'daily'
           ? dailyChallenge.level
+          : targetMode === 'weekly'
+          ? weeklyLevel.level
           : ENDLESS_CONFIG;
+      if (targetMode === 'weekly') {
+        commitWeeklyLevel({ ...weeklyLevelRef.current, attempts: weeklyLevelRef.current.attempts + 1 });
+      }
 
       if (document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
@@ -607,6 +640,8 @@ export function useGameSession(language: Lang) {
           ? createTutorialBoard()
           : targetMode === 'daily'
           ? createBoard(lvl, createSeededRng(dailyChallenge.seed))
+          : targetMode === 'weekly'
+          ? createBoard(lvl, createSeededRng(weeklyLevel.seed))
           : createBoard(lvl)
       );
       setMovesLeft(lvl.moves);
@@ -621,7 +656,7 @@ export function useGameSession(language: Lang) {
       );
       setPhase('PLAYING');
     },
-    [bumpStats, commitLives, dailyChallenge, dailyState, energy, resetInteraction, tutorialDone]
+    [bumpStats, commitLives, commitWeeklyLevel, dailyChallenge, dailyState, energy, resetInteraction, tutorialDone, weeklyLevel]
   );
 
   // Each landscape has its own music; menus and the other modes keep the calm tune.
@@ -691,6 +726,18 @@ export function useGameSession(language: Lang) {
     vibrate('victory');
   }, [bestStars, commitDaily, island]);
 
+  /** Collects the island's gift of the day. */
+  const collectIslandGift = useCallback(() => {
+    const res = collectGift(island, todayKey);
+    if (res.energy <= 0) return;
+    setIsland(res.nextState);
+    writeIsland(res.nextState);
+    commitDaily(grantReward(dailyStateRef.current, res.energy, null).nextState);
+    soundEngine.playSpecialCreate('prism');
+  }, [commitDaily, island, todayKey]);
+
+  const closeBossStory = useCallback(() => setBossStory(null), []);
+
   // The story page that is waiting to be read, if any.
   const duePage = useMemo(
     () => nextUnseenPage(Math.floor(highestUnlockedIdx / LEVELS_PER_CHAPTER) + 1, seenPages),
@@ -726,6 +773,11 @@ export function useGameSession(language: Lang) {
     soundEngine.playClick();
     startSession(mode, levelIdx, false, true);
   }, [levelIdx, mode, showGuide, startSession]);
+
+  const startWeekly = useCallback(() => {
+    soundEngine.playClick();
+    startSession('weekly', 0);
+  }, [startSession]);
 
   const restart = useCallback(() => {
     soundEngine.playClick();
@@ -795,6 +847,8 @@ export function useGameSession(language: Lang) {
 
   const recordBestScore = useCallback(
     (score: number): number => {
+      // Only the three classic modes keep a best score of their own.
+      if (mode === 'weekly' || mode === 'blitz') return Math.max(0, Math.round(score));
       const record = nextBestScore(
         {
           campaign: bestCampaignScore,
@@ -1042,7 +1096,8 @@ export function useGameSession(language: Lang) {
       if ((result.bossAttack || result.bombsPlanted) && !result.reshuffled) {
         setTransitionMode('none');
         setBoard(result.finalBoard);
-        soundEngine.playBlast('crack');
+        if (result.bossAttack) soundEngine.playBossGrowl();
+        else soundEngine.playBlast('crack');
         vibrate('invalid');
         if (result.bossStole) {
           updatedMoves = Math.max(0, updatedMoves - result.bossStole);
@@ -1080,12 +1135,30 @@ export function useGameSession(language: Lang) {
         setEndlessTarget(nextMilestone);
       }
 
+      // Halfway down, the boss loses its temper and starts attacking sooner.
+      const bossGoal = activeLevel.boss ? activeLevel.objectives.find((o) => o.kind === 'boss') : undefined;
+      if (bossGoal) {
+        const before = getObjectiveCurrent(bossGoal, startingProgress);
+        const after = getObjectiveCurrent(bossGoal, runningProgress);
+        if (before * 2 < bossGoal.target && after * 2 >= bossGoal.target && after < bossGoal.target) {
+          soundEngine.playBossGrowl();
+          setShaking(true);
+          window.setTimeout(() => setShaking(false), 420);
+          setStatusNotice(t('{name} blir rasande!', { name: t(bossGoal.label) }));
+          window.setTimeout(() => {
+            if (runTokenRef.current === token) setStatusNotice(null);
+          }, 2200);
+        }
+      }
+
       // Check victory (Campaign or Daily)
       const currentObjectives =
         mode === 'campaign'
           ? getCampaignLevel(levelIdx).objectives
           : mode === 'daily'
           ? dailyChallenge.level.objectives
+          : mode === 'weekly'
+          ? weeklyLevel.level.objectives
           : null;
 
       if (currentObjectives && areObjectivesComplete(currentObjectives, runningProgress)) {
@@ -1118,6 +1191,24 @@ export function useGameSession(language: Lang) {
             dateKey: todayKey,
           })
         );
+
+        // The weekly special level pays out once per week.
+        let weeklyEnergy: number | undefined;
+        if (mode === 'weekly') {
+          weeklyEnergy = 0;
+          if (!weeklyLevelRef.current.won) {
+            commitWeeklyLevel({ ...weeklyLevelRef.current, won: true });
+            commitDaily(grantReward(dailyStateRef.current, WEEKLY_LEVEL_ENERGY, null).nextState);
+            weeklyEnergy = WEEKLY_LEVEL_ENERGY;
+          }
+        }
+
+        // A boss beaten for the first time gets a page in the story.
+        if (mode === 'campaign' && activeLevel.boss && levelIdx + 1 > highestUnlockedIdx) {
+          const chapter = activeLevel.chapter ?? 1;
+          const biome = biomeOfChapter(chapter);
+          setBossStory(bossPage(chapter, biome, BOSSES[biome].nameSv));
+        }
 
         // The last level of a chapter hides a chest the first time it is won.
         let chest: EndSnapshot['chest'];
@@ -1197,6 +1288,7 @@ export function useGameSession(language: Lang) {
           specialBonus,
           stars,
           chest,
+          weeklyEnergy,
         });
         setBusy(false);
         setPhase('VICTORY');
@@ -1254,6 +1346,8 @@ export function useGameSession(language: Lang) {
       activeLevel,
       bestStars,
       bumpStats,
+      commitWeeklyLevel,
+      weeklyLevel,
       companion,
       powerNeeded,
       reportMission,
@@ -1293,6 +1387,7 @@ export function useGameSession(language: Lang) {
       const result = resolveSwap(board, a, b, levelColorPool(activeLevel), Math.random, {
         level: activeLevel,
         moveNumber: Math.max(1, activeLevel.moves - movesLeft + 1),
+        enraged: isBossEnraged(activeLevel, progress),
       });
 
       const swappedPreview = cloneBoard(board);
@@ -1436,24 +1531,27 @@ export function useGameSession(language: Lang) {
     setSelected(null);
     bumpStats({ powersUsed: 1 });
     reportMission({ powers: 1 });
-    soundEngine.playSpecialCreate('prism');
+    soundEngine.playAnimalVoice(GEM_COLORS_ORDER.indexOf(companion));
     vibrate('victory');
     setStatusNotice(`${t(def.powerSv)}!`);
     window.setTimeout(() => setStatusNotice(null), 1800);
 
+    // Powers grow at level 5 and 10.
+    const tier = powerTier(companionLevel);
+    const extra = (tier - 1) * TIER_EXTRA_COUNT;
     if (def.power === 'moves') {
-      if (mode === 'blitz') setBlitzLeft((left) => left + 8);
-      else setMovesLeft((moves) => moves + 3);
+      if (mode === 'blitz') setBlitzLeft((left) => left + 8 + extra * 3);
+      else setMovesLeft((moves) => moves + 3 + extra);
       return;
     }
     if (def.power === 'specials') {
-      const planted = plantBeams(board, 3);
+      const planted = plantBeams(board, 3 + extra);
       setTransitionMode('none');
       setBoard(planted.board);
       fxRef.current?.emitBlasts(planted.spots.map((spot) => ({ type: 'match' as const, row: spot.row, col: spot.col })));
       return;
     }
-    const targets = powerTargets(board, def.power);
+    const targets = powerTargets(board, def.power, Math.random, tier);
     const result = clearCells(board, targets, levelColorPool(activeLevel));
     if (!result.valid || result.steps.length === 0) return;
     skipChargeRef.current = true;
@@ -1464,6 +1562,7 @@ export function useGameSession(language: Lang) {
     bumpStats,
     busy,
     companion,
+    companionLevel,
     endlessTarget,
     energy,
     maxCascade,
@@ -1649,6 +1748,14 @@ export function useGameSession(language: Lang) {
     stats,
     island,
     buildNext,
+    collectIslandGift,
+    startWeekly,
+    companionLevel,
+    weeklyLevel: weeklyLevel.level,
+    weeklyLevelState,
+    bossStoryPage: phase === 'VICTORY' ? null : bossStory,
+    closeBossStory,
+    bossEnraged: isBossEnraged(activeLevel, progress),
     storyPage,
     closeStory,
     readStory,

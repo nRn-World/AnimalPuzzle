@@ -2,8 +2,12 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
+import { de } from './de';
 import { en } from './en';
-import { detectLanguage, formatNumber, interpolate, setLanguage, t } from './index';
+import { es } from './es';
+import { fr } from './fr';
+import { tr } from './tr';
+import { detectLanguage, formatNumber, interpolate, loadLanguage, setLanguage, t } from './index';
 
 const SRC_DIR = join(import.meta.dirname, '..');
 
@@ -52,7 +56,7 @@ function collectSourceStrings(): Map<string, string> {
 }
 
 // Identifiers and proper nouns that are legitimately the same in both languages.
-const SAME_IN_BOTH = new Set(['Nova', 'SUPERNOVA', 'Svenska', 'English']);
+const SAME_IN_BOTH = new Set(['Nova', 'SUPERNOVA', 'Svenska', 'English', 'Deutsch', 'Español', 'Français', 'Türkçe']);
 
 function placeholders(text: string): string[] {
   return Array.from(text.matchAll(/\{(\w+)\}/g), (m) => m[1]).sort();
@@ -114,7 +118,42 @@ test('t() falls back to the source text and fills in placeholders', () => {
 test('language detection prefers Swedish only for Swedish browsers', () => {
   assert.equal(detectLanguage(['sv-SE', 'en']), 'sv');
   assert.equal(detectLanguage(['en-GB', 'sv']), 'en');
-  assert.equal(detectLanguage(['de']), 'en');
+  assert.equal(detectLanguage(['de']), 'de');
+  assert.equal(detectLanguage(['tr-TR', 'en']), 'tr');
+  assert.equal(detectLanguage(['ja']), 'en');
   assert.equal(detectLanguage([]), 'sv');
   assert.equal(detectLanguage(undefined), 'sv');
+});
+
+test('German, Spanish, French and Turkish cover exactly the English entries', () => {
+  for (const [name, dict] of Object.entries({ de, es, fr, tr })) {
+    assert.deepEqual(Object.keys(dict).sort(), Object.keys(en).sort(), `${name}: keys differ from en.ts`);
+    for (const [source, translation] of Object.entries(dict)) {
+      assert.deepEqual(placeholders(translation), placeholders(source), `${name}: placeholders of ${JSON.stringify(source)}`);
+      assert.ok(translation.trim().length > 0, `${name}: empty translation for ${JSON.stringify(source)}`);
+    }
+  }
+});
+
+test('generated chapter names follow the grammar of each language', async () => {
+  setLanguage('de');
+  assert.equal(t('Spela nu'), 'Play now', 'English until the dictionary has loaded');
+  for (const lang of ['de', 'es', 'fr', 'tr'] as const) assert.ok(await loadLanguage(lang));
+  try {
+    setLanguage('de');
+    assert.equal(t('Dimmiga dalen'), 'Nebliges Tal');
+    assert.equal(t('Dimmiga ängen'), 'Neblige Wiese');
+    assert.equal(t('Dimmiga skogen'), 'Nebliger Wald');
+    assert.equal(t('dalen'), 'Tal');
+    setLanguage('fr');
+    assert.equal(t('Dimmiga dalen'), 'Vallée Brumeuse');
+    assert.equal(t('Stora sjön'), 'Grand Lac');
+    setLanguage('es');
+    assert.equal(t('Gyllene ön'), 'Isla Dorada');
+    setLanguage('tr');
+    assert.equal(t('Dimmiga dalen'), 'Sisli Vadi');
+    assert.equal(formatNumber(12400), '12.400');
+  } finally {
+    setLanguage('sv');
+  }
 });

@@ -1014,3 +1014,45 @@ html[data-reduce-motion='true'] .animate-gem-hop,
 html[data-reduce-motion='true'] .animate-gem-cheer {
   animation: none;
 }
+
+/* Island residents stroll back and forth; an enraged boss shakes. */
+.ui-island-stroll {
+  animation: island-stroll 5s ease-in-out infinite;
+}
+@keyframes island-stroll {
+  0%,
+  100% {
+    transform: translate(-10px, 0);
+  }
+  25% {
+    transform: translate(0, -5px);
+  }
+  50% {
+    transform: translate(10px, 0);
+  }
+  75% {
+    transform: translate(0, -5px);
+  }
+}
+.animate-boss-rage {
+  animation: boss-rage 420ms ease-in-out infinite;
+}
+@keyframes boss-rage {
+  0%,
+  100% {
+    transform: rotate(-7deg) scale(1.08);
+  }
+  50% {
+    transform: rotate(7deg) scale(1.08);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-island-stroll,
+  .animate-boss-rage {
+    animation: none;
+  }
+}
+html[data-reduce-motion='true'] .ui-island-stroll,
+html[data-reduce-motion='true'] .animate-boss-rage {
+  animation: none;
+}

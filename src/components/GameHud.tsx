@@ -43,6 +43,8 @@ interface GameHudProps {
   busy: boolean;
   /** Seconds left in the time mode; shown instead of the moves. */
   timeLeft?: number;
+  /** The boss has lost half its health and attacks sooner. */
+  bossEnraged?: boolean;
   companion: GemColor;
   powerCharge: number;
   powerNeeded: number;
@@ -71,6 +73,7 @@ export const GameHud: React.FC<GameHudProps> = ({
   canFullscreen = false,
   busy,
   timeLeft,
+  bossEnraged = false,
   companion,
   powerCharge,
   powerNeeded,
@@ -130,6 +133,8 @@ export const GameHud: React.FC<GameHudProps> = ({
                 ? t('Daglig')
                 : mode === 'blitz'
                 ? t('60 sekunder')
+                : mode === 'weekly'
+                ? t('Veckans utmaning')
                 : t('Oändligt')}
             </div>
             <h1 className="font-display text-2xl lg:text-3xl truncate leading-tight">
@@ -198,8 +203,26 @@ export const GameHud: React.FC<GameHudProps> = ({
                 <div
                   key={obj.id}
                   title={t(obj.label)}
-                  className="flex items-center gap-1 lg:gap-2.5"
+                  className={`relative flex items-center gap-1 lg:gap-2.5 ${
+                    obj.kind === 'boss' ? 'w-full pb-3' : ''
+                  }`}
                 >
+                  {obj.kind === 'boss' && (
+                    <span
+                      data-testid="boss-health"
+                      data-enraged={bossEnraged}
+                      aria-hidden="true"
+                      className="absolute inset-x-0 bottom-0 h-2.5 border-2 border-[#111111] bg-[#FFFFFF]/70"
+                    >
+                      <span
+                        className={`block h-full origin-left transition-transform duration-300 ${
+                          bossEnraged ? 'bg-[#FF2E4D]' : 'bg-[#39D353]'
+                        }`}
+                        style={{ transform: `scaleX(${Math.max(0, 1 - current / obj.target)})` }}
+                      />
+                      <span className="absolute inset-y-0 left-1/2 w-0.5 bg-[#111111]" />
+                    </span>
+                  )}
                   <div className="w-10 h-10 shrink-0 flex items-center justify-center">
                     {obj.kind === 'color' && obj.color && (
                       <GemSvg
@@ -216,7 +239,10 @@ export const GameHud: React.FC<GameHudProps> = ({
                     {obj.kind === 'honey' && <HoneySvg className="w-7 h-7 lg:w-9 lg:h-9" />}
                     {obj.kind === 'egg' && <EggSvg className="w-7 h-7 lg:w-9 lg:h-9" />}
                     {obj.kind === 'boss' && (
-                      <BossSvg biome={biomeOfChapter(level.chapter ?? 1)} className="w-9 h-9 lg:w-10 lg:h-10" />
+                      <BossSvg
+                        className={`w-9 h-9 lg:w-10 lg:h-10 ${bossEnraged && !done ? 'animate-boss-rage' : ''}`}
+                        biome={biomeOfChapter(level.chapter ?? 1)}
+                      />
                     )}
                     {(obj.kind === 'score' || obj.kind === 'specials') && (
                       <UiIcon name="star" className="w-6 h-6 lg:w-8 lg:h-8 text-[#E09A00]" />
@@ -225,8 +251,15 @@ export const GameHud: React.FC<GameHudProps> = ({
                       <UiIcon name="exclamation" className="w-6 h-6 lg:w-8 lg:h-8 text-[#0A6FB0]" />
                     )}
                   </div>
-                  <span className="sr-only lg:not-sr-only min-w-0 flex-1 truncate text-xs font-bold">
+                  <span
+                    className={`min-w-0 flex-1 truncate text-xs font-bold ${
+                      obj.kind === 'boss' ? '' : 'sr-only lg:not-sr-only'
+                    }`}
+                  >
                     {t(obj.label)}
+                    {obj.kind === 'boss' && bossEnraged && !done && (
+                      <span className="ml-1 font-extrabold uppercase text-[#D4002A]">· {t('Rasande')}</span>
+                    )}
                   </span>
                   <span className="font-display text-2xl leading-none shrink-0">
                     {done ? (

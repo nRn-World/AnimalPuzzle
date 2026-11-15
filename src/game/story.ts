@@ -191,3 +191,44 @@ export function readSeenPages(): string[] {
 export function writeSeenPages(seen: string[]): void {
   writeJson(STORAGE_KEYS.story, seen);
 }
+
+// --- After a boss ---------------------------------------------------------------
+
+/** Two short scenes per landscape; they alternate from chapter to chapter. */
+const BOSS_SCENES: Record<BiomeId, Array<{ cast: GemColor[]; captionSv: string; saySv: string }>> = {
+  skargard: [
+    { cast: ['ruby', 'cobalt'], captionSv: 'Kapten Krake sjönk muttrande tillbaka i djupet, och farleden låg öppen.', saySv: 'Hissa segel!' },
+    { cast: ['amber', 'emerald'], captionSv: 'Kraken tappade sin hatt i vågorna. Lejonet bär den nu med stolthet.', saySv: 'Den klär mig!' },
+  ],
+  ang: [
+    { cast: ['amethyst', 'emerald'], captionSv: 'Getingdrottningen surrade iväg över klövern, och ängen blev stilla igen.', saySv: 'Äntligen picknick!' },
+    { cast: ['ruby', 'amethyst'], captionSv: 'Bina tackade för hjälpen med en burk av sin bästa honung.', saySv: 'Dela lika nu!' },
+  ],
+  oken: [
+    { cast: ['tangerine', 'lime'], captionSv: 'Sandormen grävde ner sig djupt, och en oas glittrade fram bakom dynen.', saySv: 'Vatten!' },
+    { cast: ['lime', 'amber'], captionSv: 'Sköldpaddan kom fram sist av alla, men hade hela tiden rätt om vägen.', saySv: 'Det var ju det jag sa.' },
+  ],
+  vinter: [
+    { cast: ['quartz', 'mint'], captionSv: 'Isdraken gäspade, vände sig om och somnade på nytt. Passet var fritt.', saySv: 'Smyg, smyg...' },
+    { cast: ['cobalt', 'quartz'], captionSv: 'Pingvinen åkte kana hela vägen ner från glaciären, till allas förtjusning.', saySv: 'En gång till!' },
+  ],
+  rymden: [
+    { cast: ['rose', 'sky'], captionSv: 'Kapten Blip lämnade tillbaka varenda drag och blev bjuden på te i raketen.', saySv: 'Socker i?' },
+    { cast: ['violet', 'rose'], captionSv: 'Pandan hittade en ny stjärnbild som ser precis ut som en bambu.', saySv: 'Den är min.' },
+  ],
+  vulkan: [
+    { cast: ['amber', 'tangerine'], captionSv: 'Lavadraken blåste en sista rökring och släppte fram flocken.', saySv: 'Vi klarade det!' },
+    { cast: ['ruby', 'violet'], captionSv: 'Marken svalnade under tassarna, och långt borta syntes havet.', saySv: 'Hem, hallå!' },
+  ],
+};
+
+/** The page shown the first time the boss of a chapter is beaten. */
+export function bossPage(chapter: number, biome: BiomeId, bossNameSv: string): StoryPage {
+  const scenes = BOSS_SCENES[biome];
+  const scene = scenes[Math.abs(chapter) % scenes.length];
+  return {
+    id: `boss-${chapter}`,
+    titleSv: bossNameSv,
+    panels: [{ biome, cast: scene.cast, captionSv: scene.captionSv, saySv: scene.saySv }],
+  };
+}
