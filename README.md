@@ -112,6 +112,16 @@ What is new around the journey:
 - **A living island** — one animal moves into every building, and the islanders hand over a small gift of bonus energy once a day.
 - **Animal voices** — every companion has its own sound when its power fires, and bosses growl when they attack.
 
+Reasons to come back:
+
+- **Weekly calendar** — one box a day with bonus energy, the seventh is the big one. A missed day costs nothing.
+- **Monthly pass** — every round, win and finished mission fills a ten-step reward ladder that starts over each month.
+- **More achievements** — long-term goals on top of the first eight.
+- **Island upgrades** — every building can be upgraded for stars and then pays its daily gift twice.
+- **Challenge a friend** — a time-mode result can be shared as a link; the friend starts on the same board and sees the score to beat. No server involved.
+- **A talking companion** — short speech bubbles on long chains, when moves run low and when the power is ready.
+- **Save file** — download everything as a file in the settings and load it on another device.
+
 ## Getting started
 
 **Requires:** [Bun](https://bun.sh) 1.x

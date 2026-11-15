@@ -11,7 +11,10 @@ import {
   getCampaignLevel,
   getChapter,
 } from './levels';
-import { setLanguage, t } from '../i18n';
+import { setLanguage, t, loadLanguage } from '../i18n';
+
+// Dictionaries are separate files; fetch English before the tests run.
+await loadLanguage('en');
 
 // Every 97th level plus both ends: a spread over the whole campaign.
 const SAMPLE: number[] = [];

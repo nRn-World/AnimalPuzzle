@@ -9,7 +9,20 @@ export type AchievementId =
   | 'chains_30'
   | 'specials_25'
   | 'score_10k'
-  | 'daily_3';
+  | 'daily_3'
+  | 'wins_25'
+  | 'wins_100'
+  | 'wins_500'
+  | 'cascade_7'
+  | 'ice_500'
+  | 'crates_250'
+  | 'chains_150'
+  | 'specials_150'
+  | 'specials_500'
+  | 'score_100k'
+  | 'score_1m'
+  | 'daily_10'
+  | 'daily_30';
 
 export type AchievementIconKind =
   | 'trophy'
@@ -117,6 +130,124 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descSv: 'Slutför 3 dagliga utmaningar för exklusiva belöningar.',
     target: 3,
     rewardEnergy: 30,
+    icon: 'daily',
+    statKey: 'dailyCompletedCount',
+  },
+  // Long-term goals for players who have finished the first set.
+  {
+    id: 'wins_25',
+    titleSv: 'Nivåjägare',
+    descSv: 'Klara 25 nivåer i kampanjläget.',
+    target: 25,
+    rewardEnergy: 40,
+    icon: 'trophy',
+    statKey: 'levelsWon',
+  },
+  {
+    id: 'wins_100',
+    titleSv: 'Äventyrare',
+    descSv: 'Klara 100 nivåer i kampanjläget.',
+    target: 100,
+    rewardEnergy: 80,
+    icon: 'trophy',
+    statKey: 'levelsWon',
+  },
+  {
+    id: 'wins_500',
+    titleSv: 'Legend',
+    descSv: 'Klara 500 nivåer i kampanjläget.',
+    target: 500,
+    rewardEnergy: 200,
+    icon: 'trophy',
+    statKey: 'levelsWon',
+  },
+  {
+    id: 'cascade_7',
+    titleSv: 'Kedjemästare',
+    descSv: 'Utlös en kedjereaktion på minst ×7 i ett enda drag.',
+    target: 7,
+    rewardEnergy: 50,
+    icon: 'cascade',
+    statKey: 'bestCascade',
+  },
+  {
+    id: 'ice_500',
+    titleSv: 'Isbrytare',
+    descSv: 'Tina sammanlagt 500 isrutor.',
+    target: 500,
+    rewardEnergy: 60,
+    icon: 'ice',
+    statKey: 'totalIceCleared',
+  },
+  {
+    id: 'crates_250',
+    titleSv: 'Lådkrossare',
+    descSv: 'Spräck sammanlagt 250 trälådor.',
+    target: 250,
+    rewardEnergy: 60,
+    icon: 'crate',
+    statKey: 'totalCratesCleared',
+  },
+  {
+    id: 'chains_150',
+    titleSv: 'Befriare',
+    descSv: 'Befria sammanlagt 150 fastkedjade djur.',
+    target: 150,
+    rewardEnergy: 60,
+    icon: 'chain',
+    statKey: 'totalChainsCleared',
+  },
+  {
+    id: 'specials_150',
+    titleSv: 'Stråltrollare',
+    descSv: 'Skapa 150 specialbrickor.',
+    target: 150,
+    rewardEnergy: 50,
+    icon: 'special',
+    statKey: 'totalSpecialsCreated',
+  },
+  {
+    id: 'specials_500',
+    titleSv: 'Novamästare',
+    descSv: 'Skapa 500 specialbrickor.',
+    target: 500,
+    rewardEnergy: 120,
+    icon: 'special',
+    statKey: 'totalSpecialsCreated',
+  },
+  {
+    id: 'score_100k',
+    titleSv: 'Poängjägare',
+    descSv: 'Samla ihop 100 000 poäng totalt.',
+    target: 100000,
+    rewardEnergy: 60,
+    icon: 'score',
+    statKey: 'totalScore',
+  },
+  {
+    id: 'score_1m',
+    titleSv: 'Poängmiljonär',
+    descSv: 'Samla ihop 1 000 000 poäng totalt.',
+    target: 1000000,
+    rewardEnergy: 200,
+    icon: 'score',
+    statKey: 'totalScore',
+  },
+  {
+    id: 'daily_10',
+    titleSv: 'Daglig mästare',
+    descSv: 'Slutför 10 dagliga utmaningar.',
+    target: 10,
+    rewardEnergy: 60,
+    icon: 'daily',
+    statKey: 'dailyCompletedCount',
+  },
+  {
+    id: 'daily_30',
+    titleSv: 'Daglig legend',
+    descSv: 'Slutför 30 dagliga utmaningar.',
+    target: 30,
+    rewardEnergy: 150,
     icon: 'daily',
     statKey: 'dailyCompletedCount',
   },

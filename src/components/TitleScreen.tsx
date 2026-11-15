@@ -18,6 +18,9 @@ import { AchievementsModal, TitleAchievementsSummary } from './AchievementsSecti
 import { StarRating } from './StarRating';
 import titleBackdrop from '../assets/images/title-backdrop.webp';
 import { WorkshopFireCanvas } from './WorkshopFireCanvas';
+import { CalendarState } from '../game/calendar';
+import { PassState } from '../game/seasonPass';
+import { Challenge } from '../game/challenge';
 import { CollectionModal } from './CollectionModal';
 import { HUB_TABS, HubModal, HubTab } from './HubModal';
 import { StoryModal } from './StoryModal';
@@ -78,6 +81,14 @@ interface TitleScreenProps {
   island: IslandState;
   onBuild: () => void;
   onCollectGift: () => void;
+  onUpgrade: () => void;
+  calendar: CalendarState;
+  onClaimCalendar: () => void;
+  pass: PassState;
+  onClaimPass: () => void;
+  challenge: Challenge | null;
+  onStartChallenge: () => void;
+  onDismissChallenge: () => void;
   weeklyLevel: LevelConfig;
   weeklyLevelState: WeeklyLevelState;
   onStartWeekly: () => void;
@@ -350,6 +361,14 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   island,
   onBuild,
   onCollectGift,
+  onUpgrade,
+  calendar,
+  onClaimCalendar,
+  pass,
+  onClaimPass,
+  challenge,
+  onStartChallenge,
+  onDismissChallenge,
   weeklyLevel,
   weeklyLevelState,
   onStartWeekly,
@@ -375,6 +394,8 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
 }) => {
   const [imgFailed, setImgFailed] = useState(false);
   const [achievementsOpen, setAchievementsOpen] = useState(false);
+  // Phones: the hunt, skins and achievements are folded away until asked for.
+  const [moreOpen, setMoreOpen] = useState(false);
   const [collectionOpen, setCollectionOpen] = useState(false);
   const [hubTab, setHubTab] = useState<HubTab | null>(null);
   const { canInstall, install } = useInstallPrompt();
@@ -567,6 +588,34 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-4">
               <div className="min-w-0">
               {/* Phones and tablets: the play button comes first, so starting never needs a scroll */}
+              {challenge && (
+                <div
+                  data-testid="challenge-banner"
+                  className="mb-2.5 flex flex-wrap items-center gap-2 border-[3px] border-[#111111] bg-[var(--ui-yellow)] px-2.5 py-1.5"
+                >
+                  <span className="min-w-0 flex-1 text-xs sm:text-[13px] font-extrabold leading-snug">
+                    {t('En vän utmanar dig: slå {n} poäng på 60 sekunder, med samma startbräde.', {
+                      n: formatNumber(challenge.score),
+                    })}
+                  </span>
+                  <button
+                    type="button"
+                    data-testid="challenge-start"
+                    onClick={onStartChallenge}
+                    className="ui-btn ui-btn-green px-3 py-1 text-sm"
+                  >
+                    {t('Anta utmaningen')}
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="challenge-dismiss"
+                    onClick={onDismissChallenge}
+                    className="ui-btn px-2.5 py-1 text-sm"
+                  >
+                    {t('Inte nu')}
+                  </button>
+                </div>
+              )}
               {compact && (
                 <div data-testid="play-top" className="mb-2.5 flex flex-wrap items-stretch gap-2.5">
                   {playCta}
@@ -857,7 +906,21 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               )}
 
               </div>
-              <div className="min-w-0">
+              {/* Phones: the menu buttons come first and the extras fold away, so nothing needs a scroll */}
+              <div className={`min-w-0 ${compact ? 'flex flex-col' : ''}`}>
+              {compact && (
+                <button
+                  type="button"
+                  data-testid="more-toggle"
+                  aria-expanded={moreOpen}
+                  onClick={() => setMoreOpen((open) => !open)}
+                  className="ui-btn order-3 mt-2.5 w-full px-2 py-1 text-xs"
+                >
+                  <UiIcon name={moreOpen ? 'up' : 'down'} className="h-3.5 w-3.5" />
+                  {moreOpen ? t('Visa mindre') : t('Veckans jakt, djur-gäng och utmärkelser')}
+                </button>
+              )}
+              <div data-testid="menu-extras" className={compact ? (moreOpen ? 'order-4' : 'hidden') : ''}>
               {/* Seasonal event: a big hunt with its own skin */}
               {season ? (
                 <div data-testid="season-event" className="mt-2.5 mb-2.5 lg:mt-0 border-[3px] border-[#111111] bg-[var(--ui-yellow)] px-2.5 py-1.5">
@@ -1010,9 +1073,10 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                   onOpenModal={() => setAchievementsOpen(true)}
                 />
               </div>
+              </div>
 
               {/* Missions, companion, island, statistics and the album */}
-              <div className="mt-2.5 grid grid-cols-5 gap-1.5">
+              <div className="order-1 mt-2.5 grid grid-cols-5 gap-1.5">
                 {HUB_TABS.map((entry) => (
                   <button
                     key={entry.id}
@@ -1041,7 +1105,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               </div>
 
               {/* CTA */}
-              <div className="mt-3.5 flex flex-wrap items-stretch gap-2.5">
+              <div className={`order-2 flex flex-wrap items-stretch gap-2.5 ${compact ? 'mt-2.5' : 'mt-3.5'}`}>
                 {!compact && playCta}
 
                 <div className="flex w-full sm:w-auto gap-2.5">
@@ -1098,6 +1162,11 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
         stars={totalStars(bestStars)}
         onBuild={onBuild}
         onCollectGift={onCollectGift}
+        onUpgrade={onUpgrade}
+        calendar={calendar}
+        onClaimCalendar={onClaimCalendar}
+        pass={pass}
+        onClaimPass={onClaimPass}
         todayKey={todayKey}
         stats={stats}
         achievementStats={achievementState.stats}

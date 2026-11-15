@@ -1056,3 +1056,10 @@ html[data-reduce-motion='true'] .ui-island-stroll,
 html[data-reduce-motion='true'] .animate-boss-rage {
   animation: none;
 }
+
+/* Phones: the map gives up height so the whole menu fits on one screen. */
+@media (max-width: 63.99rem) {
+  .ui-menu-fit .ui-saga {
+    height: clamp(8.5rem, calc(100dvh - 36.75rem), 17.5rem);
+  }
+}

@@ -1,7 +1,8 @@
-import React, { useEffect, useId, useRef } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { soundEngine } from '../game/audio';
 import { isHapticsSupported, vibrate } from '../game/haptics';
 import { remindersSupported, requestReminders } from '../game/reminders';
+import { downloadSave, importSave, parseSave } from '../game/saveFile';
 import { Settings, updateSettings } from '../game/settings';
 import { GemColor } from '../game/types';
 import { useSettings } from '../hooks/useSettings';
@@ -120,6 +121,8 @@ const SliderRow: React.FC<SliderRowProps> = ({ label, value, disabled = false, t
 export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) => {
   const settings = useSettings();
   const closeRef = useRef<HTMLButtonElement | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const hapticsSupported = isHapticsSupported();
 
   useEffect(() => {
@@ -222,7 +225,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
 
           <Section title={t('Påminnelser')}>
             <ToggleRow
-              label={t('Notis när liven är fulla')}
+              label={t('Notis om fulla liv och nya uppdrag')}
               description={
                 remindersSupported()
                   ? t('Fungerar medan spelet ligger öppet i bakgrunden, till exempel som installerad app.')
@@ -239,6 +242,49 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
                 void requestReminders().then((granted) => set({ reminders: granted }));
               }}
             />
+          </Section>
+
+          <Section title={t('Sparfil')}>
+            <p className="text-xs font-semibold text-[#4B4B4B]">
+              {t('Ladda ner allt du har samlat som en fil, och läs in den på en annan enhet eller efter att webbläsaren rensats.')}
+            </p>
+            <div className="grid grid-cols-2 gap-1.5">
+              <button type="button" data-testid="save-export" onClick={downloadSave} className="ui-btn px-2 py-1.5 text-xs sm:text-sm">
+                {t('Ladda ner sparfil')}
+              </button>
+              <button
+                type="button"
+                data-testid="save-import"
+                onClick={() => fileRef.current?.click()}
+                className="ui-btn px-2 py-1.5 text-xs sm:text-sm"
+              >
+                {t('Läs in sparfil')}
+              </button>
+            </div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/json,.json"
+              data-testid="save-file-input"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = '';
+                if (!file) return;
+                void file.text().then((text) => {
+                  if (!parseSave(text)) {
+                    setSaveNotice(t('Filen är inte en sparfil från AnimalPuzzle.'));
+                    return;
+                  }
+                  if (!window.confirm(t('Läsa in sparfilen? Det som finns sparat på den här enheten ersätts.'))) return;
+                  if (importSave(text)) window.location.reload();
+                  else setSaveNotice(t('Sparfilen kunde inte läsas in.'));
+                });
+              }}
+            />
+            <div role="status" data-testid="save-notice" className="min-h-4 text-[11px] font-bold text-[#D4002A]">
+              {saveNotice}
+            </div>
           </Section>
 
           <Section title={t('Tillgänglighet')}>

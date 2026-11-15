@@ -21,6 +21,8 @@ export function buildShareText(input: ShareResultInput): string {
       ? t('AnimalPuzzle · Dagens utmaning {date}', { date: input.dateKey })
       : input.mode === 'endless'
       ? t('AnimalPuzzle · Oändligt läge')
+      : input.mode === 'blitz'
+      ? t('AnimalPuzzle · Kan du slå mig på 60 sekunder?')
       : t('AnimalPuzzle · Nivå {n}: {name}', {
           n: input.levelNumber,
           name: t(input.levelName),

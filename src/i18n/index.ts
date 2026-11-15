@@ -1,4 +1,3 @@
-import { en } from './en';
 
 /**
  * Minimal gettext-style i18n. Swedish is the source language: the Swedish
@@ -21,13 +20,13 @@ export const LANGUAGES: Array<{ id: Lang; label: string }> = [
 
 type Dictionary = Record<string, string>;
 
-/** Swedish needs none and English ships with the game; the rest load on demand. */
+/** Swedish needs none; every other language is a file of its own, loaded on demand. */
 const DICTIONARIES: Partial<Record<Lang, Dictionary | null>> = {
   sv: null,
-  en,
 };
 
 const LOADERS: Partial<Record<Lang, () => Promise<Dictionary>>> = {
+  en: () => import('./en').then((m) => m.en),
   de: () => import('./de').then((m) => m.de),
   es: () => import('./es').then((m) => m.es),
   fr: () => import('./fr').then((m) => m.fr),
@@ -36,7 +35,7 @@ const LOADERS: Partial<Record<Lang, () => Promise<Dictionary>>> = {
 
 /**
  * Fetches the dictionary of a language that is not bundled with the first
- * load. Until it has arrived `t()` answers in English. Resolves to false if
+ * load. Until it has arrived `t()` answers in Swedish. Resolves to false if
  * the download failed (for example offline before the file was cached).
  */
 export async function loadLanguage(lang: Lang): Promise<boolean> {
@@ -116,7 +115,7 @@ export function interpolate(template: string, params?: TParams): string {
 
 /** Translates a Swedish source string and fills in `{name}` placeholders. */
 export function t(source: string, params?: TParams): string {
-  const dict = currentLang in DICTIONARIES ? DICTIONARIES[currentLang] : en;
+  const dict = DICTIONARIES[currentLang] ?? null;
   const entry = dict ? dict[source] : undefined;
   let template = entry ? plain(entry) : source;
   // Generated names ("Dimmiga dalen") have no entry of their own; they are

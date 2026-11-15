@@ -32,6 +32,8 @@ export const STORAGE_KEYS = {
   stats: `${STORAGE_PREFIX}stats_v1`,
   blitz: `${STORAGE_PREFIX}blitz_v1`,
   weeklyLevel: `${STORAGE_PREFIX}weekly_level_v1`,
+  calendar: `${STORAGE_PREFIX}calendar_v1`,
+  seasonPass: `${STORAGE_PREFIX}season_pass_v1`,
 } as const;
 
 /** The subset of the Storage API this module relies on (easy to fake in tests). */

@@ -1403,8 +1403,6 @@ export const tr: Record<string, string> = {
     "Bugün alındı",
   "Påminnelser":
     "Hatırlatmalar",
-  "Notis när liven är fulla":
-    "Canlar dolunca bildir",
   "Fungerar medan spelet ligger öppet i bakgrunden, till exempel som installerad app.":
     "Oyun arka planda açık kaldığı sürece çalışır; örneğin yüklenmiş uygulama olarak.",
   "Den här enheten eller webbläsaren stöder inte notiser.":
@@ -1481,4 +1479,130 @@ export const tr: Record<string, string> = {
     "Français",
   "Türkçe":
     "Türkçe",
+  "Du slog utmaningen på {n} poäng!":
+    "{n} puanlık meydan okumayı geçtin!",
+  "Utmaningen på {n} poäng står kvar – försök igen!":
+    "{n} puanlık meydan okuma hâlâ duruyor – tekrar dene!",
+  "Utmana en vän":
+    "Bir arkadaşına meydan oku",
+  "Veckokalender":
+    "Haftalık takvim",
+  "Öppna dagens lucka":
+    "Bugünün kutusunu aç",
+  "Kom tillbaka i morgon":
+    "Yarın yine gel",
+  "Dag {n}":
+    "{n}. gün",
+  "Ett förbättrat bygge ger dubbel gåva varje dag.":
+    "Geliştirilmiş bir yapı her gün iki kat hediye verir.",
+  "Förbättra {name} · {n} stjärnor":
+    "{name} geliştir · {n} yıldız",
+  "Förbättrad":
+    "Geliştirildi",
+  "Notis om fulla liv och nya uppdrag":
+    "Canlar dolunca ve yeni görevlerde bildir",
+  "Sparfil":
+    "Kayıt dosyası",
+  "Ladda ner allt du har samlat som en fil, och läs in den på en annan enhet eller efter att webbläsaren rensats.":
+    "Topladığın her şeyi bir dosya olarak indir; başka bir cihazda ya da tarayıcı temizlendikten sonra geri yükle.",
+  "Ladda ner sparfil":
+    "Kaydı indir",
+  "Läs in sparfil":
+    "Kaydı yükle",
+  "Filen är inte en sparfil från AnimalPuzzle.":
+    "Bu dosya bir AnimalPuzzle kaydı değil.",
+  "Läsa in sparfilen? Det som finns sparat på den här enheten ersätts.":
+    "Kayıt yüklensin mi? Bu cihazda kayıtlı olanların yerini alacak.",
+  "Sparfilen kunde inte läsas in.":
+    "Kayıt dosyası yüklenemedi.",
+  "En vän utmanar dig: slå {n} poäng på 60 sekunder, med samma startbräde.":
+    "Bir arkadaşın sana meydan okuyor: aynı başlangıç tahtasında 60 saniyede {n} puanı geç.",
+  "Inte nu":
+    "Şimdi değil",
+  "Nivåjägare":
+    "Seviye Avcısı",
+  "Klara 25 nivåer i kampanjläget.":
+    "25 macera seviyesi geç.",
+  "Äventyrare":
+    "Maceracı",
+  "Klara 100 nivåer i kampanjläget.":
+    "100 macera seviyesi geç.",
+  "Legend":
+    "Efsane",
+  "Klara 500 nivåer i kampanjläget.":
+    "500 macera seviyesi geç.",
+  "Kedjemästare":
+    "Zincir Ustası",
+  "Utlös en kedjereaktion på minst ×7 i ett enda drag.":
+    "Tek hamlede en az ×7'lik bir zincirleme tepki başlat.",
+  "Isbrytare":
+    "Buzkıran",
+  "Tina sammanlagt 500 isrutor.":
+    "Toplam 500 buz karesini erit.",
+  "Lådkrossare":
+    "Sandık Kıran",
+  "Spräck sammanlagt 250 trälådor.":
+    "Toplam 250 tahta sandık kır.",
+  "Befriare":
+    "Kurtarıcı",
+  "Befria sammanlagt 150 fastkedjade djur.":
+    "Toplam 150 zincirli hayvanı kurtar.",
+  "Stråltrollare":
+    "Işın Büyücüsü",
+  "Skapa 150 specialbrickor.":
+    "150 özel taş oluştur.",
+  "Novamästare":
+    "Nova Ustası",
+  "Skapa 500 specialbrickor.":
+    "500 özel taş oluştur.",
+  "Poängjägare":
+    "Puan Avcısı",
+  "Samla ihop 100 000 poäng totalt.":
+    "Toplam 100.000 puan topla.",
+  "Poängmiljonär":
+    "Puan Milyoneri",
+  "Samla ihop 1 000 000 poäng totalt.":
+    "Toplam 1.000.000 puan topla.",
+  "Daglig mästare":
+    "Günün Ustası",
+  "Slutför 10 dagliga utmaningar.":
+    "10 günlük görev tamamla.",
+  "Daglig legend":
+    "Günün Efsanesi",
+  "Slutför 30 dagliga utmaningar.":
+    "30 günlük görev tamamla.",
+  "AnimalPuzzle · Kan du slå mig på 60 sekunder?":
+    "AnimalPuzzle · 60 saniyede beni geçebilir misin?",
+  "Vilken kedja!":
+    "Ne zincir ama!",
+  "Mer, mer, mer!":
+    "Daha, daha, daha!",
+  "Såg du det där?":
+    "Bunu gördün mü?",
+  "Tänk efter nu...":
+    "Şimdi iyi düşün...",
+  "Få drag kvar!":
+    "Az hamle kaldı!",
+  "Vi fixar det här.":
+    "Bunu hallederiz.",
+  "Jag är redo!":
+    "Hazırım!",
+  "Tryck på mig!":
+    "Bana dokun!",
+  "Nu kör vi!":
+    "Haydi gidelim!",
+  "Nya uppdrag väntar!":
+    "Yeni görevler bekliyor!",
+  "Tre nya uppdrag och dagens lucka finns att hämta.":
+    "Üç yeni görev ve bugünün kutusu seni bekliyor.",
+  "Månadens pass":
+    "Aylık bilet",
+  "Hämta belöningar":
+    "Ödülleri al",
+  "Varje spelad omgång, vinst och klart uppdrag ger poäng. {n} poäng per steg, och passet börjar om varje månad.":
+    "Oynanan her tur, her galibiyet ve tamamlanan her görev puan verir. Adım başına {n} puan; bilet her ay yeniden başlar.",
+  "Visa mindre":
+    "Daha az göster",
+  "Veckans jakt, djur-gäng och utmärkelser":
+    "Haftalık av, hayvan ekibi ve başarılar",
 };

@@ -31,11 +31,17 @@ export function msToFullLives(state: LivesState, now: number): number {
   return msToNextLife(state, now) + (MAX_LIVES - state.lives - 1) * LIFE_REGEN_MS;
 }
 
+/** Milliseconds until the next local midnight, when new daily missions arrive. */
+export function msToNextDay(now: Date): number {
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5);
+  return Math.max(0, next.getTime() - now.getTime());
+}
+
 export async function showReminder(title: string, body: string): Promise<void> {
   if (!remindersAllowed()) return;
   try {
     const registration = await navigator.serviceWorker.getRegistration();
-    const options = { body, tag: 'animalpuzzle-reminder', icon: 'icon-192.png', badge: 'icon-192.png' };
+    const options = { body, tag: 'animalpuzzle-' + title, icon: 'icon-192.png', badge: 'icon-192.png' };
     if (registration) await registration.showNotification(title, options);
     else new Notification(title, options);
   } catch {

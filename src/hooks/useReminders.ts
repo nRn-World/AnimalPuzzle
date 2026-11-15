@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { LivesState } from '../game/lives';
-import { msToFullLives, remindersAllowed, showReminder } from '../game/reminders';
+import { msToFullLives, msToNextDay, remindersAllowed, showReminder } from '../game/reminders';
 import { t } from '../i18n';
 
 /**
@@ -12,13 +12,20 @@ export function useReminders(enabled: boolean, lives: LivesState): void {
   useEffect(() => {
     if (!enabled) return;
     let timer: number | null = null;
+    let dayTimer: number | null = null;
     const clear = () => {
       if (timer !== null) window.clearTimeout(timer);
+      if (dayTimer !== null) window.clearTimeout(dayTimer);
       timer = null;
+      dayTimer = null;
     };
     const onVisibility = () => {
       clear();
       if (document.visibilityState !== 'hidden' || !remindersAllowed()) return;
+      // New daily missions arrive at midnight.
+      dayTimer = window.setTimeout(() => {
+        void showReminder(t('Nya uppdrag väntar!'), t('Tre nya uppdrag och dagens lucka finns att hämta.'));
+      }, msToNextDay(new Date()));
       const wait = msToFullLives(lives, Date.now());
       if (wait <= 0) return;
       timer = window.setTimeout(() => {
