@@ -54,10 +54,17 @@ export interface IslandState {
   built: number;
   /** Date key of the last day the daily gift was collected. */
   lastGift?: string;
+  /** How many buildings have been upgraded, counted from the start of the list. */
+  upgraded?: number;
 }
 
+export function upgradedCount(state: IslandState): number {
+  return Math.max(0, Math.min(state.built, state.upgraded ?? 0));
+}
+
+/** An upgraded building pays the daily gift twice. */
 export function dailyGift(state: IslandState): number {
-  return state.built * DAILY_GIFT_PER_BUILDING;
+  return (state.built + upgradedCount(state)) * DAILY_GIFT_PER_BUILDING;
 }
 
 export function canCollectGift(state: IslandState, todayKey: string): boolean {
@@ -75,9 +82,13 @@ export function sanitizeIsland(raw: unknown): IslandState {
     const built = (raw as Record<string, unknown>).built;
     if (typeof built === 'number' && Number.isFinite(built)) {
       const lastGift = (raw as Record<string, unknown>).lastGift;
+      const upgraded = (raw as Record<string, unknown>).upgraded;
       return {
         built: Math.max(0, Math.min(BUILDINGS.length, Math.floor(built))),
         ...(typeof lastGift === 'string' ? { lastGift } : {}),
+        ...(typeof upgraded === 'number' && upgraded > 0
+          ? { upgraded: Math.min(BUILDINGS.length, Math.floor(built), Math.floor(upgraded)) }
+          : {}),
       };
     }
   }
@@ -91,7 +102,8 @@ export function totalStars(bestStars: Record<number, number>): number {
 }
 
 export function starsSpent(state: IslandState): number {
-  return BUILDINGS.slice(0, state.built).reduce((sum, building) => sum + building.cost, 0);
+  const cost = (count: number) => BUILDINGS.slice(0, count).reduce((sum, building) => sum + building.cost, 0);
+  return cost(state.built) + cost(upgradedCount(state));
 }
 
 export function starsAvailable(state: IslandState, stars: number): number {
@@ -107,6 +119,19 @@ export function build(state: IslandState, stars: number): { nextState: IslandSta
   const next = nextBuilding(state);
   if (!next || starsAvailable(state, stars) < next.cost) return { nextState: state, built: null };
   return { nextState: { ...state, built: state.built + 1 }, built: next };
+}
+
+/** The next building to upgrade: they are upgraded in the order they were built. */
+export function nextUpgrade(state: IslandState): Building | null {
+  const done = upgradedCount(state);
+  return done < state.built ? BUILDINGS[done] : null;
+}
+
+/** Upgrades the next building if the stars are enough. It costs the same as building it did. */
+export function upgrade(state: IslandState, stars: number): { nextState: IslandState; upgraded: Building | null } {
+  const next = nextUpgrade(state);
+  if (!next || starsAvailable(state, stars) < next.cost) return { nextState: state, upgraded: null };
+  return { nextState: { ...state, upgraded: upgradedCount(state) + 1 }, upgraded: next };
 }
 
 export function readIsland(): IslandState {

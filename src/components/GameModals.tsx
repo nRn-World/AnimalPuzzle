@@ -39,6 +39,8 @@ interface GameModalsProps {
   lostToBomb?: boolean;
   /** Time mode: place on this week's list (0 = outside it). */
   blitzRank?: number;
+  /** A friend's score that this time-mode round was played against. */
+  challengeScore?: number;
   /** Weekly special level: energy paid for this win (0 = already won this week). */
   weeklyEnergy?: number;
   /** Lives left (campaign only). */
@@ -122,10 +124,11 @@ const ChestIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 const PRIMARY_CTA_CLASS = 'ui-btn ui-btn-green w-full px-4 py-1.5 font-display text-lg tracking-wide';
 
-const ShareButton: React.FC<{ notice: string | null; onShare: () => void; plain?: boolean }> = ({
+const ShareButton: React.FC<{ notice: string | null; onShare: () => void; plain?: boolean; label?: string }> = ({
   notice,
   onShare,
   plain = false,
+  label,
 }) => (
   <div className="space-y-1">
     <button
@@ -139,7 +142,7 @@ const ShareButton: React.FC<{ notice: string | null; onShare: () => void; plain?
       }
     >
       <UiIcon name="share2" className="w-4 h-4" />
-      {t('Dela resultat')}
+      {label ?? t('Dela resultat')}
     </button>
     <div
       role="status"
@@ -172,6 +175,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
   chest,
   lostToBomb = false,
   blitzRank,
+  challengeScore,
   weeklyEnergy,
   livesLeft,
   onEquipSkin,
@@ -522,6 +526,18 @@ export const GameModals: React.FC<GameModalsProps> = ({
                   ? t('Plats {n} på veckans lista', { n: blitzRank })
                   : t('Utanför veckans topp fem – försök igen!')}
               </div>
+            )}
+
+            {mode === 'blitz' && challengeScore !== undefined && (
+              <div data-testid="challenge-result" className="ui-inset px-3 py-2 text-sm font-extrabold">
+                {snapshotScore > challengeScore
+                  ? t('Du slog utmaningen på {n} poäng!', { n: formatNumber(challengeScore) })
+                  : t('Utmaningen på {n} poäng står kvar – försök igen!', { n: formatNumber(challengeScore) })}
+              </div>
+            )}
+
+            {mode === 'blitz' && (
+              <ShareButton notice={shareNotice} onShare={onShare} label={t('Utmana en vän')} />
             )}
 
             {mode === 'endless' && <ShareButton notice={shareNotice} onShare={onShare} />}

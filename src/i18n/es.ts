@@ -1403,8 +1403,6 @@ export const es: Record<string, string> = {
     "Recogido hoy",
   "Påminnelser":
     "Recordatorios",
-  "Notis när liven är fulla":
-    "Avisarme cuando las vidas estén llenas",
   "Fungerar medan spelet ligger öppet i bakgrunden, till exempel som installerad app.":
     "Funciona mientras el juego sigue abierto en segundo plano, por ejemplo como app instalada.",
   "Den här enheten eller webbläsaren stöder inte notiser.":
@@ -1481,4 +1479,130 @@ export const es: Record<string, string> = {
     "Français",
   "Türkçe":
     "Türkçe",
+  "Du slog utmaningen på {n} poäng!":
+    "¡Has superado el reto de {n} puntos!",
+  "Utmaningen på {n} poäng står kvar – försök igen!":
+    "El reto de {n} puntos sigue en pie: ¡inténtalo de nuevo!",
+  "Utmana en vän":
+    "Reta a un amigo",
+  "Veckokalender":
+    "Calendario semanal",
+  "Öppna dagens lucka":
+    "Abrir la casilla de hoy",
+  "Kom tillbaka i morgon":
+    "Vuelve mañana",
+  "Dag {n}":
+    "Día {n}",
+  "Ett förbättrat bygge ger dubbel gåva varje dag.":
+    "Un edificio mejorado da el doble de regalo cada día.",
+  "Förbättra {name} · {n} stjärnor":
+    "Mejorar {name} · {n} estrellas",
+  "Förbättrad":
+    "Mejorado",
+  "Notis om fulla liv och nya uppdrag":
+    "Avisarme de vidas llenas y misiones nuevas",
+  "Sparfil":
+    "Archivo de guardado",
+  "Ladda ner allt du har samlat som en fil, och läs in den på en annan enhet eller efter att webbläsaren rensats.":
+    "Descarga todo lo que has reunido en un archivo y cárgalo en otro dispositivo o después de borrar el navegador.",
+  "Ladda ner sparfil":
+    "Descargar archivo",
+  "Läs in sparfil":
+    "Cargar archivo",
+  "Filen är inte en sparfil från AnimalPuzzle.":
+    "Ese archivo no es un guardado de AnimalPuzzle.",
+  "Läsa in sparfilen? Det som finns sparat på den här enheten ersätts.":
+    "¿Cargar el archivo? Lo guardado en este dispositivo se reemplazará.",
+  "Sparfilen kunde inte läsas in.":
+    "No se pudo cargar el archivo.",
+  "En vän utmanar dig: slå {n} poäng på 60 sekunder, med samma startbräde.":
+    "Un amigo te reta: supera {n} puntos en 60 segundos, con el mismo tablero inicial.",
+  "Inte nu":
+    "Ahora no",
+  "Nivåjägare":
+    "Cazador de Niveles",
+  "Klara 25 nivåer i kampanjläget.":
+    "Supera 25 niveles de campaña.",
+  "Äventyrare":
+    "Aventurero",
+  "Klara 100 nivåer i kampanjläget.":
+    "Supera 100 niveles de campaña.",
+  "Legend":
+    "Leyenda",
+  "Klara 500 nivåer i kampanjläget.":
+    "Supera 500 niveles de campaña.",
+  "Kedjemästare":
+    "Maestro de Cadenas",
+  "Utlös en kedjereaktion på minst ×7 i ett enda drag.":
+    "Provoca una reacción en cadena de al menos ×7 en un solo movimiento.",
+  "Isbrytare":
+    "Rompehielos",
+  "Tina sammanlagt 500 isrutor.":
+    "Derrite un total de 500 casillas de hielo.",
+  "Lådkrossare":
+    "Rompecajas",
+  "Spräck sammanlagt 250 trälådor.":
+    "Rompe un total de 250 cajas de madera.",
+  "Befriare":
+    "Libertador",
+  "Befria sammanlagt 150 fastkedjade djur.":
+    "Libera un total de 150 animales encadenados.",
+  "Stråltrollare":
+    "Mago de Rayos",
+  "Skapa 150 specialbrickor.":
+    "Crea 150 piezas especiales.",
+  "Novamästare":
+    "Maestro de Novas",
+  "Skapa 500 specialbrickor.":
+    "Crea 500 piezas especiales.",
+  "Poängjägare":
+    "Cazador de Puntos",
+  "Samla ihop 100 000 poäng totalt.":
+    "Consigue 100.000 puntos en total.",
+  "Poängmiljonär":
+    "Millonario de Puntos",
+  "Samla ihop 1 000 000 poäng totalt.":
+    "Consigue 1.000.000 de puntos en total.",
+  "Daglig mästare":
+    "Maestro Diario",
+  "Slutför 10 dagliga utmaningar.":
+    "Completa 10 retos diarios.",
+  "Daglig legend":
+    "Leyenda Diaria",
+  "Slutför 30 dagliga utmaningar.":
+    "Completa 30 retos diarios.",
+  "AnimalPuzzle · Kan du slå mig på 60 sekunder?":
+    "AnimalPuzzle · ¿Puedes ganarme en 60 segundos?",
+  "Vilken kedja!":
+    "¡Menuda cadena!",
+  "Mer, mer, mer!":
+    "¡Más, más, más!",
+  "Såg du det där?":
+    "¿Has visto eso?",
+  "Tänk efter nu...":
+    "Piénsalo bien...",
+  "Få drag kvar!":
+    "¡Quedan pocos movimientos!",
+  "Vi fixar det här.":
+    "Lo conseguiremos.",
+  "Jag är redo!":
+    "¡Estoy listo!",
+  "Tryck på mig!":
+    "¡Tócame!",
+  "Nu kör vi!":
+    "¡Allá vamos!",
+  "Nya uppdrag väntar!":
+    "¡Hay misiones nuevas!",
+  "Tre nya uppdrag och dagens lucka finns att hämta.":
+    "Tres misiones nuevas y la casilla de hoy te esperan.",
+  "Månadens pass":
+    "Pase del mes",
+  "Hämta belöningar":
+    "Recoger recompensas",
+  "Varje spelad omgång, vinst och klart uppdrag ger poäng. {n} poäng per steg, och passet börjar om varje månad.":
+    "Cada ronda jugada, victoria y misión hecha da puntos. {n} puntos por paso, y el pase empieza de nuevo cada mes.",
+  "Visa mindre":
+    "Mostrar menos",
+  "Veckans jakt, djur-gäng och utmärkelser":
+    "Caza semanal, pandilla animal y logros",
 };

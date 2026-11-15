@@ -133,7 +133,11 @@ import {
   readCompanion,
   writeCompanion,
 } from '../game/companions';
-import { BUILD_GIFT, IslandState, build, collectGift, readIsland, totalStars, writeIsland } from '../game/island';
+import { BUILD_GIFT, IslandState, build, collectGift, readIsland, totalStars, upgrade, writeIsland } from '../game/island';
+import { CalendarState, claimCalendar, readCalendar, writeCalendar } from '../game/calendar';
+import { PASS_POINTS, PassState, addPassPoints, claimPass, monthKeyOf, readPass, writePass } from '../game/seasonPass';
+import { Challenge, challengeUrl, newChallengeSeed, parseChallenge } from '../game/challenge';
+import { QUIP_CASCADE, QUIP_LOW_MOVES, QuipKind, pickQuip } from '../game/quips';
 import {
   MissionEvent,
   MissionState,
@@ -172,6 +176,8 @@ export interface EndSnapshot {
   lostToBomb?: boolean;
   /** Time mode: place on this week's list (0 = outside it). */
   blitzRank?: number;
+  /** Time mode played on a friend's challenge: the score that had to be beaten. */
+  challengeScore?: number;
   /** Weekly special level: bonus energy paid for the first win of the week. */
   weeklyEnergy?: number;
 }
@@ -303,14 +309,43 @@ export function useGameSession(language: Lang) {
 
   const [stats, setStats] = useState<PlayStats>(() => readStats());
   const statsRef = useRef(stats);
-  const bumpStats = useCallback((add: Partial<PlayStats>) => {
-    const next = addStats(statsRef.current, add);
-    statsRef.current = next;
-    setStats(next);
-    writeStats(next);
+  // Season pass: filled by rounds played, rounds won and missions done.
+  const [pass, setPass] = useState<PassState>(() => readPass(monthKeyOf(todayKey)));
+  const passRef = useRef(pass);
+  const commitPass = useCallback((next: PassState) => {
+    if (next === passRef.current) return;
+    passRef.current = next;
+    setPass(next);
+    writePass(next);
   }, []);
+  const bumpStats = useCallback(
+    (add: Partial<PlayStats>) => {
+      const next = addStats(statsRef.current, add);
+      statsRef.current = next;
+      setStats(next);
+      writeStats(next);
+      commitPass(
+        addPassPoints(
+          passRef.current,
+          (add.gamesPlayed ?? 0) * PASS_POINTS.round +
+            (add.gamesWon ?? 0) * PASS_POINTS.win +
+            (add.missionsDone ?? 0) * PASS_POINTS.mission
+        )
+      );
+    },
+    [commitPass]
+  );
 
   const [island, setIsland] = useState<IslandState>(() => readIsland());
+  const [calendar, setCalendar] = useState<CalendarState>(() => readCalendar());
+  // A friend's challenge from the address (?utmaning=seed.score), if any.
+  const [challenge, setChallenge] = useState<Challenge | null>(() => parseChallenge(window.location.search));
+  // Seed of the time-mode board being played, so the result can be sent on as a challenge.
+  const challengeRef = useRef(challenge);
+  challengeRef.current = challenge;
+  const blitzSeedRef = useRef<string>('');
+  // What the companion is saying right now.
+  const [companionSay, setCompanionSay] = useState<{ text: string; id: number } | null>(null);
   const [seenPages, setSeenPages] = useState<string[]>(() => readSeenPages());
   const [openPage, setOpenPage] = useState<StoryPage | null>(null);
 
@@ -635,6 +670,7 @@ export function useGameSession(language: Lang) {
       setLevelIdx(targetIdx);
       setEndlessTarget(ENDLESS_MILESTONE_STEP);
       setTutorialStep(runTutorial ? 'step1' : 'done');
+      if (targetMode === 'blitz') blitzSeedRef.current = challengeRef.current?.seed ?? newChallengeSeed();
       setBoard(
         runTutorial
           ? createTutorialBoard()
@@ -642,6 +678,8 @@ export function useGameSession(language: Lang) {
           ? createBoard(lvl, createSeededRng(dailyChallenge.seed))
           : targetMode === 'weekly'
           ? createBoard(lvl, createSeededRng(weeklyLevel.seed))
+          : targetMode === 'blitz'
+          ? createBoard(lvl, createSeededRng(`animalpuzzle-challenge-${blitzSeedRef.current}`))
           : createBoard(lvl)
       );
       setMovesLeft(lvl.moves);
@@ -726,6 +764,66 @@ export function useGameSession(language: Lang) {
     vibrate('victory');
   }, [bestStars, commitDaily, island]);
 
+  /** Upgrades the next building; an upgraded building pays the daily gift twice. */
+  const upgradeNext = useCallback(() => {
+    const res = upgrade(island, totalStars(bestStars));
+    if (!res.upgraded) return;
+    setIsland(res.nextState);
+    writeIsland(res.nextState);
+    soundEngine.playSpecialCreate('nova');
+    vibrate('victory');
+  }, [bestStars, island]);
+
+  /** Collects every season-pass step that has been reached. */
+  const claimPassRewards = useCallback(() => {
+    const res = claimPass(passRef.current);
+    if (res.energy <= 0) return;
+    commitPass(res.nextState);
+    commitDaily(grantReward(dailyStateRef.current, res.energy, null).nextState);
+    soundEngine.playSpecialCreate('prism');
+  }, [commitDaily, commitPass]);
+
+  /** Opens today's box in the login calendar. */
+  const claimLoginGift = useCallback(() => {
+    const res = claimCalendar(calendar, todayKey);
+    if (res.energy <= 0) return;
+    setCalendar(res.nextState);
+    writeCalendar(res.nextState);
+    commitDaily(grantReward(dailyStateRef.current, res.energy, null).nextState);
+    soundEngine.playSpecialCreate('prism');
+  }, [calendar, commitDaily, todayKey]);
+
+  const dismissChallenge = useCallback(() => {
+    setChallenge(null);
+    try {
+      window.history.replaceState(null, '', window.location.pathname);
+    } catch {
+      // The address bar is cosmetic here.
+    }
+  }, []);
+
+  // --- Companion speech bubbles ---------------------------------------------
+  const say = useCallback((kind: QuipKind) => {
+    setCompanionSay((prev) => ({ text: pickQuip(kind), id: (prev?.id ?? 0) + 1 }));
+  }, []);
+  useEffect(() => {
+    if (!companionSay) return;
+    const timer = window.setTimeout(() => setCompanionSay(null), 2600);
+    return () => window.clearTimeout(timer);
+  }, [companionSay]);
+  useEffect(() => {
+    if (phase === 'PLAYING' && lastCascade >= QUIP_CASCADE) say('cascade');
+  }, [lastCascade, phase, say]);
+  useEffect(() => {
+    if (phase === 'PLAYING' && mode !== 'blitz' && movesLeft === QUIP_LOW_MOVES) say('lowMoves');
+  }, [mode, movesLeft, phase, say]);
+  const powerReady = powerCharge >= powerNeeded;
+  useEffect(() => {
+    if (phase === 'PLAYING' && powerReady) say('powerReady');
+    // Only when the power becomes ready, not on every phase change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [powerReady]);
+
   /** Collects the island's gift of the day. */
   const collectIslandGift = useCallback(() => {
     const res = collectGift(island, todayKey);
@@ -777,6 +875,13 @@ export function useGameSession(language: Lang) {
   const startWeekly = useCallback(() => {
     soundEngine.playClick();
     startSession('weekly', 0);
+  }, [startSession]);
+
+  /** Starts the time mode on the board of a friend's challenge. */
+  const startChallenge = useCallback(() => {
+    soundEngine.playClick();
+    setMode('blitz');
+    startSession('blitz', 0);
   }, [startSession]);
 
   const restart = useCallback(() => {
@@ -1598,9 +1703,10 @@ export function useGameSession(language: Lang) {
       specialBonus: 0,
       stars: 0,
       blitzRank: res.rank,
+      ...(challenge ? { challengeScore: challenge.score } : {}),
     });
     setPhase('GAME_OVER');
-  }, [blitzLeft, busy, commitRewards, maxCascade, mode, phase, progress.score, todayKey]);
+  }, [blitzLeft, busy, challenge, commitRewards, maxCascade, mode, phase, progress.score, todayKey]);
 
   const selectTool = useCallback(
     (tool: ToolType) => {
@@ -1701,7 +1807,10 @@ export function useGameSession(language: Lang) {
       stars: endSnapshot.stars,
       score: endSnapshot.score,
       maxCascade: endSnapshot.maxCascade,
-      url: getShareUrl(),
+      url:
+        mode === 'blitz' && blitzSeedRef.current
+          ? challengeUrl(getShareUrl(), { seed: blitzSeedRef.current, score: endSnapshot.score })
+          : getShareUrl(),
     });
     const outcome = await shareText(text);
     setShareNotice(
@@ -1749,6 +1858,15 @@ export function useGameSession(language: Lang) {
     island,
     buildNext,
     collectIslandGift,
+    upgradeNext,
+    calendar,
+    claimLoginGift,
+    pass,
+    claimPassRewards,
+    challenge,
+    dismissChallenge,
+    startChallenge,
+    companionSay,
     startWeekly,
     companionLevel,
     weeklyLevel: weeklyLevel.level,

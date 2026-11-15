@@ -1,3 +1,5 @@
+import { PASS_REWARDS, PASS_STEP, PassState, passReached } from '../game/seasonPass';
+import { CALENDAR_REWARDS, CalendarState, calendarShown, canClaimCalendar } from '../game/calendar';
 import React, { useEffect } from 'react';
 import { formatNumber, t } from '../i18n';
 import { AchievementStats } from '../game/achievements';
@@ -19,6 +21,8 @@ import {
   canCollectGift,
   dailyGift,
   nextBuilding,
+  nextUpgrade,
+  upgradedCount,
   starsAvailable,
 } from '../game/island';
 import { ALL_DONE_BONUS, Mission, MissionState, missionsDone } from '../game/missions';
@@ -53,6 +57,11 @@ interface HubModalProps {
   stars: number;
   onBuild: () => void;
   onCollectGift: () => void;
+  onUpgrade: () => void;
+  calendar: CalendarState;
+  onClaimCalendar: () => void;
+  pass: PassState;
+  onClaimPass: () => void;
   todayKey: string;
   stats: PlayStats;
   achievementStats: AchievementStats;
@@ -120,6 +129,11 @@ export const HubModal: React.FC<HubModalProps> = ({
   stars,
   onBuild,
   onCollectGift,
+  onUpgrade,
+  calendar,
+  onClaimCalendar,
+  pass,
+  onClaimPass,
   todayKey,
   stats,
   achievementStats,
@@ -146,6 +160,7 @@ export const HubModal: React.FC<HubModalProps> = ({
   const done = missionsDone(missionState, missions);
   const next = nextBuilding(island);
   const free = starsAvailable(island, stars);
+  const upgradeTarget = nextUpgrade(island);
   const totalAnimals = GEM_COLORS_ORDER.reduce((sum, color) => sum + rewardState.album[color], 0);
   let favourite: GemColor = GEM_COLORS_ORDER[0];
   for (const color of GEM_COLORS_ORDER) {
@@ -197,6 +212,74 @@ export const HubModal: React.FC<HubModalProps> = ({
         <div className="overflow-y-auto overscroll-contain pt-3">
           {tab === 'missions' && (
             <section className="space-y-2.5">
+              {/* Season pass: a monthly ladder filled by everything you play */}
+              <div data-testid="season-pass" className="ui-inset space-y-1.5 px-2.5 py-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider">
+                    {t('Månadens pass')} · {t('{score} poäng', { score: formatNumber(pass.points) })}
+                  </span>
+                  <button
+                    type="button"
+                    data-testid="pass-claim"
+                    onClick={onClaimPass}
+                    disabled={passReached(pass) <= pass.claimed}
+                    className="ui-btn ui-btn-yellow px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {t('Hämta belöningar')}
+                  </button>
+                </div>
+                <div className="grid grid-cols-5 sm:grid-cols-10 gap-1">
+                  {PASS_REWARDS.map((reward, i) => (
+                    <div
+                      key={i}
+                      data-reached={i < passReached(pass)}
+                      className={`border-2 border-[#111111] px-0.5 py-0.5 text-center font-mono-num text-[11px] font-bold ${
+                        i < pass.claimed ? 'bg-[#A6EC98]' : i < passReached(pass) ? 'bg-[#F2CD1C]' : 'bg-[#FFFFFF]/70'
+                      }`}
+                    >
+                      {i < pass.claimed ? '✓' : `+${reward}`}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[11px] font-semibold text-[#4B4B4B]">
+                  {t('Varje spelad omgång, vinst och klart uppdrag ger poäng. {n} poäng per steg, och passet börjar om varje månad.', {
+                    n: PASS_STEP,
+                  })}
+                </p>
+              </div>
+              {/* Login calendar: one box a day, the seventh is the big one */}
+              <div data-testid="calendar" className="ui-inset space-y-1.5 px-2.5 py-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider">{t('Veckokalender')}</span>
+                  <button
+                    type="button"
+                    data-testid="calendar-claim"
+                    onClick={onClaimCalendar}
+                    disabled={!canClaimCalendar(calendar, todayKey)}
+                    className="ui-btn ui-btn-yellow px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {canClaimCalendar(calendar, todayKey) ? t('Öppna dagens lucka') : t('Kom tillbaka i morgon')}
+                  </button>
+                </div>
+                <div className="grid grid-cols-7 gap-1">
+                  {CALENDAR_REWARDS.map((reward, i) => {
+                    const shown = calendarShown(calendar, todayKey);
+                    const isNext = i === shown && canClaimCalendar(calendar, todayKey);
+                    return (
+                      <div
+                        key={i}
+                        data-open={i < shown}
+                        className={`border-2 border-[#111111] px-0.5 py-1 text-center ${
+                          i < shown ? 'bg-[#A6EC98]' : isNext ? 'bg-[#F2CD1C]' : 'bg-[#FFFFFF]/70'
+                        }`}
+                      >
+                        <div className="text-[9px] font-extrabold uppercase">{t('Dag {n}', { n: i + 1 })}</div>
+                        <div className="font-mono-num text-xs font-bold">{i < shown ? '✓' : `+${reward}`}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
               <p className="text-xs font-semibold text-[#4B4B4B]">
                 {t('Tre nya uppdrag varje dag. De fylls på i alla spellägen och betalar bonusenergi direkt. Alla tre ger {n} extra.', {
                   n: ALL_DONE_BONUS,
@@ -351,6 +434,22 @@ export const HubModal: React.FC<HubModalProps> = ({
                   <span className="text-sm font-extrabold text-[#1E7D32]">{t('Ön är färdigbyggd!')}</span>
                 )}
               </div>
+              {upgradeTarget && (
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="min-w-0 text-xs font-semibold text-[#4B4B4B]">
+                    {t('Ett förbättrat bygge ger dubbel gåva varje dag.')}
+                  </span>
+                  <button
+                    type="button"
+                    data-testid="upgrade-btn"
+                    onClick={onUpgrade}
+                    disabled={free < upgradeTarget.cost}
+                    className="ui-btn px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {t('Förbättra {name} · {n} stjärnor', { name: t(upgradeTarget.nameSv), n: upgradeTarget.cost })}
+                  </button>
+                </div>
+              )}
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
                 {BUILDINGS.map((building, i) => (
                   <div
@@ -368,7 +467,7 @@ export const HubModal: React.FC<HubModalProps> = ({
                       <span className="truncate">{t(building.nameSv)}</span>
                     </div>
                     <div className="font-mono-num text-[10px] font-bold text-[#4B4B4B]">
-                      {i < island.built ? t('Byggd') : `${building.cost} ★`}
+                      {i < upgradedCount(island) ? `${t('Förbättrad')} ★` : i < island.built ? t('Byggd') : `${building.cost} ★`}
                     </div>
                   </div>
                 ))}

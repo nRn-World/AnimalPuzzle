@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { StoryModal } from './components/StoryModal';
 import { useReminders } from './hooks/useReminders';
 import titleBackdrop from './assets/images/title-backdrop.webp';
@@ -7,8 +8,6 @@ import { ComboBanner } from './components/ComboBanner';
 import { GameBoard } from './components/GameBoard';
 import { GameHud } from './components/GameHud';
 import { GameModals } from './components/GameModals';
-import { HowToPlayGuide } from './components/HowToPlayGuide';
-import { SettingsModal } from './components/SettingsModal';
 import { TitleScreen } from './components/TitleScreen';
 import { TutorialBanner } from './components/TutorialBanner';
 import { soundEngine } from './game/audio';
@@ -17,6 +16,9 @@ import { useBoardSize } from './hooks/useBoardSize';
 import { useFullscreen } from './hooks/useFullscreen';
 import { MAX_ENERGY, useGameSession } from './hooks/useGameSession';
 import { useSettings } from './hooks/useSettings';
+
+const HowToPlayGuide = lazy(() => import('./components/HowToPlayGuide').then((m) => ({ default: m.HowToPlayGuide })));
+const SettingsModal = lazy(() => import('./components/SettingsModal').then((m) => ({ default: m.SettingsModal })));
 
 export default function App() {
   // Subscribing here re-renders the whole tree when the language changes.
@@ -143,8 +145,11 @@ export default function App() {
   return (
     <>
       <AchievementUnlockToast achievement={game.achievementToast} />
-      <HowToPlayGuide open={showGuide} onClose={game.closeGuide} />
-      <SettingsModal open={settingsOpen} onClose={closeSettings} />
+      {/* Loaded after the first paint: neither is needed to show the menu */}
+      <Suspense fallback={null}>
+        <HowToPlayGuide open={showGuide} onClose={game.closeGuide} />
+        <SettingsModal open={settingsOpen} onClose={closeSettings} />
+      </Suspense>
 
       {!inGame ? (
         <TitleScreen
@@ -171,6 +176,14 @@ export default function App() {
             island={game.island}
             onBuild={game.buildNext}
             onCollectGift={game.collectIslandGift}
+            onUpgrade={game.upgradeNext}
+            calendar={game.calendar}
+            onClaimCalendar={game.claimLoginGift}
+            pass={game.pass}
+            onClaimPass={game.claimPassRewards}
+            challenge={game.challenge}
+            onStartChallenge={game.startChallenge}
+            onDismissChallenge={game.dismissChallenge}
             weeklyLevel={game.weeklyLevel}
             weeklyLevelState={game.weeklyLevelState}
             onStartWeekly={game.startWeekly}
@@ -228,6 +241,7 @@ export default function App() {
               timeLeft={mode === 'blitz' ? game.blitzLeft : undefined}
               bossEnraged={game.bossEnraged}
               companion={game.companion}
+              companionSay={game.companionSay}
               powerCharge={game.powerCharge}
               powerNeeded={game.powerNeeded}
               onFirePower={game.firePower}
@@ -307,6 +321,7 @@ export default function App() {
             chest={game.endSnapshot.chest}
             lostToBomb={game.endSnapshot.lostToBomb}
             blitzRank={game.endSnapshot.blitzRank}
+            challengeScore={game.endSnapshot.challengeScore}
             weeklyEnergy={game.endSnapshot.weeklyEnergy}
             livesLeft={game.lives.lives}
             totalMoves={activeLevel.moves}

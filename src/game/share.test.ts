@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { setLanguage } from '../i18n';
+import { setLanguage, loadLanguage } from '../i18n';
 import { buildShareText } from './share';
+
+// Dictionaries are separate files; fetch English before the tests run.
+await loadLanguage('en');
 
 const base = {
   won: true,

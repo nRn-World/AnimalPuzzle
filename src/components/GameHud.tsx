@@ -46,6 +46,8 @@ interface GameHudProps {
   /** The boss has lost half its health and attacks sooner. */
   bossEnraged?: boolean;
   companion: GemColor;
+  /** A short line the companion says, shown as a speech bubble. */
+  companionSay?: { text: string; id: number } | null;
   powerCharge: number;
   powerNeeded: number;
   onFirePower: () => void;
@@ -75,6 +77,7 @@ export const GameHud: React.FC<GameHudProps> = ({
   timeLeft,
   bossEnraged = false,
   companion,
+  companionSay = null,
   powerCharge,
   powerNeeded,
   onFirePower,
@@ -321,7 +324,17 @@ export const GameHud: React.FC<GameHudProps> = ({
         </div>
 
         {/* The companion: charges as animals are cleared, then strikes for free */}
-        <div className="flex flex-col items-center gap-1">
+        <div className="relative flex flex-col items-center gap-1">
+          {companionSay && (
+            <span
+              key={companionSay.id}
+              data-testid="companion-say"
+              role="status"
+              className="ui-speech animate-menu-pop pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 w-max max-w-[150px] -translate-x-1/2 text-center text-[11px] font-extrabold leading-tight"
+            >
+              {t(companionSay.text)}
+            </span>
+          )}
           <button
             type="button"
             data-testid="power-btn"

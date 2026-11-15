@@ -1402,8 +1402,6 @@ export const en: Record<string, string> = {
     "Collected today",
   "Påminnelser":
     "Reminders",
-  "Notis när liven är fulla":
-    "Notify me when lives are full",
   "Fungerar medan spelet ligger öppet i bakgrunden, till exempel som installerad app.":
     "Works while the game stays open in the background, for example as an installed app.",
   "Den här enheten eller webbläsaren stöder inte notiser.":
@@ -1480,4 +1478,130 @@ export const en: Record<string, string> = {
     "Français",
   "Türkçe":
     "Türkçe",
+  "Du slog utmaningen på {n} poäng!":
+    "You beat the challenge of {n} points!",
+  "Utmaningen på {n} poäng står kvar – försök igen!":
+    "The challenge of {n} points still stands – try again!",
+  "Utmana en vän":
+    "Challenge a friend",
+  "Veckokalender":
+    "Weekly calendar",
+  "Öppna dagens lucka":
+    "Open today's box",
+  "Kom tillbaka i morgon":
+    "Come back tomorrow",
+  "Dag {n}":
+    "Day {n}",
+  "Ett förbättrat bygge ger dubbel gåva varje dag.":
+    "An upgraded building gives a double gift every day.",
+  "Förbättra {name} · {n} stjärnor":
+    "Upgrade {name} · {n} stars",
+  "Förbättrad":
+    "Upgraded",
+  "Notis om fulla liv och nya uppdrag":
+    "Notify me about full lives and new missions",
+  "Sparfil":
+    "Save file",
+  "Ladda ner allt du har samlat som en fil, och läs in den på en annan enhet eller efter att webbläsaren rensats.":
+    "Download everything you have collected as a file, and load it on another device or after the browser has been cleared.",
+  "Ladda ner sparfil":
+    "Download save file",
+  "Läs in sparfil":
+    "Load save file",
+  "Filen är inte en sparfil från AnimalPuzzle.":
+    "That file is not an AnimalPuzzle save file.",
+  "Läsa in sparfilen? Det som finns sparat på den här enheten ersätts.":
+    "Load the save file? What is saved on this device will be replaced.",
+  "Sparfilen kunde inte läsas in.":
+    "The save file could not be loaded.",
+  "En vän utmanar dig: slå {n} poäng på 60 sekunder, med samma startbräde.":
+    "A friend challenges you: beat {n} points in 60 seconds, on the same starting board.",
+  "Inte nu":
+    "Not now",
+  "Nivåjägare":
+    "Level Hunter",
+  "Klara 25 nivåer i kampanjläget.":
+    "Clear 25 campaign levels.",
+  "Äventyrare":
+    "Adventurer",
+  "Klara 100 nivåer i kampanjläget.":
+    "Clear 100 campaign levels.",
+  "Legend":
+    "Legend",
+  "Klara 500 nivåer i kampanjläget.":
+    "Clear 500 campaign levels.",
+  "Kedjemästare":
+    "Chain Master",
+  "Utlös en kedjereaktion på minst ×7 i ett enda drag.":
+    "Trigger a chain reaction of at least ×7 in a single move.",
+  "Isbrytare":
+    "Icebreaker",
+  "Tina sammanlagt 500 isrutor.":
+    "Thaw a total of 500 ice tiles.",
+  "Lådkrossare":
+    "Crate Crusher",
+  "Spräck sammanlagt 250 trälådor.":
+    "Break a total of 250 wooden crates.",
+  "Befriare":
+    "Liberator",
+  "Befria sammanlagt 150 fastkedjade djur.":
+    "Free a total of 150 chained animals.",
+  "Stråltrollare":
+    "Beam Wizard",
+  "Skapa 150 specialbrickor.":
+    "Create 150 special pieces.",
+  "Novamästare":
+    "Nova Master",
+  "Skapa 500 specialbrickor.":
+    "Create 500 special pieces.",
+  "Poängjägare":
+    "Point Hunter",
+  "Samla ihop 100 000 poäng totalt.":
+    "Collect 100,000 points in total.",
+  "Poängmiljonär":
+    "Point Millionaire",
+  "Samla ihop 1 000 000 poäng totalt.":
+    "Collect 1,000,000 points in total.",
+  "Daglig mästare":
+    "Daily Master",
+  "Slutför 10 dagliga utmaningar.":
+    "Complete 10 daily challenges.",
+  "Daglig legend":
+    "Daily Legend",
+  "Slutför 30 dagliga utmaningar.":
+    "Complete 30 daily challenges.",
+  "AnimalPuzzle · Kan du slå mig på 60 sekunder?":
+    "AnimalPuzzle · Can you beat me in 60 seconds?",
+  "Vilken kedja!":
+    "What a chain!",
+  "Mer, mer, mer!":
+    "More, more, more!",
+  "Såg du det där?":
+    "Did you see that?",
+  "Tänk efter nu...":
+    "Think carefully now...",
+  "Få drag kvar!":
+    "Few moves left!",
+  "Vi fixar det här.":
+    "We can do this.",
+  "Jag är redo!":
+    "I'm ready!",
+  "Tryck på mig!":
+    "Tap me!",
+  "Nu kör vi!":
+    "Here we go!",
+  "Nya uppdrag väntar!":
+    "New missions are waiting!",
+  "Tre nya uppdrag och dagens lucka finns att hämta.":
+    "Three new missions and today's box are ready to collect.",
+  "Månadens pass":
+    "Monthly pass",
+  "Hämta belöningar":
+    "Collect rewards",
+  "Varje spelad omgång, vinst och klart uppdrag ger poäng. {n} poäng per steg, och passet börjar om varje månad.":
+    "Every round played, win and finished mission gives points. {n} points per step, and the pass starts over every month.",
+  "Visa mindre":
+    "Show less",
+  "Veckans jakt, djur-gäng och utmärkelser":
+    "Weekly hunt, animal crew and achievements",
 };

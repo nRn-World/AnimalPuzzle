@@ -9,6 +9,9 @@ import { fr } from './fr';
 import { tr } from './tr';
 import { detectLanguage, formatNumber, interpolate, loadLanguage, setLanguage, t } from './index';
 
+// Dictionaries are separate files; fetch English before the tests run.
+await loadLanguage('en');
+
 const SRC_DIR = join(import.meta.dirname, '..');
 
 function sourceFiles(dir: string): string[] {
@@ -137,7 +140,7 @@ test('German, Spanish, French and Turkish cover exactly the English entries', ()
 
 test('generated chapter names follow the grammar of each language', async () => {
   setLanguage('de');
-  assert.equal(t('Spela nu'), 'Play now', 'English until the dictionary has loaded');
+  assert.equal(t('Spela nu'), 'Spela nu', 'Swedish until the dictionary has loaded');
   for (const lang of ['de', 'es', 'fr', 'tr'] as const) assert.ok(await loadLanguage(lang));
   try {
     setLanguage('de');
