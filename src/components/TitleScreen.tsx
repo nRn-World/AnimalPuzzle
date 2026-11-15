@@ -19,6 +19,13 @@ import { StarRating } from './StarRating';
 import titleBackdrop from '../assets/images/title-backdrop.webp';
 import { WorkshopFireCanvas } from './WorkshopFireCanvas';
 import { CollectionModal } from './CollectionModal';
+import { HUB_TABS, HubModal, HubTab } from './HubModal';
+import { StoryModal } from './StoryModal';
+import { IslandState, totalStars } from '../game/island';
+import { Mission, MissionState, missionsDone } from '../game/missions';
+import { BLITZ_SECONDS, BlitzState, PlayStats } from '../game/stats';
+import { StoryPage } from '../game/story';
+import { GemColor } from '../game/types';
 import { biomeName, biomeOfChapter } from '../game/biomes';
 import { HeartIcon } from './GameModals';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
@@ -63,6 +70,18 @@ interface TitleScreenProps {
   todayKey: string;
   lives: LivesState;
   onBuyLives: () => void;
+  missions: Mission[];
+  missionState: MissionState;
+  companion: GemColor;
+  onSelectCompanion: (color: GemColor) => void;
+  island: IslandState;
+  onBuild: () => void;
+  stats: PlayStats;
+  blitz: BlitzState;
+  storyPage: StoryPage | null;
+  onCloseStory: () => void;
+  onReadStory: (id: string) => void;
+  seenPages: string[];
   /** The seasonal event running now, if any. */
   season: ActiveSeason | null;
   isFullscreen?: boolean;
@@ -98,6 +117,7 @@ const MODE_TABS: { mode: GameMode; label: string; icon: UiIconName }[] = [
   { mode: 'campaign', label: 'Kampanj', icon: 'flag' },
   { mode: 'daily', label: 'Daglig', icon: 'target' },
   { mode: 'endless', label: 'Oändligt', icon: 'trophy' },
+  { mode: 'blitz', label: 'Tid', icon: 'power' },
 ];
 
 // Difficulty badge colours that read well on the parchment panel
@@ -301,6 +321,18 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   todayKey,
   lives,
   onBuyLives,
+  missions,
+  missionState,
+  companion,
+  onSelectCompanion,
+  island,
+  onBuild,
+  stats,
+  blitz,
+  storyPage,
+  onCloseStory,
+  onReadStory,
+  seenPages,
   season,
   isFullscreen = false,
   canFullscreen = false,
@@ -318,6 +350,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   const [imgFailed, setImgFailed] = useState(false);
   const [achievementsOpen, setAchievementsOpen] = useState(false);
   const [collectionOpen, setCollectionOpen] = useState(false);
+  const [hubTab, setHubTab] = useState<HubTab | null>(null);
   const { canInstall, install } = useInstallPrompt();
   // Tick once a second while a life is on its way back.
   const [now, setNow] = useState(() => Date.now());
@@ -346,7 +379,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (achievementsOpen || collectionOpen || guideOpen) return;
+      if (achievementsOpen || collectionOpen || hubTab || storyPage || guideOpen) return;
       if (e.key === 'Enter' || e.key === ' ') {
         const activeTag = document.activeElement?.tagName;
         if (activeTag === 'BUTTON') return;
@@ -356,7 +389,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [achievementsOpen, collectionOpen, guideOpen, onStart]);
+  }, [achievementsOpen, collectionOpen, guideOpen, hubTab, onStart, storyPage]);
 
   const currentLevel = getCampaignLevel(selectedLevelIdx);
   const featuredSkinMeta = getSkinMeta(dailyChallenge.featuredSkin);
@@ -669,6 +702,39 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                 </div>
               )}
 
+              {mode === 'blitz' && (
+                <div data-testid="blitz-panel" className="ui-inset mt-2.5 px-3 py-2 space-y-1.5">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-[#D4002A]">
+                    <UiIcon name="power" className="w-3.5 h-3.5" />
+                    {t('Tidsläge · {n} sekunder', { n: BLITZ_SECONDS })}
+                  </span>
+                  <p className="text-xs sm:text-[13px] font-semibold leading-snug">
+                    {t('Inga drag att räkna: samla så många poäng du hinner innan klockan tar slut. Veckans lista börjar om varje måndag.')}
+                  </p>
+                  <span className="inline-flex rounded bg-[#111111] px-2 py-1 text-[11px] font-mono-num font-bold text-[#FFE14D]">
+                    {t('Rekord: {n} poäng', { n: formatNumber(blitz.best) })}
+                  </span>
+                  <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#4B4B4B]">
+                    {t('Veckans bästa')}
+                  </div>
+                  {blitz.week.length === 0 ? (
+                    <p className="text-xs font-semibold text-[#4B4B4B]">{t('Ingen omgång spelad den här veckan än.')}</p>
+                  ) : (
+                    <ol className="space-y-1">
+                      {blitz.week.map((score, i) => (
+                        <li
+                          key={i}
+                          className="flex items-center justify-between border-2 border-[#111111] bg-[#FFFFFF]/70 px-2 py-0.5 text-xs font-extrabold"
+                        >
+                          <span>{i + 1}.</span>
+                          <span className="font-mono-num">{formatNumber(score)}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+              )}
+
               {mode === 'endless' && (
                 <div className="ui-inset mt-2.5 px-3 py-2 space-y-1.5">
                   <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-[#D4002A]">
@@ -839,15 +905,34 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                 />
               </div>
 
-              <button
-                type="button"
-                data-testid="open-collection-btn"
-                onClick={() => setCollectionOpen(true)}
-                className="ui-btn mt-2.5 w-full px-2.5 py-1.5 text-sm"
-              >
-                <UiIcon name="leaderboardsComplex" className="w-4 h-4" />
-                {t('Album och topplista')}
-              </button>
+              {/* Missions, companion, island, statistics and the album */}
+              <div className="mt-2.5 grid grid-cols-5 gap-1.5">
+                {HUB_TABS.map((entry) => (
+                  <button
+                    key={entry.id}
+                    type="button"
+                    data-testid={`open-hub-${entry.id}`}
+                    onClick={() => setHubTab(entry.id)}
+                    className="ui-btn relative px-0.5 py-1.5 text-[11px] sm:text-xs"
+                  >
+                    <span className="truncate">{t(entry.label)}</span>
+                    {entry.id === 'missions' && (
+                      <span className="absolute -right-1.5 -top-2 border-2 border-[#111111] bg-[#F2CD1C] px-1 font-mono-num text-[10px] font-extrabold leading-tight">
+                        {missionsDone(missionState, missions)}/3
+                      </span>
+                    )}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  data-testid="open-collection-btn"
+                  onClick={() => setCollectionOpen(true)}
+                  title={t('Album och topplista')}
+                  className="ui-btn px-0.5 py-1.5 text-[11px] sm:text-xs"
+                >
+                  <span className="truncate">{t('Album')}</span>
+                </button>
+              </div>
 
               {/* CTA */}
               <div className="mt-3.5 flex flex-wrap items-stretch gap-2.5">
@@ -865,6 +950,8 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                     ? t('Kör dagens!')
                     : mode === 'endless'
                     ? t('Kör oändligt!')
+                    : mode === 'blitz'
+                    ? t('Starta klockan!')
                     : t('Spela nu')}
                 </button>
                 {outOfLives && (
@@ -921,6 +1008,28 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
         </div>
       </main>
 
+      <HubModal
+        tab={hubTab}
+        onTab={setHubTab}
+        onClose={() => setHubTab(null)}
+        skin={equippedSkin}
+        missions={missions}
+        missionState={missionState}
+        rewardState={rewardState}
+        companion={companion}
+        onSelectCompanion={onSelectCompanion}
+        island={island}
+        stars={totalStars(bestStars)}
+        onBuild={onBuild}
+        stats={stats}
+        achievementStats={achievementState.stats}
+        blitz={blitz}
+        bestEndlessScore={bestEndlessScore}
+        levelsCleared={highestUnlockedIdx}
+        seenPages={seenPages}
+        onReadStory={onReadStory}
+      />
+      <StoryModal page={storyPage} skin={equippedSkin} onClose={onCloseStory} />
       <CollectionModal
         open={collectionOpen}
         rewardState={rewardState}

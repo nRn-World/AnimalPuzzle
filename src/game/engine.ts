@@ -839,6 +839,16 @@ export function movePortals(board: Board): boolean {
   return moved;
 }
 
+/** Turns up to `count` plain animals into beams. Returns the new board and the cells changed. */
+export function plantBeams(board: Board, count: number, rng: RngFn = Math.random): { board: Board; spots: Coord[] } {
+  const next = cloneBoard(board);
+  const spots = takeSpots(plainSpots(next), count, rng);
+  spots.forEach((spot, i) => {
+    next[spot.row][spot.col].gem!.special = i % 2 === 0 ? 'beam_h' : 'beam_v';
+  });
+  return { board: next, spots };
+}
+
 /** Plain animals that can be given a bomb or a chain. */
 function plainSpots(board: Board): Coord[] {
   const spots: Coord[] = [];
@@ -1199,6 +1209,7 @@ export function resolveSwap(
   let bombExploded: Coord | undefined;
   let bombsPlanted: Coord[] | undefined;
   let bossAttack: Coord[] | undefined;
+  let bossStole: number | undefined;
   currentBoard = cloneBoard(currentBoard);
   for (const row of currentBoard) {
     for (const cell of row) {
@@ -1217,9 +1228,27 @@ export function resolveSwap(
       }
     }
     if (level.boss && moveNumber % level.boss.every === 0) {
-      bossAttack = takeSpots(plainSpots(currentBoard), level.boss.count, rng);
-      for (const spot of bossAttack) {
-        currentBoard[spot.row][spot.col].gem!.chained = true;
+      const attack = level.boss.attack ?? 'chain';
+      if (attack === 'steal') {
+        bossStole = level.boss.count;
+        bossAttack = [];
+      } else {
+        // Crates only land on plain floor, so belts and portals keep working.
+        const spots = plainSpots(currentBoard).filter(
+          (p) => attack !== 'crate' || (!currentBoard[p.row][p.col].belt && !currentBoard[p.row][p.col].portal)
+        );
+        bossAttack = takeSpots(spots, level.boss.count, rng);
+        for (const spot of bossAttack) {
+          const cell = currentBoard[spot.row][spot.col];
+          if (attack === 'crate') {
+            cell.gem = null;
+            cell.crate = 1;
+          } else if (attack === 'bomb') {
+            cell.gem!.bomb = level.boss.timer ?? 9;
+          } else {
+            cell.gem!.chained = true;
+          }
+        }
       }
     }
   }
@@ -1246,7 +1275,8 @@ export function resolveSwap(
     honeySpread: honeySpread ?? undefined,
     bombExploded,
     bombsPlanted: bombsPlanted?.length ? bombsPlanted : undefined,
-    bossAttack: bossAttack?.length ? bossAttack : undefined,
+    bossAttack: bossAttack?.length || bossStole ? bossAttack : undefined,
+    bossStole,
   };
 }
 
@@ -1311,9 +1341,24 @@ export function applyTool(
     }
   }
 
+  return clearCells(board, targets, pool, rng, extraBlasts);
+}
+
+/**
+ * Clears the given cells outright (as a tool or a companion power does) and
+ * plays out the cascades that follow. Costs no move.
+ */
+export function clearCells(
+  board: Board,
+  targets: Coord[],
+  colors: number | ColorPool,
+  rng: RngFn = Math.random,
+  extraBlasts: BlastEvent[] = []
+): SwapResult {
+  const pool = resolveColorPool(colors);
   const firstStep = executeClearPhase(
     board,
-    targets,
+    targets.filter((p) => inBounds(p.row, p.col)),
     [],
     [],
     1,

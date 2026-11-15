@@ -34,6 +34,8 @@ import {
   findBestHint,
   levelColorPool,
   resolveSwap,
+  clearCells,
+  plantBeams,
 } from '../game/engine';
 import { vibrate } from '../game/haptics';
 import {
@@ -116,6 +118,38 @@ import {
   getActiveSeason,
 } from '../game/seasons';
 import { biomeOfChapter } from '../game/biomes';
+import { BOSSES } from '../game/bosses';
+import {
+  animalLevel,
+  chargeFrom,
+  chargeNeeded,
+  getCompanion,
+  isCompanionUnlocked,
+  powerTargets,
+  readCompanion,
+  writeCompanion,
+} from '../game/companions';
+import { BUILD_GIFT, IslandState, build, readIsland, totalStars, writeIsland } from '../game/island';
+import {
+  MissionEvent,
+  MissionState,
+  applyMissionEvent,
+  getDailyMissions,
+  readMissionState,
+  writeMissionState,
+} from '../game/missions';
+import {
+  BLITZ_SECONDS,
+  BlitzState,
+  PlayStats,
+  addBlitzScore,
+  addStats,
+  readBlitz,
+  readStats,
+  writeBlitz,
+  writeStats,
+} from '../game/stats';
+import { STORY_PAGES, StoryPage, nextUnseenPage, readSeenPages, writeSeenPages } from '../game/story';
 import { formatNumber, Lang, t } from '../i18n';
 
 export const MAX_ENERGY = 100;
@@ -132,6 +166,8 @@ export interface EndSnapshot {
   chest?: { energy: number; skin: AnimalSkinId | null };
   /** The level ended because a bomb went off. */
   lostToBomb?: boolean;
+  /** Time mode: place on this week's list (0 = outside it). */
+  blitzRank?: number;
 }
 
 const EMPTY_SNAPSHOT: EndSnapshot = {
@@ -229,6 +265,33 @@ export function useGameSession(language: Lang) {
     writeDailyState(next);
   }, []);
   const weekKey = useMemo(() => getWeekKey(), []);
+
+  // --- Companion, missions, island, story and statistics ---------------------
+  const [companion, setCompanion] = useState<GemColor>(() => readCompanion());
+  const [powerCharge, setPowerCharge] = useState<number>(0);
+  const skipChargeRef = useRef(false);
+  const powerNeeded = chargeNeeded(animalLevel(rewardState.album[companion]).level);
+
+  const missions = useMemo(() => getDailyMissions(todayKey), [todayKey]);
+  const [missionState, setMissionState] = useState<MissionState>(() => readMissionState(todayKey));
+  const missionStateRef = useRef(missionState);
+
+  const [stats, setStats] = useState<PlayStats>(() => readStats());
+  const statsRef = useRef(stats);
+  const bumpStats = useCallback((add: Partial<PlayStats>) => {
+    const next = addStats(statsRef.current, add);
+    statsRef.current = next;
+    setStats(next);
+    writeStats(next);
+  }, []);
+
+  const [island, setIsland] = useState<IslandState>(() => readIsland());
+  const [seenPages, setSeenPages] = useState<string[]>(() => readSeenPages());
+  const [openPage, setOpenPage] = useState<StoryPage | null>(null);
+
+  const [blitz, setBlitz] = useState<BlitzState>(() => readBlitz(weekKey));
+  const blitzRef = useRef(blitz);
+  const [blitzLeft, setBlitzLeft] = useState<number>(BLITZ_SECONDS);
   const weeklyQuest = useMemo(() => getWeeklyQuest(weekKey), [weekKey]);
 
   const [endlessTarget, setEndlessTarget] = useState<number>(ENDLESS_MILESTONE_STEP);
@@ -238,6 +301,20 @@ export function useGameSession(language: Lang) {
         ? getCampaignLevel(levelIdx)
         : mode === 'daily'
         ? dailyChallenge.level
+        : mode === 'blitz'
+        ? {
+            ...ENDLESS_CONFIG,
+            name: 'Tidsläge',
+            subtitle: 'Så många poäng du hinner på 60 sekunder',
+            objectives: [
+              {
+                id: 'blitz-score',
+                kind: 'score',
+                label: 'Slå ditt rekord',
+                target: Math.max(blitz.best, 3000),
+              },
+            ],
+          }
         : {
             ...ENDLESS_CONFIG,
             objectives: [
@@ -249,7 +326,7 @@ export function useGameSession(language: Lang) {
               },
             ],
           },
-    [dailyChallenge, endlessTarget, levelIdx, mode]
+    [blitz.best, dailyChallenge, endlessTarget, levelIdx, mode]
   );
 
   const [tutorialDone, setTutorialDone] = useState<boolean>(() =>
@@ -335,6 +412,8 @@ export function useGameSession(language: Lang) {
     // Mid-animation state is not a position the player can return to, and the
     // scripted tutorial board is simply replayed instead of restored.
     if (busy || tutorialStep !== 'done') return;
+    // A round against the clock cannot be paused over a restart.
+    if (mode === 'blitz') return;
     // Nothing worth keeping until the first move has been made.
     if (progress.score <= 0 && movesLeft >= activeLevel.moves) return;
 
@@ -533,13 +612,16 @@ export function useGameSession(language: Lang) {
       setMovesLeft(lvl.moves);
       setProgress(createEmptyProgress());
       setEnergy(startingEnergy);
+      setPowerCharge(0);
+      setBlitzLeft(BLITZ_SECONDS);
+      if (!skipTutorial) bumpStats({ gamesPlayed: 1 });
       setMaxCascade(1);
       setStatusNotice(
         startingEnergy > 0 ? t('Bonusenergi aktiverad: +{n}', { n: startingEnergy }) : null
       );
       setPhase('PLAYING');
     },
-    [commitLives, dailyChallenge, dailyState, energy, resetInteraction, tutorialDone]
+    [bumpStats, commitLives, dailyChallenge, dailyState, energy, resetInteraction, tutorialDone]
   );
 
   // Each landscape has its own music; menus and the other modes keep the calm tune.
@@ -557,6 +639,79 @@ export function useGameSession(language: Lang) {
     }, 5000);
     return () => window.clearInterval(timer);
   }, [lives.lives, commitLives]);
+
+  // Time played, counted while a board is on screen.
+  useEffect(() => {
+    if (phase !== 'PLAYING') return;
+    const timer = window.setInterval(() => bumpStats({ secondsPlayed: 5 }), 5000);
+    return () => window.clearInterval(timer);
+  }, [phase, bumpStats]);
+
+  // The clock of the time mode only runs while playing.
+  useEffect(() => {
+    if (phase !== 'PLAYING' || mode !== 'blitz') return;
+    const timer = window.setInterval(() => setBlitzLeft((left) => Math.max(0, left - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [phase, mode]);
+
+  /** Adds an event to today's missions and pays out the ones it finishes. */
+  const reportMission = useCallback(
+    (event: MissionEvent) => {
+      const res = applyMissionEvent(missionStateRef.current, missions, event);
+      if (res.nextState === missionStateRef.current) return;
+      missionStateRef.current = res.nextState;
+      setMissionState(res.nextState);
+      writeMissionState(res.nextState);
+      if (res.energy > 0) {
+        commitDaily(grantReward(dailyStateRef.current, res.energy, null).nextState);
+        bumpStats({ missionsDone: res.completed.length });
+        soundEngine.playSpecialCreate('prism');
+        setStatusNotice(t('Uppdrag klart! +{n} bonusenergi', { n: res.energy }));
+        window.setTimeout(() => setStatusNotice(null), 2600);
+      }
+    },
+    [bumpStats, commitDaily, missions]
+  );
+
+  const selectCompanion = useCallback((color: GemColor) => {
+    if (!isCompanionUnlocked(color, rewardStateRef.current.album)) return;
+    soundEngine.playClick();
+    setCompanion(color);
+    writeCompanion(color);
+  }, []);
+
+  /** Spends stars on the next building of the island. */
+  const buildNext = useCallback(() => {
+    const res = build(island, totalStars(bestStars));
+    if (!res.built) return;
+    setIsland(res.nextState);
+    writeIsland(res.nextState);
+    commitDaily(grantReward(dailyStateRef.current, BUILD_GIFT, null).nextState);
+    soundEngine.playSpecialCreate('nova');
+    vibrate('victory');
+  }, [bestStars, commitDaily, island]);
+
+  // The story page that is waiting to be read, if any.
+  const duePage = useMemo(
+    () => nextUnseenPage(Math.floor(highestUnlockedIdx / LEVELS_PER_CHAPTER) + 1, seenPages),
+    [highestUnlockedIdx, seenPages]
+  );
+  const storyPage = openPage ?? (phase === 'TITLE_MENU' ? duePage : null);
+
+  const closeStory = useCallback(() => {
+    if (openPage) {
+      setOpenPage(null);
+      return;
+    }
+    if (!duePage) return;
+    const next = [...seenPages, duePage.id];
+    setSeenPages(next);
+    writeSeenPages(next);
+  }, [duePage, openPage, seenPages]);
+
+  const readStory = useCallback((id: string) => {
+    setOpenPage(STORY_PAGES.find((page) => page.id === id) ?? null);
+  }, []);
 
   /** Trades bonus energy for a full set of lives. */
   const buyLives = useCallback(() => {
@@ -793,6 +948,30 @@ export function useGameSession(language: Lang) {
       }
       const hunt = applyCollected(rewardStateRef.current, collected, weekKey);
       commitRewards(hunt.nextState);
+
+      // The companion's power charges from every animal cleared (but not from
+      // its own strike), and today's missions move forward.
+      if (skipChargeRef.current) {
+        skipChargeRef.current = false;
+      } else {
+        const gained = chargeFrom(collected, companion);
+        if (gained > 0) setPowerCharge((charge) => Math.min(powerNeeded, charge + gained));
+      }
+      reportMission({
+        cleared: collected,
+        specials: result.steps.reduce((sum, step) => sum + step.spawnedSpecials.length, 0),
+        cascades: result.steps.some((step) => step.cascadeIndex >= 3) ? 1 : 0,
+        score: result.totalScore,
+        blockers: result.steps.reduce(
+          (sum, step) =>
+            sum +
+            step.deltaProgress.clearedIce +
+            step.deltaProgress.clearedCrates +
+            step.deltaProgress.clearedChains +
+            step.deltaProgress.clearedHoney,
+          0
+        ),
+      });
       if (season) {
         let total = 0;
         for (const color of GEM_COLORS_ORDER) total += collected[color] ?? 0;
@@ -865,8 +1044,14 @@ export function useGameSession(language: Lang) {
         setBoard(result.finalBoard);
         soundEngine.playBlast('crack');
         vibrate('invalid');
+        if (result.bossStole) {
+          updatedMoves = Math.max(0, updatedMoves - result.bossStole);
+          setMovesLeft(updatedMoves);
+        }
         setStatusNotice(
-          result.bossAttack ? t('Bossen kedjar fast djur!') : t('En bomb har dykt upp – matcha den i tid!')
+          result.bossAttack
+            ? t(BOSSES[biomeOfChapter(activeLevel.chapter ?? 1)].attackSv)
+            : t('En bomb har dykt upp – matcha den i tid!')
         );
         window.setTimeout(() => {
           if (runTokenRef.current === token) setStatusNotice(null);
@@ -920,6 +1105,9 @@ export function useGameSession(language: Lang) {
             writeBestStars(nextStars);
           }
         }
+
+        reportMission({ wins: 1, score: bonus });
+        bumpStats({ gamesWon: 1, bossesBeaten: activeLevel.boss ? 1 : 0 });
 
         const nextBest = recordBestScore(finalScore);
         commitRewards(
@@ -1063,9 +1251,12 @@ export function useGameSession(language: Lang) {
       return true;
     },
     [
-      activeLevel.id,
-      activeLevel.moves,
+      activeLevel,
       bestStars,
+      bumpStats,
+      companion,
+      powerNeeded,
+      reportMission,
       dailyChallenge,
       dailyState,
       highestUnlockedIdx,
@@ -1142,8 +1333,10 @@ export function useGameSession(language: Lang) {
       await waitMs(260);
       if (runTokenRef.current !== tokenBefore) return;
 
-      const nextMoves = Math.max(0, movesLeft - 1);
+      // The time mode is limited by the clock, not by moves.
+      const nextMoves = mode === 'blitz' ? movesLeft : Math.max(0, movesLeft - 1);
       setMovesLeft(nextMoves);
+      bumpStats({ moves: 1 });
       const completed = await playSwapResult(
         result,
         nextMoves,
@@ -1169,7 +1362,9 @@ export function useGameSession(language: Lang) {
     [
       activeLevel,
       board,
+      bumpStats,
       busy,
+      mode,
       endlessTarget,
       energy,
       flashInvalid,
@@ -1231,6 +1426,82 @@ export function useGameSession(language: Lang) {
       progress,
     ]
   );
+
+  /** Fires the companion's power once it is fully charged. Costs no move. */
+  const firePower = useCallback(async () => {
+    if (busy || phase !== 'PLAYING' || tutorialPrompt || powerCharge < powerNeeded) return;
+    const def = getCompanion(companion);
+    setPowerCharge(0);
+    setActiveTool(null);
+    setSelected(null);
+    bumpStats({ powersUsed: 1 });
+    reportMission({ powers: 1 });
+    soundEngine.playSpecialCreate('prism');
+    vibrate('victory');
+    setStatusNotice(`${t(def.powerSv)}!`);
+    window.setTimeout(() => setStatusNotice(null), 1800);
+
+    if (def.power === 'moves') {
+      if (mode === 'blitz') setBlitzLeft((left) => left + 8);
+      else setMovesLeft((moves) => moves + 3);
+      return;
+    }
+    if (def.power === 'specials') {
+      const planted = plantBeams(board, 3);
+      setTransitionMode('none');
+      setBoard(planted.board);
+      fxRef.current?.emitBlasts(planted.spots.map((spot) => ({ type: 'match' as const, row: spot.row, col: spot.col })));
+      return;
+    }
+    const targets = powerTargets(board, def.power);
+    const result = clearCells(board, targets, levelColorPool(activeLevel));
+    if (!result.valid || result.steps.length === 0) return;
+    skipChargeRef.current = true;
+    await playSwapResult(result, movesLeft, progress, energy, maxCascade, endlessTarget);
+  }, [
+    activeLevel,
+    board,
+    bumpStats,
+    busy,
+    companion,
+    endlessTarget,
+    energy,
+    maxCascade,
+    mode,
+    movesLeft,
+    phase,
+    playSwapResult,
+    powerCharge,
+    powerNeeded,
+    progress,
+    reportMission,
+    tutorialPrompt,
+  ]);
+
+  // Time mode: when the clock runs out (and the board has settled) the round ends.
+  useEffect(() => {
+    if (mode !== 'blitz' || phase !== 'PLAYING' || blitzLeft > 0 || busy) return;
+    runTokenRef.current += 1;
+    const score = progress.score;
+    const res = addBlitzScore(blitzRef.current, score);
+    blitzRef.current = res.nextState;
+    setBlitz(res.nextState);
+    writeBlitz(res.nextState);
+    commitRewards(addTopScore(rewardStateRef.current, { score, mode: 'blitz', level: 0, dateKey: todayKey }));
+    soundEngine.playVictory();
+    vibrate('victory');
+    setEndSnapshot({
+      score,
+      best: res.nextState.best,
+      maxCascade,
+      movesLeft: 0,
+      bonus: 0,
+      specialBonus: 0,
+      stars: 0,
+      blitzRank: res.rank,
+    });
+    setPhase('GAME_OVER');
+  }, [blitzLeft, busy, commitRewards, maxCascade, mode, phase, progress.score, todayKey]);
 
   const selectTool = useCallback(
     (tool: ToolType) => {
@@ -1368,6 +1639,22 @@ export function useGameSession(language: Lang) {
     lives,
     buyLives,
     season,
+    companion,
+    powerCharge,
+    powerNeeded,
+    selectCompanion,
+    firePower,
+    missions,
+    missionState,
+    stats,
+    island,
+    buildNext,
+    storyPage,
+    closeStory,
+    readStory,
+    seenPages,
+    blitz,
+    blitzLeft,
     // board
     board,
     transitionMode,

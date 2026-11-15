@@ -1022,8 +1022,6 @@ export const en: Record<string, string> = {
     "Weekly hunt done! +{n} energy and Party Hats unlocked",
   "Veckans jakt klar! +{n} energi":
     "Weekly hunt done! +{n} energy",
-  "Is tinas av matchningar på rutan, trälådor spräcks av matchningar intill och kedjor lossar när djuret matchas. Längre fram kommer hål i brädet, honung som sprider sig varje drag du inte rensar någon, och ägg som ska lotsas ner till botten. Sent i sagan dyker bombdjur med nedräkning, rullband och portaler som byter djur med varandra efter varje drag upp, och varje kapitel slutar med en boss. En misslyckad kampanjnivå kostar ett liv; liven fylls på med tiden.":
-    "Ice thaws when you match on the tile, wooden crates break from matches next to them and chains come off when the animal is matched. Later on you meet holes in the board, honey that spreads every move you clear none of it, and eggs to steer down to the bottom. Late in the saga come bomb animals with a countdown, conveyor belts and portals that trade animals with each other after every move, and every chapter ends with a boss. A failed campaign level costs a life; lives refill over time.",
   "Bomb, {n} drag kvar":
     "Bomb, {n} moves left",
   "Bomben smällde":
@@ -1064,10 +1062,6 @@ export const en: Record<string, string> = {
     "Easter Hunt",
   "Sommarlovet":
     "Summer Holiday",
-  "Bossen":
-    "The boss",
-  "Bossnivå – varje djur du rensar skadar bossen":
-    "Boss level – every animal you clear hurts the boss",
   "Matcha bombdjuren innan nedräkningen når noll":
     "Match the bomb animals before the countdown hits zero",
   "Skärgården":
@@ -1084,8 +1078,6 @@ export const en: Record<string, string> = {
     "The Volcano",
   "{name} klar! +{n} energi och nytt djur-skin":
     "{name} done! +{n} energy and a new animal skin",
-  "Bossen kedjar fast djur!":
-    "The boss chains up animals!",
   "En bomb har dykt upp – matcha den i tid!":
     "A bomb has appeared – match it in time!",
   "Fyll på · {n} energi":
@@ -1094,4 +1086,298 @@ export const en: Record<string, string> = {
     "Conveyor belt",
   "Portalruta":
     "Portal tile",
+  "Tidsläge":
+    "Time mode",
+  "60 sekunder":
+    "60 seconds",
+  "Sekunder kvar":
+    "Seconds left",
+  "Sekunder":
+    "Seconds",
+  "{power} ({pct} % laddad): {desc}":
+    "{power} ({pct}% charged): {desc}",
+  "Tiden är ute":
+    "Time is up",
+  "Veckans bästa omgång!":
+    "Best round of the week!",
+  "Plats {n} på veckans lista":
+    "Place {n} on this week's list",
+  "Utanför veckans topp fem – försök igen!":
+    "Outside this week's top five – try again!",
+  "Tidsläge · {n} sekunder":
+    "Time mode · {n} seconds",
+  "Inga drag att räkna: samla så många poäng du hinner innan klockan tar slut. Veckans lista börjar om varje måndag.":
+    "No moves to count: score as many points as you can before the clock runs out. The weekly list starts over every Monday.",
+  "Veckans bästa":
+    "Best this week",
+  "Ingen omgång spelad den här veckan än.":
+    "No round played this week yet.",
+  "Album":
+    "Collection",
+  "Starta klockan!":
+    "Start the clock!",
+  "Tid":
+    "Time",
+  "Sätt igång!":
+    "Let's go!",
+  "Nästa ruta":
+    "Next panel",
+  "Samla {n} djur":
+    "Collect {n} animals",
+  "Samla {n} st: {animal}":
+    "Collect {n} of: {animal}",
+  "Skapa {n} specialbrickor":
+    "Create {n} special pieces",
+  "Gör {n} kedjor på minst ×3":
+    "Make {n} chains of at least ×3",
+  "Tjäna {n} poäng":
+    "Score {n} points",
+  "Vinn {n} nivåer":
+    "Win {n} levels",
+  "Använd din kompis kraft {n} gånger":
+    "Use your companion's power {n} times",
+  "Rensa {n} hinder":
+    "Clear {n} obstacles",
+  "Tre nya uppdrag varje dag. De fylls på i alla spellägen och betalar bonusenergi direkt. Alla tre ger {n} extra.":
+    "Three new missions every day. They fill up in every game mode and pay bonus energy right away. All three give {n} extra.",
+  "Klart":
+    "Done",
+  "{n} av 3 klara i dag":
+    "{n} of 3 done today",
+  "Välj ett djur som följer med. Kraften laddas av djuren du rensar, tre gånger snabbare av kompisens egen sort, och kostar inget drag. Ju fler du samlat av ett djur, desto högre nivå och snabbare laddning.":
+    "Pick an animal to bring along. Its power charges from the animals you clear, three times faster from the companion's own kind, and costs no move. The more of an animal you have collected, the higher its level and the faster it charges.",
+  "Max nivå {n}":
+    "Max level {n}",
+  "Samla {n} för att låsa upp ({now}/{n})":
+    "Collect {n} to unlock ({now}/{n})",
+  "Laddas av {n} djur":
+    "Charges from {n} animals",
+  "Bygg upp djurens ö med stjärnorna du vinner i kampanjen. Varje bygge ger {n} bonusenergi.":
+    "Rebuild the animals' island with the stars you win in the campaign. Every building gives {n} bonus energy.",
+  "{n} stjärnor att bygga för":
+    "{n} stars to build with",
+  "Bygg {name} · {n} stjärnor":
+    "Build {name} · {n} stars",
+  "Ön är färdigbyggd!":
+    "The island is complete!",
+  "Byggd":
+    "Built",
+  "Spelad tid":
+    "Time played",
+  "{h} h {m} min":
+    "{h} hr {m} min",
+  "Spelade omgångar":
+    "Rounds played",
+  "Vunna omgångar":
+    "Rounds won",
+  "Klarade nivåer":
+    "Levels cleared",
+  "Stjärnor":
+    "Stars",
+  "Besegrade bossar":
+    "Bosses beaten",
+  "Samlade djur":
+    "Animals collected",
+  "Favoritdjur":
+    "Favourite animal",
+  "Längsta kedja":
+    "Longest chain",
+  "Gjorda drag":
+    "Moves made",
+  "Använda krafter":
+    "Powers used",
+  "Klarade uppdrag":
+    "Missions done",
+  "Skapade specialbrickor":
+    "Special pieces created",
+  "Rekord i oändligt":
+    "Endless record",
+  "Rekord i tidsläget":
+    "Time mode record",
+  "Berättelsen":
+    "The story",
+  "Uppdrag":
+    "Missions",
+  "Kompis":
+    "Companion",
+  "Din ö":
+    "Your island",
+  "Statistik":
+    "Statistics",
+  "Springer längs en hel rad och rensar den":
+    "Runs along a whole row and clears it",
+  "Vrålar bort en rad och en kolumn i ett kors":
+    "Roars away a row and a column in a cross",
+  "Hoppar runt och rensar tio rutor":
+    "Hops around and clears ten tiles",
+  "Glider nerför två kolumner och rensar dem":
+    "Slides down two columns and clears them",
+  "Gör tre djur till strålar":
+    "Turns three animals into beams",
+  "Tinar upp till tolv isrutor":
+    "Thaws up to twelve ice tiles",
+  "River bort brädets båda diagonaler":
+    "Claws away both diagonals of the board",
+  "Ger dig tre extra drag":
+    "Gives you three extra moves",
+  "Sköljer bort de två nedersta raderna":
+    "Washes away the two bottom rows",
+  "Rullar över ett stort fält mitt på brädet":
+    "Rolls over a large patch in the middle of the board",
+  "Samlar in alla djur av den vanligaste sorten":
+    "Collects every animal of the most common kind",
+  "Slår sönder upp till åtta lådor, kedjor och honung":
+    "Smashes up to eight crates, chains and honey",
+  "Rävsprång":
+    "Fox Dash",
+  "Lejonvrål":
+    "Lion's Roar",
+  "Grodhopp":
+    "Frog Hop",
+  "Isglid":
+    "Ice Slide",
+  "Morotsregn":
+    "Carrot Rain",
+  "Vårvärme":
+    "Spring Warmth",
+  "Tigerklös":
+    "Tiger Claws",
+  "Lugn och ro":
+    "Slow and Steady",
+  "Flodvåg":
+    "Tidal Wave",
+  "Pandarull":
+    "Panda Roll",
+  "Skarpsyn":
+    "Sharp Eyes",
+  "Bollkonst":
+    "Ball Tricks",
+  "Kapten Krake":
+    "Captain Kraken",
+  "Getingdrottningen":
+    "The Wasp Queen",
+  "Sandormen":
+    "The Sandworm",
+  "Isdraken":
+    "The Ice Dragon",
+  "Kapten Blip":
+    "Captain Blip",
+  "Lavadraken":
+    "The Lava Dragon",
+  "Kapten Krake kedjar fast djur!":
+    "Captain Kraken chains up animals!",
+  "Getingdrottningen lägger en bomb!":
+    "The Wasp Queen plants a bomb!",
+  "Sandormen begraver djur i lådor!":
+    "The Sandworm buries animals in crates!",
+  "Isdraken fryser fast djur!":
+    "The Ice Dragon freezes animals in place!",
+  "Kapten Blip stal ett drag!":
+    "Captain Blip stole a move!",
+  "Lavadraken spottar en bomb!":
+    "The Lava Dragon spits a bomb!",
+  "Kedjar fast två djur var fjärde drag":
+    "Chains up two animals every fourth move",
+  "Lägger en bomb med nedräkning var sjätte drag":
+    "Plants a countdown bomb every sixth move",
+  "Begraver två djur i lådor var fjärde drag":
+    "Buries two animals in crates every fourth move",
+  "Fryser fast fyra djur var femte drag":
+    "Freezes four animals in place every fifth move",
+  "Stjäl ett drag var sjätte drag":
+    "Steals a move every sixth move",
+  "Spottar en bomb med nedräkning var sjätte drag":
+    "Spits a countdown bomb every sixth move",
+  "Lägereld":
+    "Campfire",
+  "Tält":
+    "Tent",
+  "Morotsland":
+    "Carrot patch",
+  "Stuga":
+    "Cottage",
+  "Brygga":
+    "Jetty",
+  "Brunn":
+    "Well",
+  "Segelbåt":
+    "Sailing boat",
+  "Trädkoja":
+    "Treehouse",
+  "Väderkvarn":
+    "Windmill",
+  "Fyr":
+    "Lighthouse",
+  "Utkikstorn":
+    "Lookout tower",
+  "Gyllene staty":
+    "Golden statue",
+  "Stormen":
+    "The Storm",
+  "Hemma igen":
+    "Home Again",
+  "Uppdrag klart! +{n} bonusenergi":
+    "Mission done! +{n} bonus energy",
+  "Så många poäng du hinner på 60 sekunder":
+    "As many points as you can in 60 seconds",
+  "Slå ditt rekord":
+    "Beat your record",
+  "En natt slet stormen loss djurens ö och spred vännerna över hela världen.":
+    "One night the storm tore the animals' island loose and scattered the friends across the world.",
+  "Var är alla?":
+    "Where is everyone?",
+  "Räven bestämde sig: varenda vän ska hittas, och ön ska byggas upp igen.":
+    "The fox made up its mind: every single friend will be found, and the island will be rebuilt.",
+  "Vi seglar i gryningen!":
+    "We sail at dawn!",
+  "Men Kapten Krake vaktar skärgården och släpper inte förbi någon utan strid.":
+    "But Captain Kraken guards the archipelago and lets nobody pass without a fight.",
+  "Hjälp oss samla flocken!":
+    "Help us gather the pack!",
+  "Bortom skärgården breder en äng ut sig, full av blommor och surrande vingar.":
+    "Beyond the archipelago lies a meadow, full of flowers and buzzing wings.",
+  "Här luktar det honung!":
+    "It smells of honey here!",
+  "Getingdrottningen har tagit ängen i besittning, och hon gillar inte besök.":
+    "The Wasp Queen has taken over the meadow, and she does not like visitors.",
+  "Akta bomberna!":
+    "Watch out for the bombs!",
+  "Solen bränner och sanden tar aldrig slut. Tigern visar vägen mellan dynerna.":
+    "The sun burns and the sand never ends. The tiger leads the way between the dunes.",
+  "Följ mina spår!":
+    "Follow my tracks!",
+  "Under sanden rör sig något stort. Sandormen begraver allt som står still.":
+    "Something big is moving under the sand. The Sandworm buries anything that stands still.",
+  "Jag går så fort jag kan...":
+    "I'm going as fast as I can...",
+  "Snön knarrar under tassarna. Isbjörnen och pingvinen känner sig äntligen hemma.":
+    "The snow creaks under their paws. The polar bear and the penguin finally feel at home.",
+  "Lagom varmt, tycker jag.":
+    "Just warm enough, I'd say.",
+  "Högst upp på glaciären sover Isdraken. Den som väcker den fryser fast.":
+    "At the top of the glacier the Ice Dragon sleeps. Whoever wakes it is frozen in place.",
+  "Tyst nu, allihop!":
+    "Quiet now, everyone!",
+  "Ugglan hittade en raket bakom isen. Nästa vän finns visst bland stjärnorna.":
+    "The owl found a rocket behind the ice. The next friend seems to be among the stars.",
+  "Tre, två, ett...":
+    "Three, two, one...",
+  "Kapten Blip samlar på allt som blänker, och allra helst på andras drag.":
+    "Captain Blip collects everything that glitters, and best of all other people's moves.",
+  "Han tog mitt drag!":
+    "He took my move!",
+  "Den sista vännen sitter fast vid vulkanens fot, där marken glöder röd.":
+    "The last friend is stuck at the foot of the volcano, where the ground glows red.",
+  "Nu vänder vi inte om.":
+    "No turning back now.",
+  "Lavadraken vaktar vägen hem. Bakom den väntar havet, och ön som ska byggas upp.":
+    "The Lava Dragon guards the way home. Beyond it waits the sea, and the island to be rebuilt.",
+  "Tillsammans klarar vi det!":
+    "Together we can do it!",
+  "Flocken är samlad och seglar hem. Men världen är stor, och äventyret går ett varv till.":
+    "The pack is gathered and sails home. But the world is big, and the adventure goes one more lap.",
+  "En gång till?":
+    "One more time?",
+  "Is tinas av matchningar på rutan, trälådor spräcks av matchningar intill och kedjor lossar när djuret matchas. Längre fram kommer hål i brädet, honung som sprider sig varje drag du inte rensar någon, och ägg som ska lotsas ner till botten. Sent i sagan dyker bombdjur med nedräkning, rullband och portaler som byter djur med varandra efter varje drag upp, och varje kapitel slutar med en boss. En misslyckad kampanjnivå kostar ett liv; liven fylls på med tiden. Din kompis kraft laddas av djuren du rensar: tryck på kompisen bredvid verktygen när ringen är full.":
+    "Ice thaws when you match on the tile, wooden crates break from matches next to them and chains come off when the animal is matched. Later on you meet holes in the board, honey that spreads every move you clear none of it, and eggs to steer down to the bottom. Late in the saga come bomb animals with a countdown, conveyor belts and portals that trade animals with each other after every move, and every chapter ends with a boss. A failed campaign level costs a life; lives refill over time. Your companion's power charges from the animals you clear: tap the companion next to the tools when the ring is full.",
 };

@@ -33,7 +33,7 @@ function collectSourceStrings(): Map<string, string> {
   const patterns = [
     /\bt\(\s*'((?:[^'\\\n]|\\.)*)'/g,
     /\bt\(\s*"((?:[^"\\\n]|\\.)*)"/g,
-    /\b(?:name|subtitle|label|title|sub|eyebrow|text|tip|nameSv|descSv|titleSv|labelSv|instructionSv|goalSummary|beam_h|beam_v|nova|scout|prism)\s*:\s*'((?:[^'\\\n]|\\.)*)'/g,
+    /\b(?:name|subtitle|label|title|sub|eyebrow|text|tip|nameSv|descSv|titleSv|labelSv|powerSv|attackSv|introSv|captionSv|saySv|instructionSv|goalSummary|beam_h|beam_v|nova|scout|prism)\s*:\s*'((?:[^'\\\n]|\\.)*)'/g,
   ];
   for (const file of sourceFiles(SRC_DIR)) {
     const code = readFileSync(file, 'utf8');

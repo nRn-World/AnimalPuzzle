@@ -381,7 +381,7 @@ export const SagaMap: React.FC<SagaMapProps> = ({
                         data-testid="saga-boss"
                         className={`pointer-events-none absolute -right-7 -top-5 h-9 w-9 ${locked ? 'opacity-60 grayscale' : ''}`}
                       >
-                        <BossSvg />
+                        <BossSvg biome={biome} />
                       </span>
                     )}
                     {frontier && (
