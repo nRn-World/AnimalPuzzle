@@ -85,6 +85,8 @@ export function reviveBoard(raw: unknown): Board | null {
       if (crate > 0 && gem !== null) return null;
       const cell: Cell = block ? { row: r, col: c, gem, ice, crate, block } : { row: r, col: c, gem, ice, crate };
       if (rawCell.belt === 1 || rawCell.belt === -1) cell.belt = rawCell.belt;
+      const portal = nonNegInt(rawCell.portal, 9);
+      if (portal !== null && portal > 0) cell.portal = portal;
       row.push(cell);
     }
     board.push(row);

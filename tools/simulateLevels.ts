@@ -83,7 +83,8 @@ const hasFeature = (level: LevelConfig) =>
   (feature === 'holes' && !!level.holeCells) ||
   (feature === 'boss' && !!level.boss) ||
   (feature === 'bombs' && !!level.bombEvery) ||
-  (feature === 'belts' && !!level.beltRows);
+  (feature === 'belts' && !!level.beltRows) ||
+  (feature === 'portals' && !!level.portalPairs);
 let cursor = start;
 for (let i = 0; i < levels; i++) {
   // Mix of consecutive early levels and levels spread over the whole campaign

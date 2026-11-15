@@ -54,6 +54,8 @@ export interface Cell {
   block?: 'hole' | 'honey';
   /** Conveyor belt: after every move the animals on it slide one step (1 = right, -1 = left). */
   belt?: 1 | -1;
+  /** Portal pair number: after every move the two cells of a pair trade animals. */
+  portal?: number;
 }
 
 /** `crate` value of a hole: high enough that nothing ever wears it down. */
@@ -154,6 +156,8 @@ export interface LevelConfig {
   bombTimer?: number;
   /** Rows that work as conveyor belts. */
   beltRows?: Array<{ row: number; dir: 1 | -1 }>;
+  /** Pairs of portal cells that trade animals after every move. */
+  portalPairs?: Array<[Coord, Coord]>;
   /** Boss level: every `every` moves the boss chains `count` animals. */
   boss?: { every: number; count: number };
 }

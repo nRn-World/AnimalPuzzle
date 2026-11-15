@@ -395,6 +395,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 if (cell.gem.bomb !== undefined) labelParts.push(t('Bomb, {n} drag kvar', { n: cell.gem.bomb }));
               }
               if (cell.ice > 0) labelParts.push(t('Is nivå {n}', { n: cell.ice }));
+              if (cell.portal) labelParts.push(t('Portalruta'));
+              if (cell.belt) labelParts.push(t('Rullband'));
 
               const checkerboardDark = (r + c) % 2 === 0;
               const delta = cell.gem ? gemOffsets.get(cell.gem.id) : undefined;
@@ -464,6 +466,20 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       : 'hover:bg-[#1E263A]'
                   } ${invalid ? 'animate-gem-invalid' : ''}`}
                 >
+                  {/* Portal: a glowing ring, one colour per pair */}
+                  {cell.portal && !isHole && (
+                    <div
+                      aria-hidden="true"
+                      data-testid="portal"
+                      className="pointer-events-none absolute inset-[3%] rounded-full border-[3px] border-dashed"
+                      style={{
+                        borderColor: cell.portal % 2 === 1 ? '#C77DFF' : '#3CE0C8',
+                        background: `radial-gradient(circle, ${
+                          cell.portal % 2 === 1 ? 'rgba(199,125,255,0.55)' : 'rgba(60,224,200,0.5)'
+                        } 0%, rgba(0,0,0,0) 72%)`,
+                      }}
+                    />
+                  )}
                   {/* Conveyor belt floor: chevrons show which way it moves */}
                   {cell.belt && !isHole && (
                     <div
@@ -543,9 +559,17 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                         {cell.gem.bomb !== undefined && (
                           <span
                             aria-hidden="true"
+                            className={`pointer-events-none absolute inset-0 z-10 rounded-md border-[3px] ${
+                              cell.gem.bomb <= 3 ? 'border-[#FF2E4D] bg-[#FF2E4D]/25' : 'border-[#FF9F1C] bg-[#FF9F1C]/15'
+                            }`}
+                          />
+                        )}
+                        {cell.gem.bomb !== undefined && (
+                          <span
+                            aria-hidden="true"
                             data-testid="bomb-timer"
-                            className={`absolute -right-0.5 -top-0.5 z-20 grid h-[46%] w-[46%] place-items-center rounded-full border-2 border-[#111111] font-mono-num text-[min(3.4vw,15px)] font-extrabold leading-none ${
-                              cell.gem.bomb <= 3 ? 'bg-[#FF2E4D] text-white animate-pulse' : 'bg-[#111111] text-[#F2CD1C]'
+                            className={`absolute -right-1 -top-1 z-20 grid h-[58%] w-[58%] place-items-center rounded-full border-[3px] border-[#111111] font-mono-num text-[min(4.4vw,19px)] font-extrabold leading-none ${
+                              cell.gem.bomb <= 3 ? 'bg-[#FF2E4D] text-white animate-pulse' : 'bg-[#FF9F1C] text-[#111111]'
                             }`}
                           >
                             {cell.gem.bomb}

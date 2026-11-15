@@ -12,6 +12,7 @@ import {
   getObjectiveCurrent,
   hasValidMoves,
   moveBelts,
+  movePortals,
   resolveSwap,
 } from './engine';
 import { CAMPAIGN_LEVELS, getCampaignLevel } from './levels';
@@ -418,4 +419,38 @@ test('the boss chains animals on its turn and takes damage from every animal cle
   let progress = createEmptyProgress();
   for (const step of result.steps) progress = addStepDelta(progress, step);
   assert.ok(getObjectiveCurrent(level.objectives[0], progress) >= 3);
+});
+
+test('a portal pair trades animals, and rests while one end is chained', () => {
+  const board = makeCleanBoard();
+  board[1][1].portal = 1;
+  board[6][5].portal = 1;
+  const a = board[1][1].gem!.id;
+  const b = board[6][5].gem!.id;
+  assert.equal(movePortals(board), true);
+  assert.equal(board[1][1].gem!.id, b);
+  assert.equal(board[6][5].gem!.id, a);
+
+  board[1][1].gem!.chained = true;
+  assert.equal(movePortals(board), false);
+  assert.equal(board[1][1].gem!.id, b);
+});
+
+test('generated portal levels place whole pairs on open cells', () => {
+  let seen = 0;
+  for (let index = 160; index < 600 && seen < 12; index++) {
+    const level = getCampaignLevel(index);
+    if (!level.portalPairs) continue;
+    seen++;
+    const board = createBoard(level, makeDeterministicRng(index));
+    const counts = new Map<number, number>();
+    for (const cell of board.flat()) {
+      if (!cell.portal) continue;
+      assert.equal(cell.crate, 0);
+      counts.set(cell.portal, (counts.get(cell.portal) ?? 0) + 1);
+    }
+    assert.ok(counts.size >= 1);
+    for (const n of counts.values()) assert.equal(n, 2);
+  }
+  assert.equal(seen, 12);
 });

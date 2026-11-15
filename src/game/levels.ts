@@ -1,4 +1,4 @@
-import { GemColor, LevelConfig, LevelDifficulty } from './types';
+import { Coord, GemColor, LevelConfig, LevelDifficulty } from './types';
 
 interface CellSpec {
   row: number;
@@ -1310,8 +1310,8 @@ function generateLevel(levelIdx: number): LevelConfig {
   }
   const feat = featRng();
   if (chapter >= FIRST_CHAPTER.bombs && feat < 0.22) {
-    level.bombEvery = 7;
-    level.bombTimer = rank >= 2 ? 13 : 10;
+    level.bombEvery = rank >= 2 ? 9 : 7;
+    level.bombTimer = rank >= 2 ? 15 : 10;
     if (objectives.length <= 2 && !kinds.has('egg') && !kinds.has('honey')) {
       level.subtitle = GENERATED_SUBTITLES.bombs.text;
     }
@@ -1329,6 +1329,24 @@ function generateLevel(levelIdx: number): LevelConfig {
           dir: level.beltRows[0].dir === 1 ? -1 : 1,
         });
       }
+    }
+  } else if (chapter >= FIRST_CHAPTER.portals && feat < 0.6) {
+    // Portals sit on plain open cells, well apart from each other.
+    const taken = new Set<string>();
+    for (const cells of [holeCells, honeyCells, crateCells, chainCells, eggCells]) {
+      for (const cell of cells) taken.add(`${cell.row},${cell.col}`);
+    }
+    const spots: Coord[] = [];
+    const wanted = featRng() < 0.5 ? 4 : 2;
+    for (let tries = 0; tries < 80 && spots.length < wanted; tries++) {
+      const spot = { row: 1 + Math.floor(featRng() * 6), col: Math.floor(featRng() * 8) };
+      if (taken.has(`${spot.row},${spot.col}`)) continue;
+      if (spots.some((s) => Math.abs(s.row - spot.row) + Math.abs(s.col - spot.col) < 3)) continue;
+      spots.push(spot);
+    }
+    if (spots.length >= 2) {
+      level.portalPairs = [[spots[0], spots[1]]];
+      if (spots.length >= 4) level.portalPairs.push([spots[2], spots[3]]);
     }
   }
   return level;
@@ -1351,7 +1369,7 @@ const GENERATED_SUBTITLES = {
 };
 
 /** Chapter in which each newer ingredient first shows up. */
-export const FIRST_CHAPTER = { boss: 5, holes: 6, honey: 9, eggs: 12, bombs: 15, belts: 18 };
+export const FIRST_CHAPTER = { boss: 5, holes: 6, honey: 9, eggs: 12, bombs: 15, belts: 18, portals: 21 };
 
 function cellList(mask: Mask): Array<{ row: number; col: number }> {
   return Array.from(mask)

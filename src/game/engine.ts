@@ -131,6 +131,12 @@ export function createBoard(level: LevelConfig, rng: RngFn = Math.random): Board
     }
   }
 
+  (level.portalPairs ?? []).forEach((pair, index) => {
+    const open = pair.every((p) => inBounds(p.row, p.col) && board[p.row][p.col].crate === 0);
+    if (!open) return;
+    for (const p of pair) board[p.row][p.col].portal = index + 1;
+  });
+
   for (const belt of level.beltRows ?? []) {
     if (belt.row < 0 || belt.row >= BOARD_SIZE) continue;
     for (let c = 0; c < BOARD_SIZE; c++) {
@@ -809,6 +815,30 @@ export function moveBelts(board: Board): boolean {
   return moved;
 }
 
+/**
+ * The two cells of every portal pair trade animals. A pair rests while one
+ * end is blocked, empty or holds a chained animal. Mutates `board`.
+ */
+export function movePortals(board: Board): boolean {
+  const pairs = new Map<number, Cell[]>();
+  for (const row of board) {
+    for (const cell of row) {
+      if (cell.portal) pairs.set(cell.portal, [...(pairs.get(cell.portal) ?? []), cell]);
+    }
+  }
+  let moved = false;
+  for (const cells of pairs.values()) {
+    if (cells.length !== 2) continue;
+    const [a, b] = cells;
+    if (a.crate > 0 || b.crate > 0 || !a.gem || !b.gem || a.gem.chained || b.gem.chained) continue;
+    const gem = a.gem;
+    a.gem = b.gem;
+    b.gem = gem;
+    moved = true;
+  }
+  return moved;
+}
+
 /** Plain animals that can be given a bomb or a chain. */
 function plainSpots(board: Board): Coord[] {
   const spots: Coord[] = [];
@@ -1152,6 +1182,16 @@ export function resolveSwap(
       const afterBelt = runAutoCascades(currentBoard, steps.length + 1, pool, rng);
       steps.push(...afterBelt.steps);
       currentBoard = afterBelt.finalBoard;
+    }
+  }
+
+  // Portals trade their animals, which can also line up new matches.
+  if (currentBoard.some((row) => row.some((cell) => cell.portal))) {
+    currentBoard = cloneBoard(currentBoard);
+    if (movePortals(currentBoard)) {
+      const afterPortal = runAutoCascades(currentBoard, steps.length + 1, pool, rng);
+      steps.push(...afterPortal.steps);
+      currentBoard = afterPortal.finalBoard;
     }
   }
 
