@@ -1022,8 +1022,8 @@ export const en: Record<string, string> = {
     "Weekly hunt done! +{n} energy and Party Hats unlocked",
   "Veckans jakt klar! +{n} energi":
     "Weekly hunt done! +{n} energy",
-  "Is tinas av matchningar på rutan, trälådor spräcks av matchningar intill och kedjor lossar när djuret matchas. Längre fram kommer hål i brädet, honung som sprider sig varje drag du inte rensar någon, och ägg som ska lotsas ner till botten. Sent i sagan dyker bombdjur med nedräkning och rullband upp, och varje kapitel slutar med en boss. En misslyckad kampanjnivå kostar ett liv; liven fylls på med tiden.":
-    "Ice thaws when you match on the tile, wooden crates break from matches next to them and chains come off when the animal is matched. Later on you meet holes in the board, honey that spreads every move you clear none of it, and eggs to steer down to the bottom. Late in the saga come bomb animals with a countdown and conveyor belts, and every chapter ends with a boss. A failed campaign level costs a life; lives refill over time.",
+  "Is tinas av matchningar på rutan, trälådor spräcks av matchningar intill och kedjor lossar när djuret matchas. Längre fram kommer hål i brädet, honung som sprider sig varje drag du inte rensar någon, och ägg som ska lotsas ner till botten. Sent i sagan dyker bombdjur med nedräkning, rullband och portaler som byter djur med varandra efter varje drag upp, och varje kapitel slutar med en boss. En misslyckad kampanjnivå kostar ett liv; liven fylls på med tiden.":
+    "Ice thaws when you match on the tile, wooden crates break from matches next to them and chains come off when the animal is matched. Later on you meet holes in the board, honey that spreads every move you clear none of it, and eggs to steer down to the bottom. Late in the saga come bomb animals with a countdown, conveyor belts and portals that trade animals with each other after every move, and every chapter ends with a boss. A failed campaign level costs a life; lives refill over time.",
   "Bomb, {n} drag kvar":
     "Bomb, {n} moves left",
   "Bomben smällde":
@@ -1090,4 +1090,8 @@ export const en: Record<string, string> = {
     "A bomb has appeared – match it in time!",
   "Fyll på · {n} energi":
     "Refill · {n} energy",
+  "Rullband":
+    "Conveyor belt",
+  "Portalruta":
+    "Portal tile",
 };

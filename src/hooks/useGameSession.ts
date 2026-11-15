@@ -774,7 +774,7 @@ export function useGameSession(language: Lang) {
       // End-of-move events (belts sliding, bombs ticking, new bombs and chains)
       // only exist on the final board, so always show it.
       if (!result.reshuffled) {
-        const hasBelt = result.finalBoard.some((row) => row.some((cell) => cell.belt));
+        const hasBelt = result.finalBoard.some((row) => row.some((cell) => cell.belt || cell.portal));
         setTransitionMode(hasBelt ? 'swap' : 'none');
         setBoard(result.finalBoard);
         if (hasBelt) {

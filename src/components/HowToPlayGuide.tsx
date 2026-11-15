@@ -160,7 +160,7 @@ const PAGES: GuidePage[] = [
     eyebrow: 'Senare nivåer',
     title: 'Hinder du möter',
     text:
-      'Is tinas av matchningar på rutan, trälådor spräcks av matchningar intill och kedjor lossar när djuret matchas. Längre fram kommer hål i brädet, honung som sprider sig varje drag du inte rensar någon, och ägg som ska lotsas ner till botten. Sent i sagan dyker bombdjur med nedräkning och rullband upp, och varje kapitel slutar med en boss. En misslyckad kampanjnivå kostar ett liv; liven fylls på med tiden.',
+      'Is tinas av matchningar på rutan, trälådor spräcks av matchningar intill och kedjor lossar när djuret matchas. Längre fram kommer hål i brädet, honung som sprider sig varje drag du inte rensar någon, och ägg som ska lotsas ner till botten. Sent i sagan dyker bombdjur med nedräkning, rullband och portaler som byter djur med varandra efter varje drag upp, och varje kapitel slutar med en boss. En misslyckad kampanjnivå kostar ett liv; liven fylls på med tiden.',
     tip: 'Tips: matcha bredvid hindren – inte bara på dem.',
     visual: () => (
       <div className="flex items-center gap-2 sm:gap-3">
