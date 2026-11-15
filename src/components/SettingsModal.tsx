@@ -285,7 +285,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
           <Section title={t('Tack')}>
             <ul data-testid="settings-credits" className="ui-inset space-y-1.5 px-3 py-2 text-xs leading-snug">
               <li>
-                <strong>Kenney</strong> (kenney.nl) – {t('ikonerna i menyerna')} · CC0
+                <strong>Kenney</strong> (kenney.nl) – {t('ikonerna i menyerna och de inspelade ljudeffekterna')} · CC0
               </li>
               <li>
                 <strong>Vernon Adams</strong> – {t('typsnittet Bangers')} · SIL OFL

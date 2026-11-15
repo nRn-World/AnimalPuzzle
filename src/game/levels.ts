@@ -382,7 +382,7 @@ export const CAMPAIGN_LEVELS: LevelConfig[] = [
     difficulty: 'medium',
     name: 'Isvinden',
     subtitle: 'Två ispelare delar brädet — matcha igenom dem',
-    moves: 24,
+    moves: 17,
     colorCount: 5,
     objectives: [
       { id: 'l10-ice', kind: 'ice', label: 'Isrutor', target: 14 },
@@ -396,7 +396,7 @@ export const CAMPAIGN_LEVELS: LevelConfig[] = [
     difficulty: 'hard',
     name: 'Glaciärgrinden',
     subtitle: 'Frysta hörn och en låst kärna i mitten',
-    moves: 24,
+    moves: 14,
     colorCount: 5,
     objectives: [
       { id: 'l11-ice', kind: 'ice', label: 'Isrutor', target: 12 },
@@ -411,7 +411,7 @@ export const CAMPAIGN_LEVELS: LevelConfig[] = [
     difficulty: 'hard',
     name: 'Snöstormen',
     subtitle: 'Frostringen sluter sig — samla poäng medan du tinar',
-    moves: 25,
+    moves: 18,
     colorCount: 6,
     objectives: [
       { id: 'l12-ice', kind: 'ice', label: 'Isrutor', target: 16 },
@@ -439,7 +439,7 @@ export const CAMPAIGN_LEVELS: LevelConfig[] = [
     difficulty: 'hard',
     name: 'Frostens Väktare',
     subtitle: 'Tjock is i hörnen och kedjade djur i mitten',
-    moves: 26,
+    moves: 18,
     colorCount: 6,
     objectives: [
       { id: 'l14-ice', kind: 'ice', label: 'Isrutor', target: 24 },
@@ -475,7 +475,7 @@ export const CAMPAIGN_LEVELS: LevelConfig[] = [
     difficulty: 'extreme',
     name: 'Isdrottningens Sal',
     subtitle: 'Hela salen är frusen — fyra lådor låser mitten',
-    moves: 28,
+    moves: 23,
     colorCount: 6,
     objectives: [
       { id: 'l16-ice', kind: 'ice', label: 'Isrutor', target: 22 },
@@ -492,7 +492,7 @@ export const CAMPAIGN_LEVELS: LevelConfig[] = [
     difficulty: 'medium',
     name: 'Kungliga Förrådet',
     subtitle: 'Två rader av lådor skyddar kungens förråd',
-    moves: 24,
+    moves: 20,
     colorCount: 5,
     objectives: [
       { id: 'l17-crate', kind: 'crate', label: 'Trälådor', target: 10 },
@@ -506,7 +506,7 @@ export const CAMPAIGN_LEVELS: LevelConfig[] = [
     difficulty: 'medium',
     name: 'Kedjeborgen',
     subtitle: 'Ett kors av kedjor håller borgen samman',
-    moves: 24,
+    moves: 18,
     colorCount: 5,
     objectives: [
       { id: 'l18-chain', kind: 'chain', label: 'Kedjor', target: 12 },
@@ -536,7 +536,7 @@ export const CAMPAIGN_LEVELS: LevelConfig[] = [
     difficulty: 'hard',
     name: 'Kronans Kammare',
     subtitle: 'Kedjor i mitten och frost längs kanterna',
-    moves: 26,
+    moves: 16,
     colorCount: 6,
     objectives: [
       { id: 'l20-chain', kind: 'chain', label: 'Kedjor', target: 6 },
@@ -553,7 +553,7 @@ export const CAMPAIGN_LEVELS: LevelConfig[] = [
     difficulty: 'hard',
     name: 'Riddarsalen',
     subtitle: 'Inga hinder — bara skickliga specialare och poäng',
-    moves: 26,
+    moves: 14,
     colorCount: 6,
     objectives: [
       { id: 'l21-specials', kind: 'specials', label: 'Specialare', target: 4 },
@@ -566,7 +566,7 @@ export const CAMPAIGN_LEVELS: LevelConfig[] = [
     difficulty: 'hard',
     name: 'Tronsalen',
     subtitle: 'Kungens tron är låst med lådor och fyra kedjor',
-    moves: 28,
+    moves: 23,
     colorCount: 6,
     objectives: [
       { id: 'l22-crate', kind: 'crate', label: 'Trälådor', target: 10 },
@@ -627,7 +627,7 @@ export const CAMPAIGN_LEVELS: LevelConfig[] = [
     difficulty: 'extreme',
     name: 'Stjärnfall',
     subtitle: 'Bygg kaskader under stjärnorna',
-    moves: 28,
+    moves: 14,
     colorCount: 6,
     objectives: [
       { id: 'l25-cascade', kind: 'cascade3', label: 'Kaskad ×3+', target: 3 },
@@ -640,7 +640,7 @@ export const CAMPAIGN_LEVELS: LevelConfig[] = [
     difficulty: 'extreme',
     name: 'Nebulosan',
     subtitle: 'Ett hav av möjligheter — smid många specialare',
-    moves: 30,
+    moves: 20,
     colorCount: 6,
     objectives: [
       { id: 'l26-specials', kind: 'specials', label: 'Specialare', target: 6 },
@@ -653,7 +653,7 @@ export const CAMPAIGN_LEVELS: LevelConfig[] = [
     difficulty: 'extreme',
     name: 'Kometer',
     subtitle: 'Tjock is i alla hörn och en låst kärna',
-    moves: 30,
+    moves: 17,
     colorCount: 6,
     objectives: [
       { id: 'l27-ice', kind: 'ice', label: 'Isrutor', target: 24 },
@@ -696,7 +696,7 @@ export const CAMPAIGN_LEVELS: LevelConfig[] = [
     difficulty: 'extreme',
     name: 'Prismastormen',
     subtitle: 'Ett sista prov i specialare och poäng',
-    moves: 30,
+    moves: 16,
     colorCount: 6,
     objectives: [
       { id: 'l29-specials', kind: 'specials', label: 'Specialare', target: 6 },
@@ -709,7 +709,7 @@ export const CAMPAIGN_LEVELS: LevelConfig[] = [
     difficulty: 'extreme',
     name: 'Kristalltornet',
     subtitle: 'Två lådpelare och ett tjockt isband i mitten',
-    moves: 32,
+    moves: 17,
     colorCount: 6,
     objectives: [
       { id: 'l30-crate', kind: 'crate', label: 'Trälådor', target: 10 },
@@ -724,7 +724,7 @@ export const CAMPAIGN_LEVELS: LevelConfig[] = [
     difficulty: 'extreme',
     name: 'Evighetens Port',
     subtitle: 'Halva brädet är täckt av dubbel is',
-    moves: 34,
+    moves: 20,
     colorCount: 6,
     objectives: [
       { id: 'l31-ice', kind: 'ice', label: 'Isrutor', target: 30 },
@@ -904,7 +904,7 @@ const COLOR_FAMILIES: GemColor[][] = [
   ['quartz'],
 ];
 
-function chapterCrew(chapter: number): GemColor[] {
+export function chapterCrew(chapter: number): GemColor[] {
   const rng = seededRng(chapter * 7919 + 13);
   const crew = COLOR_FAMILIES.map((family) => family[Math.floor(rng() * family.length)]);
   for (let i = crew.length - 1; i > 0; i--) {
@@ -1031,6 +1031,8 @@ const RATE = {
   special: 0.9,
   cascade3: 0.55,
   score: 800,
+  honey: 0.8,
+  egg: 0.25,
   oneColor: 3.0,
   twoColors: 2.5,
 };
@@ -1087,6 +1089,69 @@ function generateLevel(levelIdx: number): LevelConfig {
     : new Set<string>();
   for (const k of crateMask) chainMask.delete(k);
 
+  // --- Board shape, honey and eggs ------------------------------------------
+  // These arrive one at a time as the saga goes on. They draw from their own
+  // random stream so the rest of the level does not depend on them.
+  const extraRng = seededRng(id * 40503 + 977);
+  const holeMask: Mask =
+    chapter >= FIRST_CHAPTER.holes && extraRng() < 0.45
+      ? maskOf(BOARD_SHAPES[Math.floor(extraRng() * BOARD_SHAPES.length)])
+      : new Set();
+  for (const k of holeMask) {
+    crateMask.delete(k);
+    iceMask.delete(k);
+    chainMask.delete(k);
+  }
+
+  const honeyMask: Mask = new Set();
+  if (chapter >= FIRST_CHAPTER.honey && rank >= 1 && extraRng() < 0.24) {
+    // A blob that grows from a seed in the lower half of the board.
+    const wanted = 3 + Math.floor(extraRng() * 3);
+    let frontier = [{ row: 4 + Math.floor(extraRng() * 4), col: Math.floor(extraRng() * 8) }];
+    for (let guard = 0; guard < 60 && honeyMask.size < wanted && frontier.length > 0; guard++) {
+      const spot = frontier[Math.floor(extraRng() * frontier.length)];
+      const k = key(spot.row, spot.col);
+      if (spot.row < 3 || spot.row > 7 || spot.col < 0 || spot.col > 7 || holeMask.has(k) || crateMask.has(k)) {
+        frontier = frontier.filter((f) => f !== spot);
+        continue;
+      }
+      honeyMask.add(k);
+      frontier.push(
+        { row: spot.row, col: spot.col - 1 },
+        { row: spot.row, col: spot.col + 1 },
+        { row: spot.row - 1, col: spot.col },
+        { row: spot.row + 1, col: spot.col }
+      );
+    }
+    for (const k of honeyMask) {
+      iceMask.delete(k);
+      chainMask.delete(k);
+    }
+  }
+
+  const eggCells: Array<{ row: number; col: number }> = [];
+  if (chapter >= FIRST_CHAPTER.eggs && honeyMask.size === 0 && extraRng() < 0.22) {
+    // Eggs start near the top, in columns with a clear way down.
+    const freeCols = [0, 1, 2, 3, 4, 5, 6, 7].filter((col) => {
+      for (let row = 0; row < 8; row++) {
+        const k = key(row, col);
+        if (holeMask.has(k) || crateMask.has(k) || chainMask.has(k)) return false;
+      }
+      return true;
+    });
+    for (let i = freeCols.length - 1; i > 0; i--) {
+      const j = Math.floor(extraRng() * (i + 1));
+      [freeCols[i], freeCols[j]] = [freeCols[j], freeCols[i]];
+    }
+    const wanted = Math.min(freeCols.length, 2 + (rank >= 2 ? 1 : 0) + (extraRng() < 0.35 ? 1 : 0));
+    for (const col of freeCols.slice(0, wanted)) {
+      eggCells.push({ row: Math.floor(extraRng() * 2), col });
+    }
+    eggCells.sort((a, b) => a.col - b.col);
+  }
+
+  const holeCells = cellList(holeMask);
+  const honeyCells = cellList(honeyMask);
   const crateCells = specsOf(crateMask, () => (deepHp && rng() < 0.4 ? 2 : 1));
   const iceCells = specsOf(iceMask, (r, c) => (deepHp && (r + c) % 3 === 0 ? 2 : 1));
   const chainCells = specsOf(chainMask, () => 1).map(({ row, col }) => ({ row, col }));
@@ -1102,6 +1167,8 @@ function generateLevel(levelIdx: number): LevelConfig {
     iceHp / (RATE.ice * boost),
     crateHp / (RATE.crateHp * boost),
     chainCells.length / (RATE.chain * boost),
+    honeyCells.length / (RATE.honey * boost),
+    eggCells.length / (RATE.egg * boost),
   ].filter((n) => n > 0);
   obstacleCosts.sort((a, b) => b - a);
   const obstacleCost = obstacleCosts.reduce((sum, n, i) => sum + n * (i === 0 ? 1 : 0.5), 0);
@@ -1113,14 +1180,27 @@ function generateLevel(levelIdx: number): LevelConfig {
   const effort = moves * share;
   // Effort left for the "collect" style goal that runs alongside the obstacles.
   const spare = Math.max(effort * 0.45, effort - obstacleCost * 0.6);
+  // A board with gaps has fewer matches to offer, honey fights back and eggs
+  // depend on luck in their column: each gets a few moves of margin.
+  moves += Math.round(holeCells.length / 4);
+  if (honeyCells.length > 0) moves += 1;
+  moves += eggCells.length * (rank === 0 ? 2 : 1);
+  moves = Math.min(44, moves);
 
   // --- Objectives ----------------------------------------------------------
   const objectives: LevelConfig['objectives'] = [];
+  // Honey and eggs always count as goals; other obstacles fill the remaining slots.
+  if (honeyCells.length > 0) {
+    objectives.push({ id: `g${id}-honey`, kind: 'honey', label: 'Honung', target: honeyCells.length });
+  }
+  if (eggCells.length > 0) {
+    objectives.push({ id: `g${id}-egg`, kind: 'egg', label: 'Ägg', target: eggCells.length });
+  }
   if (iceHp > 0) objectives.push({ id: `g${id}-ice`, kind: 'ice', label: 'Isrutor', target: iceHp });
-  if (crateCells.length > 0) {
+  if (crateCells.length > 0 && objectives.length < 3) {
     objectives.push({ id: `g${id}-crate`, kind: 'crate', label: 'Trälådor', target: crateCells.length });
   }
-  if (chainCells.length > 0) {
+  if (chainCells.length > 0 && objectives.length < 3) {
     objectives.push({ id: `g${id}-chain`, kind: 'chain', label: 'Kedjor', target: chainCells.length });
   }
 
@@ -1171,6 +1251,10 @@ function generateLevel(levelIdx: number): LevelConfig {
       ? 'finale'
       : objectives.length >= 3
       ? 'mixed'
+      : kinds.has('egg')
+      ? 'eggs'
+      : kinds.has('honey')
+      ? 'honey'
       : kinds.has('crate')
       ? 'crates'
       : kinds.has('chain')
@@ -1200,6 +1284,9 @@ function generateLevel(levelIdx: number): LevelConfig {
   if (iceCells.length > 0) level.iceCells = iceCells;
   if (crateCells.length > 0) level.crateCells = crateCells;
   if (chainCells.length > 0) level.chainCells = chainCells;
+  if (holeCells.length > 0) level.holeCells = holeCells;
+  if (honeyCells.length > 0) level.honeyCells = honeyCells;
+  if (eggCells.length > 0 && objectives.some((o) => o.kind === 'egg')) level.eggCells = eggCells;
   return level;
 }
 
@@ -1213,7 +1300,47 @@ const GENERATED_SUBTITLES = {
   specials: { text: 'Skapa specialdjur med stora matchningar' },
   cascades: { text: 'Bygg långa kaskader för att nå målet' },
   score: { text: 'Jaga poäng – stora matchningar ger mest' },
+  honey: { text: 'Rensa honungen – annars sprider den sig' },
+  eggs: { text: 'Matcha under äggen så att de når botten' },
 };
+
+/** Chapter in which each newer ingredient first shows up. */
+export const FIRST_CHAPTER = { holes: 6, honey: 9, eggs: 12 };
+
+function cellList(mask: Mask): Array<{ row: number; col: number }> {
+  return Array.from(mask)
+    .map((k) => k.split(',').map(Number))
+    .sort((a, b) => a[0] - b[0] || a[1] - b[1])
+    .map(([row, col]) => ({ row, col }));
+}
+
+function mirrorLR(list: Array<[number, number]>): Array<{ row: number; col: number }> {
+  const out: Array<{ row: number; col: number }> = [];
+  for (const [row, col] of list) {
+    out.push({ row, col });
+    if (col !== 7 - col) out.push({ row, col: 7 - col });
+  }
+  return out;
+}
+
+/**
+ * Gaps that give the board another outline. Every shape keeps all open cells
+ * reachable for falling animals (straight down or diagonally past a gap).
+ */
+const BOARD_SHAPES: Array<Array<{ row: number; col: number }>> = [
+  mirrorLR([[0, 0], [7, 0]]), // clipped corners
+  mirrorLR([[0, 0], [0, 1], [1, 0]]), // rounded top
+  mirrorLR([[7, 0], [7, 1], [6, 0]]), // rounded bottom
+  mirrorLR([[0, 0], [0, 1], [1, 0], [7, 0], [7, 1], [6, 0]]), // octagon
+  mirrorLR([[3, 3], [4, 3]]), // hole in the middle
+  mirrorLR([[3, 0], [4, 0]]), // notched sides
+  mirrorLR([[2, 2], [5, 2]]), // four pillars
+  mirrorLR([[3, 1], [4, 1]]), // two posts
+  mirrorLR([[0, 3]]), // gap in the top edge
+  mirrorLR([[7, 3], [0, 0]]), // gap in the bottom edge
+  mirrorLR([[2, 3], [5, 3]]), // two slots
+  mirrorLR([[0, 0], [1, 0], [6, 0], [7, 0]]), // narrow waist reversed
+];;
 
 /** Objective labels for "collect this animal" goals. */
 const ANIMAL_LABELS: Record<GemColor, string> = {

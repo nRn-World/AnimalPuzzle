@@ -742,3 +742,48 @@ html[data-reduce-motion="true"] .animate-combo-banner {
 .ui-medal-tail-right::after {
   background: var(--ui-blue);
 }
+
+/* Saga map: night-blue map sheet with halftone dots. */
+.ui-saga {
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.07) 0 2.5px, transparent 3px) 0 0 / 16px 16px local,
+    linear-gradient(180deg, #23307a 0%, #1a2360 100%);
+  scrollbar-width: thin;
+  scrollbar-color: #111111 transparent;
+}
+.ui-node-finale {
+  background: var(--ui-yellow);
+}
+
+/* Victory confetti: flat paper pieces tumbling down behind the dialog. */
+.ui-confetti {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ui-confetti i {
+  position: absolute;
+  top: -5%;
+  border: 2px solid var(--ui-ink);
+  animation: confetti-fall 3s linear infinite;
+}
+@keyframes confetti-fall {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(22px, 50vh, 0) rotate(260deg);
+  }
+  100% {
+    transform: translate3d(-14px, 112vh, 0) rotate(540deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-confetti {
+    display: none;
+  }
+}
+html[data-reduce-motion='true'] .ui-confetti {
+  display: none;
+}

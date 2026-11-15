@@ -272,3 +272,78 @@ test('two scouts swapped together send out a flock of three', () => {
   assert.equal(result.combo, 'scout_flock');
   assert.equal(result.steps[0].blasts.filter((b) => b.type === 'scout').length, 3);
 });
+
+test('a hole never holds an animal and survives every blast', () => {
+  const level = { ...CAMPAIGN_LEVELS[0], holeCells: [{ row: 3, col: 3 }, { row: 3, col: 4 }] };
+  const board = createBoard(level, makeDeterministicRng(11));
+  assert.equal(board[3][3].block, 'hole');
+  assert.equal(board[3][3].gem, null);
+  const pulsed = applyTool(board, 'pulse', { row: 3, col: 0 }, 6, makeDeterministicRng(2));
+  assert.equal(pulsed.finalBoard[3][3].block, 'hole');
+  assert.equal(pulsed.finalBoard[3][4].block, 'hole');
+  assert.equal(pulsed.steps[0].deltaProgress.clearedCrates, 0);
+  // Cells under the hole are refilled diagonally.
+  for (let r = 4; r < BOARD_SIZE; r++) assert.ok(pulsed.finalBoard[r][3].gem, `row ${r} refilled`);
+  assert.equal(applyTool(board, 'hammer', { row: 3, col: 3 }, 6).valid, false);
+});
+
+function honeyBoard(): Board {
+  const board = makeCleanBoard();
+  board[7][7].gem = null;
+  board[7][7].crate = 1;
+  board[7][7].block = 'honey';
+  return board;
+}
+
+test('honey is cleared by a match next to it', () => {
+  const board = honeyBoard();
+  // Column 6, rows 5-7 become rose once (7,5) moves right.
+  board[5][6].gem!.color = 'rose';
+  board[6][6].gem!.color = 'rose';
+  board[7][5].gem!.color = 'rose';
+  board[7][6].gem!.color = 'mint';
+  const result = resolveSwap(board, { row: 7, col: 5 }, { row: 7, col: 6 }, 6, makeDeterministicRng(4));
+  assert.equal(result.valid, true);
+  assert.equal(result.steps[0].deltaProgress.clearedHoney, 1);
+  assert.equal(result.honeySpread, undefined);
+  assert.equal(result.finalBoard.flat().filter((cell) => cell.block === 'honey').length, 0);
+});
+
+test('honey spreads by one cell after a move that leaves it alone', () => {
+  const board = honeyBoard();
+  board[0][0].gem!.color = 'rose';
+  board[0][1].gem!.color = 'rose';
+  board[1][2].gem!.color = 'rose';
+  board[0][2].gem!.color = 'mint';
+  const result = resolveSwap(board, { row: 1, col: 2 }, { row: 0, col: 2 }, 6, makeDeterministicRng(9));
+  assert.equal(result.valid, true);
+  assert.ok(result.honeySpread, 'the honey spread');
+  const honey = result.finalBoard.flat().filter((cell) => cell.block === 'honey');
+  assert.equal(honey.length, 2);
+  for (const cell of honey) assert.equal(cell.gem, null);
+});
+
+test('an egg never matches and is collected at the bottom of its column', () => {
+  const board = makeCleanBoard();
+  board[6][0].gem!.egg = true;
+  // Clearing (7,0)-(7,2) lets the egg sink to the bottom row.
+  board[7][0].gem!.color = 'rose';
+  board[7][1].gem!.color = 'rose';
+  board[6][2].gem!.color = 'rose';
+  board[7][2].gem!.color = 'mint';
+  const result = resolveSwap(board, { row: 6, col: 2 }, { row: 7, col: 2 }, 6, makeDeterministicRng(6));
+  assert.equal(result.valid, true);
+  const collected = result.steps.reduce((sum, step) => sum + step.deltaProgress.collectedEggs, 0);
+  assert.equal(collected, 1);
+  assert.equal(result.finalBoard.flat().some((cell) => cell.gem?.egg), false);
+  assert.ok(result.steps.some((step) => step.blasts.some((b) => b.type === 'egg')));
+});
+
+test('three eggs in a row are not a match', () => {
+  const board = makeCleanBoard();
+  for (const c of [2, 3, 4]) {
+    board[2][c].gem!.egg = true;
+    board[2][c].gem!.color = 'rose';
+  }
+  assert.equal(findMatchGroups(board).length, 0);
+});

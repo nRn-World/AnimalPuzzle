@@ -8,6 +8,7 @@ import {
   GameMode,
   GemColor,
   LevelProgress,
+  HOLE_HP,
   SpecialType,
 } from './types';
 
@@ -57,8 +58,11 @@ export function reviveBoard(raw: unknown): Board | null {
       const rawCell: unknown = rawRow[c];
       if (!isObject(rawCell)) return null;
       const ice = nonNegInt(rawCell.ice, 2);
-      const crate = nonNegInt(rawCell.crate, 2);
+      const block =
+        rawCell.block === 'hole' || rawCell.block === 'honey' ? rawCell.block : undefined;
+      const crate = block === 'hole' ? HOLE_HP : nonNegInt(rawCell.crate, block === 'honey' ? 1 : 2);
       if (ice === null || crate === null) return null;
+      if (block === 'honey' && crate === 0) return null;
 
       let gem: Cell['gem'] = null;
       if (rawCell.gem !== null && rawCell.gem !== undefined) {
@@ -72,11 +76,12 @@ export function reviveBoard(raw: unknown): Board | null {
           special: rawGem.special as SpecialType,
           chained: rawGem.chained === true,
         };
+        if (rawGem.egg === true) gem.egg = true;
       }
       // A crate never holds an animal. (An open cell may legitimately be empty
       // when crates above it block the refill.)
       if (crate > 0 && gem !== null) return null;
-      row.push({ row: r, col: c, gem, ice, crate });
+      row.push(block ? { row: r, col: c, gem, ice, crate, block } : { row: r, col: c, gem, ice, crate });
     }
     board.push(row);
   }
@@ -113,6 +118,9 @@ function reviveProgress(raw: unknown): LevelProgress | null {
     clearedIce,
     clearedCrates,
     clearedChains,
+    // Saves from before honey and eggs existed simply have none.
+    clearedHoney: nonNegInt(raw.clearedHoney) ?? 0,
+    collectedEggs: nonNegInt(raw.collectedEggs) ?? 0,
     specialsCreated,
     cascade3Count,
   };

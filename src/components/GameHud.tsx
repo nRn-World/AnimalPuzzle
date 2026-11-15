@@ -14,7 +14,9 @@ import {
 import {
   ChainBadgeIcon,
   CrateSvg,
+  EggSvg,
   GemSvg,
+  HoneySvg,
   HammerIcon,
   IceBadgeIcon,
   PulseIcon,
@@ -190,6 +192,8 @@ export const GameHud: React.FC<GameHudProps> = ({
                     {obj.kind === 'ice' && <IceBadgeIcon className="w-6 h-6 lg:w-8 lg:h-8" />}
                     {obj.kind === 'crate' && <CrateSvg hp={2} className="w-7 h-7 lg:w-9 lg:h-9" />}
                     {obj.kind === 'chain' && <ChainBadgeIcon className="w-6 h-6 lg:w-8 lg:h-8" />}
+                    {obj.kind === 'honey' && <HoneySvg className="w-7 h-7 lg:w-9 lg:h-9" />}
+                    {obj.kind === 'egg' && <EggSvg className="w-7 h-7 lg:w-9 lg:h-9" />}
                     {(obj.kind === 'score' || obj.kind === 'specials') && (
                       <UiIcon name="star" className="w-6 h-6 lg:w-8 lg:h-8 text-[#E09A00]" />
                     )}

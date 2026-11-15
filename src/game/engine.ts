@@ -1,4 +1,5 @@
 import {
+  HOLE_HP,
   BOARD_SIZE,
   BlastEvent,
   Board,
@@ -79,6 +80,8 @@ export function createEmptyProgress(): LevelProgress {
     clearedIce: 0,
     clearedCrates: 0,
     clearedChains: 0,
+    clearedHoney: 0,
+    collectedEggs: 0,
     specialsCreated: 0,
     cascade3Count: 0,
   };
@@ -106,6 +109,24 @@ export function createBoard(level: LevelConfig, rng: RngFn = Math.random): Board
     if (inBounds(crate.row, crate.col)) {
       board[crate.row][crate.col].crate = crate.hp;
       board[crate.row][crate.col].ice = 0;
+    }
+  }
+
+  for (const hole of level.holeCells ?? []) {
+    if (inBounds(hole.row, hole.col)) {
+      const cell = board[hole.row][hole.col];
+      cell.crate = HOLE_HP;
+      cell.ice = 0;
+      cell.block = 'hole';
+    }
+  }
+
+  for (const honey of level.honeyCells ?? []) {
+    if (inBounds(honey.row, honey.col) && board[honey.row][honey.col].block !== 'hole') {
+      const cell = board[honey.row][honey.col];
+      cell.crate = 1;
+      cell.ice = 0;
+      cell.block = 'honey';
     }
   }
 
@@ -155,6 +176,12 @@ export function createBoard(level: LevelConfig, rng: RngFn = Math.random): Board
     }
   }
 
+  for (const egg of level.eggCells ?? []) {
+    if (!inBounds(egg.row, egg.col)) continue;
+    const gem = board[egg.row][egg.col].gem;
+    if (gem && !gem.chained) gem.egg = true;
+  }
+
   if (!hasValidMoves(board)) {
     return shuffleBoard(board, pool, rng);
   }
@@ -170,6 +197,11 @@ export function canSwap(board: Board, a: Coord, b: Coord): boolean {
   if (cellA.crate > 0 || cellB.crate > 0) return false;
   if (!cellA.gem || !cellB.gem) return false;
   if (cellA.gem.chained || cellB.gem.chained) return false;
+  // An egg can trade places with an animal, but a prism has nothing to copy from it.
+  if (cellA.gem.egg && cellB.gem.egg) return false;
+  if ((cellA.gem.egg || cellB.gem.egg) && (cellA.gem.special === 'prism' || cellB.gem.special === 'prism')) {
+    return false;
+  }
   return true;
 }
 
@@ -186,7 +218,11 @@ interface RunSegment {
   orientation: 'h' | 'v' | 'sq';
 }
 
-export function findMatchGroups(board: Board): MatchGroup[] {
+export function findMatchGroups(source: Board): MatchGroup[] {
+  // Eggs never match: to the matcher their cells simply hold no animal.
+  const board: Board = source.some((row) => row.some((cell) => cell.gem?.egg))
+    ? source.map((row) => row.map((cell) => (cell.gem?.egg ? { ...cell, gem: null } : cell)))
+    : source;
   const runs: RunSegment[] = [];
 
   // Horizontal runs
@@ -437,10 +473,11 @@ function pickScoutTarget(
       const cellKey = `${r},${c}`;
       const cell = board[r][c];
       if (cell.crate > 0) {
+        if (cell.block === 'hole') continue;
         if (!damagedCrates.has(cellKey)) tiers[0].push({ row: r, col: c });
         continue;
       }
-      if (!cell.gem || alreadyCleared.has(cellKey)) continue;
+      if (!cell.gem || cell.gem.egg || alreadyCleared.has(cellKey)) continue;
       if (cell.gem.chained) tiers[1].push({ row: r, col: c });
       else if (cell.ice > 0) tiers[2].push({ row: r, col: c });
       else tiers[3].push({ row: r, col: c });
@@ -475,7 +512,32 @@ function executeClearPhase(
   let clearedIce = 0;
   let clearedCrates = 0;
   let clearedChains = 0;
+  let clearedHoney = 0;
+  let collectedEggs = 0;
   const damagedCratesThisStep = new Set<string>();
+
+  // One hit on a blocker. Holes shrug it off; honey and crates lose a layer.
+  const hitCrate = (r: number, c: number) => {
+    const target = working[r][c];
+    damagedCratesThisStep.add(`${r},${c}`);
+    if (target.block === 'hole') return;
+    const isHoney = target.block === 'honey';
+    target.crate -= 1;
+    blasts.push({ type: isHoney ? 'honey' : 'crate', row: r, col: c });
+    if (target.crate <= 0) {
+      target.crate = 0;
+      delete target.block;
+      if (isHoney) clearedHoney++;
+      else clearedCrates++;
+    }
+  };
+
+  // Eggs that reached the bottom of their column leave the board first.
+  for (const spot of landedEggs(working)) {
+    working[spot.row][spot.col].gem = null;
+    collectedEggs++;
+    blasts.push({ type: 'egg', row: spot.row, col: spot.col });
+  }
 
   const enqueueCoord = (pt: Coord) => {
     if (!inBounds(pt.row, pt.col)) return;
@@ -496,18 +558,12 @@ function executeClearPhase(
     // Crates only get damaged by blasts if directBlastHitCrates or enqueued by a blast
     if (cell.crate > 0) {
       if (directBlastHitCrates && !damagedCratesThisStep.has(key)) {
-        damagedCratesThisStep.add(key);
-        cell.crate -= 1;
-        blasts.push({ type: 'crate', row: pt.row, col: pt.col });
-        if (cell.crate <= 0) {
-          cell.crate = 0;
-          clearedCrates++;
-        }
+        hitCrate(pt.row, pt.col);
       }
       continue;
     }
 
-    if (!cell.gem) continue;
+    if (!cell.gem || cell.gem.egg) continue;
 
     const gem = cell.gem;
     clearedCoords.push({ row: pt.row, col: pt.col });
@@ -531,13 +587,7 @@ function executeClearPhase(
         for (let cc = 0; cc < BOARD_SIZE; cc++) {
           const targetCell = working[pt.row][cc];
           if (targetCell.crate > 0 && !damagedCratesThisStep.has(`${pt.row},${cc}`)) {
-            damagedCratesThisStep.add(`${pt.row},${cc}`);
-            targetCell.crate -= 1;
-            blasts.push({ type: 'crate', row: pt.row, col: cc });
-            if (targetCell.crate <= 0) {
-              targetCell.crate = 0;
-              clearedCrates++;
-            }
+            hitCrate(pt.row, cc);
           } else {
             enqueueCoord({ row: pt.row, col: cc });
           }
@@ -547,13 +597,7 @@ function executeClearPhase(
         for (let rr = 0; rr < BOARD_SIZE; rr++) {
           const targetCell = working[rr][pt.col];
           if (targetCell.crate > 0 && !damagedCratesThisStep.has(`${rr},${pt.col}`)) {
-            damagedCratesThisStep.add(`${rr},${pt.col}`);
-            targetCell.crate -= 1;
-            blasts.push({ type: 'crate', row: rr, col: pt.col });
-            if (targetCell.crate <= 0) {
-              targetCell.crate = 0;
-              clearedCrates++;
-            }
+            hitCrate(rr, pt.col);
           } else {
             enqueueCoord({ row: rr, col: pt.col });
           }
@@ -567,13 +611,7 @@ function executeClearPhase(
             if (!inBounds(nr, nc)) continue;
             const targetCell = working[nr][nc];
             if (targetCell.crate > 0 && !damagedCratesThisStep.has(`${nr},${nc}`)) {
-              damagedCratesThisStep.add(`${nr},${nc}`);
-              targetCell.crate -= 1;
-              blasts.push({ type: 'crate', row: nr, col: nc });
-              if (targetCell.crate <= 0) {
-                targetCell.crate = 0;
-                clearedCrates++;
-              }
+              hitCrate(nr, nc);
             } else {
               enqueueCoord({ row: nr, col: nc });
             }
@@ -585,13 +623,7 @@ function executeClearPhase(
           blasts.push({ type: 'scout', row: target.row, col: target.col, color: gem.color, from: pt });
           const targetCell = working[target.row][target.col];
           if (targetCell.crate > 0) {
-            damagedCratesThisStep.add(`${target.row},${target.col}`);
-            targetCell.crate -= 1;
-            blasts.push({ type: 'crate', row: target.row, col: target.col });
-            if (targetCell.crate <= 0) {
-              targetCell.crate = 0;
-              clearedCrates++;
-            }
+            hitCrate(target.row, target.col);
           } else {
             enqueueCoord(target);
           }
@@ -627,13 +659,7 @@ function executeClearPhase(
       if (!inBounds(nr, nc)) continue;
       const key = `${nr},${nc}`;
       if (working[nr][nc].crate > 0 && !damagedCratesThisStep.has(key)) {
-        damagedCratesThisStep.add(key);
-        working[nr][nc].crate -= 1;
-        blasts.push({ type: 'crate', row: nr, col: nc });
-        if (working[nr][nc].crate <= 0) {
-          working[nr][nc].crate = 0;
-          clearedCrates++;
-        }
+        hitCrate(nr, nc);
       }
     }
   }
@@ -653,6 +679,8 @@ function executeClearPhase(
     clearedIce * 60 +
     clearedCrates * 90 +
     clearedChains * 50 +
+    clearedHoney * 70 +
+    collectedEggs * 150 +
     spawnedSpecials.length * 80;
   const stepScore = basePoints * cascadeIndex;
   const energyGained = Math.min(
@@ -677,8 +705,71 @@ function executeClearPhase(
       clearedIce,
       clearedCrates,
       clearedChains,
+      clearedHoney,
+      collectedEggs,
     },
   };
+}
+
+/** The lowest cell of a column that is part of the board (not a hole). */
+function exitRow(board: Board, col: number): number {
+  for (let r = BOARD_SIZE - 1; r >= 0; r--) {
+    if (board[r][col].block !== 'hole') return r;
+  }
+  return -1;
+}
+
+/** Eggs resting on the bottom of their column, ready to be collected. */
+export function landedEggs(board: Board): Coord[] {
+  const found: Coord[] = [];
+  for (let c = 0; c < BOARD_SIZE; c++) {
+    const r = exitRow(board, c);
+    if (r >= 0 && board[r][c].gem?.egg) found.push({ row: r, col: c });
+  }
+  return found;
+}
+
+const ORTHOGONAL: Array<[number, number]> = [
+  [-1, 0],
+  [1, 0],
+  [0, -1],
+  [0, 1],
+];
+
+/**
+ * Honey creeps over one neighbouring animal. Returns the cell it took, or
+ * null when no honey is left or it has nowhere to go. Mutates `board`.
+ */
+export function spreadHoney(board: Board, rng: RngFn = Math.random): Coord | null {
+  const options: Coord[] = [];
+  const seen = new Set<string>();
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (board[r][c].block !== 'honey') continue;
+      for (const [dr, dc] of ORTHOGONAL) {
+        const nr = r + dr;
+        const nc = c + dc;
+        if (!inBounds(nr, nc) || seen.has(`${nr},${nc}`)) continue;
+        const gem = board[nr][nc].gem;
+        if (board[nr][nc].crate > 0 || !gem) continue;
+        if (gem.special !== 'none' || gem.chained || gem.egg) continue;
+        seen.add(`${nr},${nc}`);
+        options.push({ row: nr, col: nc });
+      }
+    }
+  }
+  if (options.length === 0) return null;
+  const spot = options[Math.floor(rng() * options.length)];
+  const cell = board[spot.row][spot.col];
+  // Ice under the animal stays, so an ice goal can never become unreachable.
+  cell.gem = null;
+  cell.crate = 1;
+  cell.block = 'honey';
+  return spot;
+}
+
+function hasHoney(board: Board): boolean {
+  return board.some((row) => row.some((cell) => cell.block === 'honey'));
 }
 
 function runAutoCascades(
@@ -693,7 +784,7 @@ function runAutoCascades(
 
   while (cascadeIdx <= 24) {
     const groups = findMatchGroups(current);
-    if (groups.length === 0) break;
+    if (groups.length === 0 && landedEggs(current).length === 0) break;
 
     const allTargets: Coord[] = [];
     const spawned: Array<{ coord: Coord; special: SpecialType; color: GemColor }> = [];
@@ -980,6 +1071,13 @@ export function resolveSwap(
   steps.push(...cascade.steps);
   currentBoard = cascade.finalBoard;
 
+  // Honey spreads after every move that did not clear any of it.
+  let honeySpread: Coord | null = null;
+  if (hasHoney(board) && steps.every((step) => step.deltaProgress.clearedHoney === 0)) {
+    currentBoard = cloneBoard(currentBoard);
+    honeySpread = spreadHoney(currentBoard, rng);
+  }
+
   let reshuffled = false;
   if (!hasValidMoves(currentBoard)) {
     currentBoard = shuffleBoard(currentBoard, pool, rng);
@@ -999,6 +1097,7 @@ export function resolveSwap(
     maxCascade,
     reshuffled,
     combo: combo ?? undefined,
+    honeySpread: honeySpread ?? undefined,
   };
 }
 
@@ -1041,7 +1140,7 @@ export function applyTool(
 
   if (tool === 'hammer') {
     const cell = board[target.row][target.col];
-    if (cell.crate === 0 && !cell.gem) {
+    if ((cell.crate === 0 && !cell.gem) || cell.block === 'hole' || cell.gem?.egg) {
       return {
         valid: false,
         reason: 'blocked',
@@ -1178,7 +1277,7 @@ export function shuffleBoard(
   for (let r = 0; r < BOARD_SIZE; r++) {
     for (let c = 0; c < BOARD_SIZE; c++) {
       const cell = next[r][c];
-      if (cell.crate === 0 && cell.gem && !cell.gem.chained) {
+      if (cell.crate === 0 && cell.gem && !cell.gem.chained && !cell.gem.egg) {
         movableCoords.push({ row: r, col: c });
         gems.push(cell.gem);
       }
@@ -1244,6 +1343,10 @@ export function getObjectiveCurrent(
       return progress.clearedCrates;
     case 'chain':
       return progress.clearedChains;
+    case 'honey':
+      return progress.clearedHoney;
+    case 'egg':
+      return progress.collectedEggs;
     case 'score':
       return progress.score;
     case 'specials':

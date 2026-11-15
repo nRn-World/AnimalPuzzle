@@ -14,6 +14,16 @@ const MUSIC_BUS_SCALE = 1.0;
 const MUSIC_LOOKAHEAD_SECONDS = 1.5;
 const MUSIC_TICK_MS = 400;
 
+/** Recorded effects (Kenney "Interface Sounds", CC0) served from /sfx. */
+const SAMPLE_NAMES = ['click', 'swap', 'invalid', 'crack'] as const;
+type SampleName = (typeof SAMPLE_NAMES)[number];
+
+function sampleUrl(name: SampleName): string | null {
+  // No bundler environment (unit tests): stay with the synthesised sounds.
+  const base = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL;
+  return typeof base === 'string' ? `${base}sfx/${name}.wav` : null;
+}
+
 class SoundEngine {
   private ctx: AudioContext | null = null;
   private sfxBus: GainNode | null = null;
@@ -255,6 +265,44 @@ class SoundEngine {
     partial.stop(at + note.duration * 0.5 + 0.05);
   }
 
+  private samples = new Map<SampleName, AudioBuffer>();
+  private samplesRequested = false;
+
+  /** Fetches the recorded effects once; until they arrive the synth fills in. */
+  private loadSamples(ctx: AudioContext): void {
+    if (this.samplesRequested || typeof fetch !== 'function') return;
+    this.samplesRequested = true;
+    for (const name of SAMPLE_NAMES) {
+      const url = sampleUrl(name);
+      if (!url) continue;
+      fetch(url)
+        .then((res) => (res.ok ? res.arrayBuffer() : Promise.reject(new Error(String(res.status)))))
+        .then((data) => ctx.decodeAudioData(data))
+        .then((buffer) => void this.samples.set(name, buffer))
+        .catch(() => {
+          /* offline or unsupported: the synthesised sound is used instead */
+        });
+    }
+  }
+
+  /** Plays a recorded effect. Returns false when it is not loaded (yet). */
+  private playSample(name: SampleName, gain = 0.5, rate = 1): boolean {
+    const ctx = this.ensureContext();
+    if (!ctx) return true;
+    this.loadSamples(ctx);
+    const buffer = this.samples.get(name);
+    if (!buffer) return false;
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.playbackRate.value = rate;
+    const volume = ctx.createGain();
+    volume.gain.value = gain;
+    source.connect(volume);
+    volume.connect(this.sfxOut(ctx));
+    source.start();
+    return true;
+  }
+
   private playTone(
     freq: number,
     duration: number,
@@ -349,14 +397,17 @@ class SoundEngine {
   }
 
   playClick(): void {
+    if (this.playSample('click', 0.55)) return;
     this.playTone(620, 0.06, 'sine', 0.07, 0, 740);
   }
 
   playSwap(): void {
+    if (this.playSample('swap', 0.45)) return;
     this.playTone(320, 0.08, 'triangle', 0.08, 0, 440);
   }
 
   playInvalidSwap(): void {
+    if (this.playSample('invalid', 0.4)) return;
     this.playTone(210, 0.11, 'sawtooth', 0.06, 0, 150);
     this.playTone(170, 0.12, 'sawtooth', 0.05, 0.07, 130);
   }
@@ -411,6 +462,8 @@ class SoundEngine {
       return;
     }
     if (kind === 'crack') {
+      // Slightly different pitch each time so a row of crates does not sound mechanical.
+      if (this.playSample('crack', 0.5, 0.9 + Math.random() * 0.25)) return;
       this.playTone(260, 0.09, 'square', 0.06, 0, 110);
       return;
     }

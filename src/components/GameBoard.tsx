@@ -12,7 +12,7 @@ import {
   SpecialType,
   ToolType,
 } from '../game/types';
-import { CrateSvg, GemSvg } from './GemSvg';
+import { CrateSvg, EggSvg, GemSvg, HoneySvg } from './GemSvg';
 import { ParticleCanvas, ParticleCanvasHandle } from './ParticleCanvas';
 
 export type BoardTransitionMode = 'none' | 'swap' | 'fall';
@@ -379,8 +379,15 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               const clearing = clearingKeys.has(key);
 
               const labelParts = [t('Rad {row} kolumn {col}', { row: r + 1, col: c + 1 })];
-              if (cell.crate > 0) {
+              const isHole = cell.block === 'hole';
+              if (isHole) {
+                labelParts.push(t('Hål'));
+              } else if (cell.block === 'honey') {
+                labelParts.push(t('Honung'));
+              } else if (cell.crate > 0) {
                 labelParts.push(t('Trälåda nivå {n}', { n: cell.crate }));
+              } else if (cell.gem?.egg) {
+                labelParts.push(t('Ägg'));
               } else if (cell.gem) {
                 labelParts.push(t(GEM_META[cell.gem.color].nameSv));
                 if (cell.gem.special !== 'none') labelParts.push(t(SPECIAL_LABELS[cell.gem.special]));
@@ -435,8 +442,15 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     }
                     onCellClick({ row: r, col: c });
                   }}
-                  className={`group relative min-w-0 min-h-0 w-full h-full rounded-md sm:rounded-lg flex items-center justify-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B841] cursor-pointer touch-none shadow-[inset_0_2px_4px_rgba(0,0,0,0.65)] ${
-                    checkerboardDark ? 'bg-[#22307A]' : 'bg-[#2B3B91]'
+                  disabled={isHole}
+                  tabIndex={isHole ? -1 : undefined}
+                  aria-hidden={isHole ? true : undefined}
+                  className={`group relative min-w-0 min-h-0 w-full h-full rounded-md sm:rounded-lg flex items-center justify-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B841] touch-none ${
+                    isHole
+                      ? 'pointer-events-none bg-[#070A14]'
+                      : `cursor-pointer shadow-[inset_0_2px_4px_rgba(0,0,0,0.65)] ${
+                          checkerboardDark ? 'bg-[#22307A]' : 'bg-[#2B3B91]'
+                        }`
                   } ${
                     isSelected
                       ? 'ring-2 ring-inset ring-[#F5B841] bg-[#3F52C4] z-10'
@@ -462,16 +476,20 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   )}
 
                   {/* Crate or 3D Animal Gem Content */}
-                  {cell.crate > 0 ? (
+                  {isHole ? null : cell.crate > 0 ? (
                     <div
                       className={`w-full h-full p-1 transition-all duration-150 group-hover:-translate-y-0.5 ${
                         clearing ? 'animate-gem-clear' : ''
                       } ${tutActive && !isTutTarget ? 'opacity-40' : ''}`}
                     >
-                      <CrateSvg
-                        hp={cell.crate}
-                        className="w-full h-full drop-shadow-[0_4px_5px_rgba(0,0,0,0.7)]"
-                      />
+                      {cell.block === 'honey' ? (
+                        <HoneySvg className="w-full h-full drop-shadow-[0_4px_5px_rgba(0,0,0,0.7)]" />
+                      ) : (
+                        <CrateSvg
+                          hp={cell.crate}
+                          className="w-full h-full drop-shadow-[0_4px_5px_rgba(0,0,0,0.7)]"
+                        />
+                      )}
                     </div>
                   ) : cell.gem ? (
                     <div
@@ -489,14 +507,18 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                         hinted={hinted || isTutTarget}
                         isSpecial={cell.gem.special !== 'none'}
                       >
-                        <GemSvg
-                          color={cell.gem.color}
-                          special={cell.gem.special}
-                          chained={cell.gem.chained}
-                          skin={skin}
-                          animationSeed={cell.gem.id}
-                          className="relative z-10 w-full h-full drop-shadow-[0_3px_4px_rgba(0,0,0,0.68)]"
-                        />
+                        {cell.gem.egg ? (
+                          <EggSvg className="relative z-10 w-full h-full drop-shadow-[0_3px_4px_rgba(0,0,0,0.68)]" />
+                        ) : (
+                          <GemSvg
+                            color={cell.gem.color}
+                            special={cell.gem.special}
+                            chained={cell.gem.chained}
+                            skin={skin}
+                            animationSeed={cell.gem.id}
+                            className="relative z-10 w-full h-full drop-shadow-[0_3px_4px_rgba(0,0,0,0.68)]"
+                          />
+                        )}
                       </GemMotion>
                     </div>
                   ) : null}

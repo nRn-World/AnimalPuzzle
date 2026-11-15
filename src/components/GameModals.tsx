@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSettings } from '../hooks/useSettings';
 import { formatNumber, t } from '../i18n';
 import { AnimalSkinId, GameMode, GamePhase } from '../game/types';
 import { getSkinMeta } from '../game/daily';
@@ -11,6 +12,10 @@ export interface DailyRewardResult {
   energyGranted: number;
   unlockedNewSkin: AnimalSkinId | null;
   alreadyClaimed: boolean;
+  /** Days in a row with a completed daily challenge, including today. */
+  streak?: number;
+  /** Extra energy the streak added on top of the daily reward. */
+  streakEnergy?: number;
 }
 
 interface GameModalsProps {
@@ -28,6 +33,8 @@ interface GameModalsProps {
   stars: number;
   totalMoves: number;
   dailyReward: DailyRewardResult | null;
+  /** Chapter chest opened by this win, if any. */
+  chest?: { energy: number; skin: AnimalSkinId | null };
   onEquipSkin: (skin: AnimalSkinId) => void;
   /** Feedback after the share button was used; null while idle. */
   shareNotice: string | null;
@@ -39,6 +46,59 @@ interface GameModalsProps {
   onNextLevel: () => void;
   onBackToTitle: () => void;
 }
+
+/** Counts up to `value` in under a second; jumps straight there with reduced motion. */
+const CountUp: React.FC<{ value: number }> = ({ value }) => {
+  const { reduceMotion } = useSettings();
+  const [shown, setShown] = useState(reduceMotion ? value : 0);
+  useEffect(() => {
+    if (reduceMotion || value <= 0) {
+      setShown(value);
+      return;
+    }
+    let frame = 0;
+    const started = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - started) / 900);
+      setShown(Math.round(value * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [value, reduceMotion]);
+  return <>{formatNumber(shown)}</>;
+};
+
+const CONFETTI_COLORS = ['#FF2E4D', '#27B8FF', '#6FE65E', '#F2CD1C', '#FF8AD1', '#FFFFFF'];
+
+/** Paper confetti raining over the whole screen behind the dialog. */
+const Confetti: React.FC = () => (
+  <div className="ui-confetti" aria-hidden="true">
+    {Array.from({ length: 36 }, (_, i) => (
+      <i
+        key={i}
+        style={{
+          left: `${(i * 37 + 11) % 100}%`,
+          background: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+          animationDelay: `${-((i * 0.41) % 3.4)}s`,
+          animationDuration: `${2.6 + ((i * 7) % 5) * 0.32}s`,
+          width: 7 + (i % 3) * 3,
+          height: 11 + (i % 4) * 2,
+        }}
+      />
+    ))}
+  </div>
+);
+
+const ChestIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
+    <path d="M6 20 C6 11 12 7 24 7 C36 7 42 11 42 20 Z" fill="#C97A2B" stroke="#111111" strokeWidth="3" strokeLinejoin="round" />
+    <rect x="6" y="20" width="36" height="20" fill="#E09A45" stroke="#111111" strokeWidth="3" strokeLinejoin="round" />
+    <path d="M6 20 H42" stroke="#111111" strokeWidth="3" />
+    <rect x="19.5" y="15.5" width="9" height="11" rx="1.5" fill="#F2CD1C" stroke="#111111" strokeWidth="2.6" />
+    <path d="M14 8.5 V40 M34 8.5 V40" stroke="#7A4B12" strokeWidth="3" />
+  </svg>
+);
 
 const PRIMARY_CTA_CLASS = 'ui-btn ui-btn-green w-full px-4 py-1.5 font-display text-lg tracking-wide';
 
@@ -89,6 +149,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
   stars,
   totalMoves,
   dailyReward,
+  chest,
   onEquipSkin,
   shareNotice,
   onShare,
@@ -115,6 +176,22 @@ export const GameModals: React.FC<GameModalsProps> = ({
     >
       <div className={`relative w-full max-w-md ${phase === 'VICTORY' ? 'pt-11' : ''}`}>
       {phase === 'VICTORY' && (
+        <>
+          <Confetti />
+          {/* Two animals cheer from behind the panel */}
+          <span aria-hidden="true" className="pointer-events-none absolute left-[7%] top-1 h-14 w-14 animate-menu-bob">
+            <GemSvg color="ruby" special="none" animationSeed={2} />
+          </span>
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute right-[7%] top-1 h-14 w-14 animate-menu-bob"
+            style={{ animationDelay: '-1.3s' }}
+          >
+            <GemSvg color="cobalt" special="none" animationSeed={9} />
+          </span>
+        </>
+      )}
+      {phase === 'VICTORY' && (
         <div className="ui-medal" aria-hidden="true" data-testid="victory-medal">
           <span className="ui-medal-tail ui-medal-tail-left" />
           <span className="ui-medal-tail ui-medal-tail-right" />
@@ -124,7 +201,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
         </div>
       )}
       <div
-        className={`ui-panel w-full overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-5 ${
+        className={`ui-panel relative w-full overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-5 ${
           phase === 'VICTORY'
             ? 'max-h-[calc(100dvh-4.75rem)] pt-[5.75rem] sm:pt-[5.75rem] text-center space-y-3.5'
             : 'max-h-[calc(100dvh-2rem)]'
@@ -201,7 +278,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
                   {t('Poäng')}
                 </div>
                 <div className="font-mono-num text-lg font-bold text-[#111111] mt-0.5">
-                  {formatNumber(snapshotScore)}
+                  <CountUp value={snapshotScore} />
                 </div>
               </div>
               <div className="ui-inset px-1 py-2">
@@ -237,6 +314,28 @@ export const GameModals: React.FC<GameModalsProps> = ({
               </span>
             </div>
 
+            {chest && (
+              <div
+                data-testid="chapter-chest"
+                className="flex items-center gap-2.5 border-[3px] border-[#111111] bg-[var(--ui-blue)] px-2.5 py-2 text-left"
+              >
+                <ChestIcon className="h-10 w-10 shrink-0 animate-star-pop" />
+                <div className="min-w-0 text-sm font-semibold leading-snug">
+                  <div className="text-xs font-extrabold uppercase tracking-wider">
+                    {t('Kapitelkista öppnad')}
+                  </div>
+                  <div>
+                    {chest.skin
+                      ? t('+{n} bonusenergi och nytt djur-skin: {name}', {
+                          n: chest.energy,
+                          name: t(getSkinMeta(chest.skin).nameSv),
+                        })
+                      : t('+{n} bonusenergi till nästa omgång', { n: chest.energy })}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Daily Challenge Reward Box */}
             {mode === 'daily' && dailyReward && (
               <div
@@ -258,6 +357,17 @@ export const GameModals: React.FC<GameModalsProps> = ({
                         </span>{' '}
                         {t('Bonusenergi till nästa omgång')}
                       </div>
+                      {dailyReward.streak ? (
+                        <div data-testid="daily-streak-result">
+                          {t('Svit: {n} dagar i rad', { n: dailyReward.streak })}
+                          {dailyReward.streakEnergy ? (
+                            <span className="font-mono-num font-bold text-[#D4002A]">
+                              {' '}
+                              +{dailyReward.streakEnergy}
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : null}
                       {unlockedSkinMeta && (
                         <div>
                           {t('Nytt djur-skin:')}{' '}

@@ -3,6 +3,8 @@ import { t } from '../i18n';
 import {
   ChainBadgeIcon,
   CrateSvg,
+  EggSvg,
+  HoneySvg,
   GemSvg,
   HammerIcon,
   IceBadgeIcon,
@@ -158,7 +160,7 @@ const PAGES: GuidePage[] = [
     eyebrow: 'Senare nivåer',
     title: 'Hinder du möter',
     text:
-      'Is tinas av matchningar på rutan, trälådor spräcks av matchningar intill och kedjor lossar när djuret matchas.',
+      'Is tinas av matchningar på rutan, trälådor spräcks av matchningar intill och kedjor lossar när djuret matchas. Längre fram kommer hål i brädet, honung som sprider sig varje drag du inte rensar någon, och ägg som ska lotsas ner till botten.',
     tip: 'Tips: matcha bredvid hindren – inte bara på dem.',
     visual: () => (
       <div className="flex items-center gap-2 sm:gap-3">
@@ -166,9 +168,11 @@ const PAGES: GuidePage[] = [
           { key: 'ice', icon: <IceBadgeIcon className="w-8 h-8" />, label: 'Is' },
           { key: 'crate', icon: <CrateSvg hp={2} className="w-8 h-8" />, label: 'Låda' },
           { key: 'chain', icon: <ChainBadgeIcon className="w-8 h-8" />, label: 'Kedja' },
+          { key: 'honey', icon: <HoneySvg className="w-8 h-8" />, label: 'Honung' },
+          { key: 'egg', icon: <EggSvg className="w-8 h-8" />, label: 'Ägg' },
         ].map((item) => (
           <div key={item.key} className="flex flex-col items-center gap-1">
-            <IconTile className="w-14 h-14">{item.icon}</IconTile>
+            <IconTile className="w-11 h-11 sm:w-14 sm:h-14">{item.icon}</IconTile>
             <span className="text-[10px] font-semibold text-[#CBD5E1]">{t(item.label)}</span>
           </div>
         ))}

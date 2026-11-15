@@ -50,7 +50,10 @@ function play(level: LevelConfig, seed: number): { won: boolean; used: number } 
       if (!res.valid) continue;
       let p = progress;
       for (const step of res.steps) p = addStepDelta(p, step);
-      const value = -remaining(level, p) * 1000 + res.totalScore / 100 + rng() * 2;
+      // Eggs only count once they land, so reward every row they sink.
+      let eggRows = 0;
+      for (const row of res.finalBoard) for (const cell of row) if (cell.gem?.egg) eggRows += 7 - cell.row;
+      const value = -remaining(level, p) * 1000 - eggRows * 25 + res.totalScore / 100 + rng() * 2;
       if (!best || value > best.value) best = { board: res.finalBoard, progress: p, value };
     }
     if (!best) return { won: false, used: move };
@@ -67,9 +70,22 @@ const start = Number(process.argv[4] ?? 32);
 const stride = Math.max(1, Math.floor((CAMPAIGN_LEVEL_COUNT - start) / levels));
 
 const stats: Record<string, { games: number; wins: number; usedShare: number; never: number; levels: number }> = {};
+// FEATURE=honey|egg|holes plays only levels that have that ingredient.
+const feature = process.env.FEATURE;
+const hasFeature = (level: LevelConfig) =>
+  !feature ||
+  (feature === 'honey' && !!level.honeyCells) ||
+  (feature === 'egg' && !!level.eggCells) ||
+  (feature === 'holes' && !!level.holeCells);
+let cursor = start;
 for (let i = 0; i < levels; i++) {
   // Mix of consecutive early levels and levels spread over the whole campaign
-  const idx = start + Math.floor(i / 8) * stride * 8 + (i % 8);
+  let idx = process.env.CONSECUTIVE ? start + i : start + Math.floor(i / 8) * stride * 8 + (i % 8);
+  if (feature) {
+    while (cursor < CAMPAIGN_LEVEL_COUNT && !hasFeature(getCampaignLevel(cursor))) cursor++;
+    if (cursor >= CAMPAIGN_LEVEL_COUNT) break;
+    idx = cursor++;
+  }
   const level = getCampaignLevel(idx);
   const d = level.difficulty ?? 'medium';
   const s = (stats[d] ??= { games: 0, wins: 0, usedShare: 0, never: 0, levels: 0 });

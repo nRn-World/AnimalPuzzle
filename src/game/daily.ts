@@ -32,7 +32,44 @@ export const ANIMAL_SKINS: AnimalSkinMeta[] = [
     nameSv: 'Stjärnnatt',
     descSv: 'Glittrande stjärndiadem (Daglig utmaning)',
   },
+  {
+    id: 'party',
+    nameSv: 'Kalashattar',
+    descSv: 'Randiga partyhattar (Veckans jakt)',
+  },
+  {
+    id: 'explorer',
+    nameSv: 'Upptäckare',
+    descSv: 'Upptäckarhattar (Kapitelkistor)',
+  },
 ];
+
+/** Where each skin comes from, shown on locked skins. */
+export const SKIN_SOURCE: Record<AnimalSkinId, { text: string }> = {
+  classic: { text: 'Upplåst' },
+  royal: { text: 'Lås upp i daglig' },
+  winter: { text: 'Lås upp i daglig' },
+  starlight: { text: 'Lås upp i daglig' },
+  party: { text: 'Veckans jakt' },
+  explorer: { text: 'Tredje kapitelkistan' },
+};
+
+/** Adds a skin and energy to the save (used by weekly hunt and chapter chests). */
+export function grantReward(
+  state: DailySaveState,
+  energy: number,
+  skin: AnimalSkinId | null
+): { nextState: DailySaveState; unlockedNewSkin: AnimalSkinId | null } {
+  const isNew = skin !== null && !state.unlockedSkins.includes(skin);
+  return {
+    nextState: {
+      ...state,
+      bonusEnergyBank: Math.min(MAX_ENERGY_BANK, state.bonusEnergyBank + Math.max(0, energy)),
+      unlockedSkins: isNew ? [...state.unlockedSkins, skin] : state.unlockedSkins,
+    },
+    unlockedNewSkin: isNew ? skin : null,
+  };
+}
 
 export const EXCLUSIVE_DAILY_SKINS: AnimalSkinId[] = ['royal', 'winter', 'starlight'];
 
@@ -62,7 +99,7 @@ export function createInitialDailyState(): DailySaveState {
   };
 }
 
-const VALID_SKINS: AnimalSkinId[] = ['classic', 'royal', 'winter', 'starlight'];
+const VALID_SKINS: AnimalSkinId[] = ['classic', 'royal', 'winter', 'starlight', 'party', 'explorer'];
 
 /** Turns anything read from storage into a valid daily save state. */
 export function sanitizeDailyState(raw: unknown): DailySaveState {

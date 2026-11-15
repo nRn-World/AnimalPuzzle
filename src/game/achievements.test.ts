@@ -36,7 +36,7 @@ function makeDummyStep(overrides: Partial<CascadeStep> = {}): CascadeStep {
       },
       clearedIce: 0,
       clearedCrates: 0,
-      clearedChains: 0,
+      clearedChains: 0, clearedHoney: 0, collectedEggs: 0,
     },
     ...overrides,
   };
@@ -82,7 +82,7 @@ test('applyStepToAchievements accumulates ice blocks across steps until 100 is r
         },
         clearedIce: 64,
         clearedCrates: 0,
-        clearedChains: 0,
+        clearedChains: 0, clearedHoney: 0, collectedEggs: 0,
       },
     })
   ).nextState;
@@ -112,7 +112,7 @@ test('applyStepToAchievements accumulates ice blocks across steps until 100 is r
         },
         clearedIce: 40,
         clearedCrates: 0,
-        clearedChains: 0,
+        clearedChains: 0, clearedHoney: 0, collectedEggs: 0,
       },
     })
   );
