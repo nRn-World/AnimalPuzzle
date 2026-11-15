@@ -368,8 +368,8 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
 
       <main className="relative z-10 w-full min-h-[100dvh] overflow-x-hidden bg-transparent flex flex-col justify-between pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
         <div className="flex-1 flex items-center px-3 sm:px-8 lg:px-16 py-3 sm:py-5">
-          <div className="w-full max-w-[600px] animate-menu-pop">
-            <h1 className="ui-title relative z-10 mb-3 sm:mb-4 text-center text-[clamp(2.6rem,14vw,3.6rem)] sm:text-[4.25rem]">
+          <div className="ui-menu-fit w-full max-w-[600px] lg:max-w-[1010px] animate-menu-pop">
+            <h1 className="ui-title relative z-10 mb-3 sm:mb-4 text-center lg:text-left lg:pl-6 text-[clamp(2.6rem,14vw,3.6rem)] sm:text-[4.25rem]">
               AnimalPuzzle
             </h1>
 
@@ -388,6 +388,9 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                 </button>
               )}
 
+              {/* Wide screens: two columns so the whole menu fits without scrolling */}
+              <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-4">
+              <div className="min-w-0">
               {savedGame && (
                 <button
                   type="button"
@@ -600,8 +603,10 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                 </div>
               )}
 
+              </div>
+              <div className="min-w-0">
               {/* Weekly hunt: collected in every mode, new animal each Monday */}
-              <div data-testid="weekly-hunt" className="ui-inset mt-2.5 flex items-center gap-2.5 px-2.5 py-1.5">
+              <div data-testid="weekly-hunt" className="ui-inset mt-2.5 lg:mt-0 flex items-center gap-2.5 px-2.5 py-1.5">
                 <span className="h-10 w-10 shrink-0">
                   <GemSvg color={weeklyQuest.color} special="none" animationSeed={21} />
                 </span>
@@ -762,6 +767,8 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                     {t('Inställningar')}
                   </button>
                 </div>
+              </div>
+              </div>
               </div>
             </div>
           </div>
