@@ -59,7 +59,7 @@ const MAX_BEAMS = 24;
 const MAX_RINGS = 32;
 const MAX_LABELS = 18;
 const CELEBRATION_COLORS = ['#FF8A9B', '#FDE047', '#6EE7B7', '#93C5FD', '#D8B4FE', '#FFFFFF'];
-const LABEL_FONT = '700 16px "Bricolage Grotesque", "JetBrains Mono", sans-serif';
+const LABEL_FONT = '700 16px "Grandstander Variable", "JetBrains Mono Variable", sans-serif';
 
 export const ParticleCanvas = forwardRef<ParticleCanvasHandle>((_, ref) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -219,7 +219,16 @@ export const ParticleCanvas = forwardRef<ParticleCanvasHandle>((_, ref) => {
             spawnParticle(cx, cy, pColor, shape, 1.45);
           }
         } else {
-          spawnRing(cx, cy, cellW * 0.85, colorHex, 0.28);
+          if (b.type === 'scout' && b.from) {
+            // Flight trail from the take-off cell to the landing cell
+            const fx = (b.from.col + 0.5) * cellW;
+            const fy = (b.from.row + 0.5) * cellH;
+            for (let i = 0; i <= 8; i++) {
+              const k = i / 8;
+              spawnParticle(fx + (cx - fx) * k, fy + (cy - fy) * k, i % 2 ? '#FFFFFF' : colorHex, 'star', 0.5);
+            }
+          }
+          spawnRing(cx, cy, cellW * (b.type === 'scout' ? 1.2 : 0.85), colorHex, 0.28);
           const count = b.type === 'match' ? 5 : 9;
           for (let i = 0; i < count; i++) {
             const shape: ParticleShape = i % 2 === 0 ? 'star' : 'confetti';

@@ -14,7 +14,7 @@ test('daily records are stored separately from campaign and endless records', ()
   assert.equal(update.best, 900);
   assert.equal(update.improved, true);
   assert.deepEqual(scores, { campaign: 500, daily: 200, endless: 100 });
-  assert.equal(BEST_SCORE_STORAGE_KEYS.daily, 'kromatik_best_daily');
+  assert.equal(BEST_SCORE_STORAGE_KEYS.daily, 'animalpuzzle_best_daily');
   assert.notEqual(BEST_SCORE_STORAGE_KEYS.daily, BEST_SCORE_STORAGE_KEYS.campaign);
 });
 

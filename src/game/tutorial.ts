@@ -1,3 +1,4 @@
+import { STORAGE_KEYS } from './storage';
 import { allocGemId, findBestHint, findMatchGroups } from './engine';
 import { BOARD_SIZE, Board, Cell, Coord, GameMode, GemColor } from './types';
 
@@ -13,7 +14,7 @@ export interface TutorialPrompt {
   to: Coord;
 }
 
-export const TUTORIAL_STORAGE_KEY = 'kromatik_tutorial_done';
+export const TUTORIAL_STORAGE_KEY = STORAGE_KEYS.tutorialDone;
 
 export interface TutorialGateOptions {
   mode: GameMode;

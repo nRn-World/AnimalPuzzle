@@ -5,9 +5,8 @@ coverage/
 .DS_Store
 *.log
 .env*
-!.env.example
 .freebuff/
-.aistudio/
 /menu-final.png
 /victory-modal.png
 /dolphin-*.png
+.cache/

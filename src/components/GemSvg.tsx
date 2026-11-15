@@ -1,5 +1,45 @@
 import React from 'react';
 import { AnimalSkinId, GEM_META, GemColor, SpecialType } from '../game/types';
+import { useSettings } from '../hooks/useSettings';
+
+/**
+ * One distinct shape per animal for the colour-blind mode, drawn inside a
+ * 10×10 box centred on the origin. Similar hues (red/pink, blue/sky/violet,
+ * green/lime/mint) deliberately get shapes that look nothing alike.
+ */
+const COLOR_SYMBOLS: Record<GemColor, React.ReactNode> = {
+  ruby: <circle r="3.7" />,
+  amber: <path d="M0 -4.3 L4.5 3.4 L-4.5 3.4 Z" />,
+  emerald: <path d="M-3.4 -3.4 H3.4 V3.4 H-3.4 Z" />,
+  cobalt: <path d="M0 -4.6 L4.6 0 L0 4.6 L-4.6 0 Z" />,
+  amethyst: <path d="M-1.4 -4.2 H1.4 V-1.4 H4.2 V1.4 H1.4 V4.2 H-1.4 V1.4 H-4.2 V-1.4 H-1.4 Z" />,
+  quartz: <circle r="3" fill="none" stroke="currentColor" strokeWidth="1.9" />,
+  tangerine: <path d="M0 4.3 L4.5 -3.4 L-4.5 -3.4 Z" />,
+  lime: (
+    <path
+      d="M-1.4 -4.2 H1.4 V-1.4 H4.2 V1.4 H1.4 V4.2 H-1.4 V1.4 H-4.2 V-1.4 H-1.4 Z"
+      transform="rotate(45)"
+    />
+  ),
+  sky: <path d="M-4.4 -1.5 H4.4 V1.5 H-4.4 Z" />,
+  violet: (
+    <path d="M0 -4.6 L1.3 -1.5 L4.6 -1.3 L2 0.9 L2.9 4.2 L0 2.4 L-2.9 4.2 L-2 0.9 L-4.6 -1.3 L-1.3 -1.5 Z" />
+  ),
+  rose: (
+    <path d="M0 4 C-5.6 0.4 -4.6 -4 -2 -4 C-0.8 -4 0 -3 0 -2.2 C0 -3 0.8 -4 2 -4 C4.6 -4 5.6 0.4 0 4 Z" />
+  ),
+  mint: <path d="M-3.6 -3.8 H-1 V3.8 H-3.6 Z M1 -3.8 H3.6 V3.8 H1 Z" />,
+};
+
+/** Corner badge with the animal's colour-blind shape, in 64×64 gem coordinates. */
+const ColorSymbolBadge: React.FC<{ color: GemColor }> = ({ color }) => (
+  <g transform="translate(11 53)" data-symbol={color}>
+    <circle r="8.6" fill="#0B1018" stroke="#F8FAFC" strokeWidth="1.5" />
+    <g fill="#F8FAFC" color="#F8FAFC">
+      {COLOR_SYMBOLS[color]}
+    </g>
+  </g>
+);
 
 interface GemSvgProps {
   color: GemColor;
@@ -35,6 +75,7 @@ export const GemSvg: React.FC<GemSvgProps> = ({
 }) => {
   const palette = GEM_META[color];
   const seed = animationSeed;
+  const { symbols } = useSettings();
 
   return (
     <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
@@ -386,9 +427,9 @@ export const GemSvg: React.FC<GemSvgProps> = ({
       {/* 10. DELFIN (sky) — uploaded artwork with matching blink frame */}
       {special !== 'prism' && color === 'sky' && (
         <g>
-          <image href={`${import.meta.env.BASE_URL}delfin-gem.png`} x="0" y="0" width="64" height="64" />
+          <image href={`${import.meta.env.BASE_URL}delfin-gem.webp`} x="0" y="0" width="64" height="64" />
           <image
-            href={`${import.meta.env.BASE_URL}delfin-gem-eyes.png`}
+            href={`${import.meta.env.BASE_URL}delfin-gem-eyes.webp`}
             x="0"
             y="0"
             width="64"
@@ -535,6 +576,16 @@ export const GemSvg: React.FC<GemSvgProps> = ({
         </g>
       )}
 
+      {/* Scout: a pair of wings, the animal flies to where it is needed */}
+      {special === 'scout' && (
+        <g stroke="#0F1219" strokeWidth="1.6" strokeLinejoin="round">
+          <path d="M13 30 C2 22 0 12 3 6 C9 8 16 13 19 22 Z" fill="#FFFFFF" />
+          <path d="M51 30 C62 22 64 12 61 6 C55 8 48 13 45 22 Z" fill="#FFFFFF" />
+          <path d="M6 12 C9 15 12 18 14 23" fill="none" stroke="#7DD3FC" strokeWidth="1.4" strokeLinecap="round" />
+          <path d="M58 12 C55 15 52 18 50 23" fill="none" stroke="#7DD3FC" strokeWidth="1.4" strokeLinecap="round" />
+        </g>
+      )}
+
       {/* Iron Chain Overlay */}
       {chained && (
         <g stroke="#0F1219" strokeWidth="1.6">
@@ -545,6 +596,9 @@ export const GemSvg: React.FC<GemSvgProps> = ({
           <circle cx="32" cy="32" r="7" fill="#475569" stroke="#E2E8F0" strokeWidth="2" />
         </g>
       )}
+
+      {/* Colour-blind mode: the prism has no colour of its own, so it gets no badge */}
+      {symbols && special !== 'prism' && <ColorSymbolBadge color={color} />}
     </svg>
   );
 };
@@ -633,7 +687,7 @@ export const ShuffleIcon: React.FC<{ className?: string }> = ({ className = 'w-5
     <path
       d="M3 7 H8 L15 17 H21 M18 4 L21 7 L18 10 M3 17 H8 L10.5 13.5 M13.5 10.5 L15 7 H21 M18 14 L21 17 L18 20"
       fill="none"
-      stroke="#CBD5E1"
+      stroke="currentColor"
       strokeWidth="2.1"
       strokeLinecap="round"
       strokeLinejoin="round"

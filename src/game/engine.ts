@@ -133,6 +133,17 @@ export function createBoard(level: LevelConfig, rng: RngFn = Math.random): Board
       ) {
         excluded.add(board[r - 1][c].gem!.color);
       }
+      if (
+        r >= 1 &&
+        c >= 1 &&
+        board[r - 1][c].gem &&
+        board[r][c - 1].gem &&
+        board[r - 1][c - 1].gem &&
+        board[r - 1][c].gem!.color === board[r][c - 1].gem!.color &&
+        board[r - 1][c].gem!.color === board[r - 1][c - 1].gem!.color
+      ) {
+        excluded.add(board[r - 1][c].gem!.color);
+      }
 
       const color = pickRandomColor(pool, rng, excluded);
       board[r][c].gem = {
@@ -172,7 +183,7 @@ export interface MatchGroup {
 interface RunSegment {
   cells: Coord[];
   color: GemColor;
-  orientation: 'h' | 'v';
+  orientation: 'h' | 'v' | 'sq';
 }
 
 export function findMatchGroups(board: Board): MatchGroup[] {
@@ -234,6 +245,22 @@ export function findMatchGroups(board: Board): MatchGroup[] {
     }
   }
 
+  // 2x2 squares of one animal also count as a match (they create a scout)
+  for (let r = 0; r + 1 < BOARD_SIZE; r++) {
+    for (let c = 0; c + 1 < BOARD_SIZE; c++) {
+      const quad = [board[r][c], board[r][c + 1], board[r + 1][c], board[r + 1][c + 1]];
+      if (quad.some((cell) => !cell.gem || cell.crate > 0)) continue;
+      const color = quad[0].gem!.color;
+      if (quad.every((cell) => cell.gem!.color === color)) {
+        runs.push({
+          cells: quad.map((cell) => ({ row: cell.row, col: cell.col })),
+          color,
+          orientation: 'sq',
+        });
+      }
+    }
+  }
+
   if (runs.length === 0) return [];
 
   // Merge intersecting runs of the same color
@@ -276,10 +303,13 @@ export function findMatchGroups(board: Board): MatchGroup[] {
     let maxRunLen = 0;
     let maxOrientation: 'h' | 'v' = 'h';
 
+    let hasSquare = false;
+
     for (const seg of groupRuns) {
       if (seg.orientation === 'h') hasH = true;
       if (seg.orientation === 'v') hasV = true;
-      if (seg.cells.length > maxRunLen) {
+      if (seg.orientation === 'sq') hasSquare = true;
+      if (seg.orientation !== 'sq' && seg.cells.length > maxRunLen) {
         maxRunLen = seg.cells.length;
         maxOrientation = seg.orientation;
       }
@@ -295,6 +325,8 @@ export function findMatchGroups(board: Board): MatchGroup[] {
       special = 'nova';
     } else if (maxRunLen === 4) {
       special = maxOrientation === 'h' ? 'beam_v' : 'beam_h';
+    } else if (hasSquare) {
+      special = 'scout';
     }
 
     groups.push({
@@ -385,6 +417,39 @@ export function applyGravityAndRefill(
   }
 
   return next;
+}
+
+/**
+ * Where a scout flies: the most useful cell that is not already being
+ * cleared. Crates first, then chained animals, then ice, then anything.
+ */
+function pickScoutTarget(
+  board: Board,
+  alreadyCleared: Set<string>,
+  damagedCrates: Set<string>,
+  rng: RngFn,
+  origin: Coord
+): Coord | null {
+  const tiers: Coord[][] = [[], [], [], []];
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (r === origin.row && c === origin.col) continue;
+      const cellKey = `${r},${c}`;
+      const cell = board[r][c];
+      if (cell.crate > 0) {
+        if (!damagedCrates.has(cellKey)) tiers[0].push({ row: r, col: c });
+        continue;
+      }
+      if (!cell.gem || alreadyCleared.has(cellKey)) continue;
+      if (cell.gem.chained) tiers[1].push({ row: r, col: c });
+      else if (cell.ice > 0) tiers[2].push({ row: r, col: c });
+      else tiers[3].push({ row: r, col: c });
+    }
+  }
+  for (const tier of tiers) {
+    if (tier.length > 0) return tier[Math.floor(rng() * tier.length)];
+  }
+  return null;
 }
 
 function executeClearPhase(
@@ -512,6 +577,23 @@ function executeClearPhase(
             } else {
               enqueueCoord({ row: nr, col: nc });
             }
+          }
+        }
+      } else if (gem.special === 'scout') {
+        const target = pickScoutTarget(working, visitedClear, damagedCratesThisStep, rng, pt);
+        if (target) {
+          blasts.push({ type: 'scout', row: target.row, col: target.col, color: gem.color, from: pt });
+          const targetCell = working[target.row][target.col];
+          if (targetCell.crate > 0) {
+            damagedCratesThisStep.add(`${target.row},${target.col}`);
+            targetCell.crate -= 1;
+            blasts.push({ type: 'crate', row: target.row, col: target.col });
+            if (targetCell.crate <= 0) {
+              targetCell.crate = 0;
+              clearedCrates++;
+            }
+          } else {
+            enqueueCoord(target);
           }
         }
       } else if (gem.special === 'prism') {
@@ -650,6 +732,10 @@ const COMBO_SCORE_MULTIPLIER: Record<ComboType, number> = {
   prism_beam: 1.7,
   prism_nova: 1.8,
   prism_storm: 2.2,
+  scout_flock: 1.3,
+  scout_beam: 1.4,
+  scout_nova: 1.5,
+  prism_scout: 1.7,
 };
 
 export function resolveSwap(
@@ -705,7 +791,12 @@ export function resolveSwap(
         }
       }
     } else if (otherGem.special !== 'none') {
-      combo = otherGem.special === 'nova' ? 'prism_nova' : 'prism_beam';
+      combo =
+        otherGem.special === 'nova'
+          ? 'prism_nova'
+          : otherGem.special === 'scout'
+          ? 'prism_scout'
+          : 'prism_beam';
       // Prism + Special = convert all gems of otherGem.color to that special and detonate
       for (let r = 0; r < BOARD_SIZE; r++) {
         for (let c = 0; c < BOARD_SIZE; c++) {
@@ -755,7 +846,38 @@ export function resolveSwap(
     const isBeamA = sA === 'beam_h' || sA === 'beam_v';
     const isBeamB = sB === 'beam_h' || sB === 'beam_v';
 
-    if (isBeamA && isBeamB) {
+    const isScoutA = sA === 'scout';
+    const isScoutB = sB === 'scout';
+
+    if (isScoutA || isScoutB) {
+      const other = isScoutA ? sB : sA;
+      const busy = new Set<string>([`${a.row},${a.col}`, `${b.row},${b.col}`]);
+      const landing = (): Coord | null => {
+        const spot = pickScoutTarget(currentBoard, busy, busy, rng, b);
+        if (spot) busy.add(`${spot.row},${spot.col}`);
+        return spot;
+      };
+      targets.push({ row: a.row, col: a.col }, { row: b.row, col: b.col });
+      if (other === 'scout') {
+        combo = 'scout_flock';
+        for (let i = 0; i < 3; i++) {
+          const spot = landing();
+          if (!spot) break;
+          extraBlasts.push({ type: 'scout', row: spot.row, col: spot.col, color: gemA.color, from: b });
+          targets.push(spot);
+        }
+      } else {
+        combo = other === 'nova' ? 'scout_nova' : 'scout_beam';
+        // The scout carries the other special to a useful cell and sets it off there.
+        let spot = landing();
+        while (spot && currentBoard[spot.row][spot.col].crate > 0) spot = landing();
+        if (spot) {
+          extraBlasts.push({ type: 'scout', row: spot.row, col: spot.col, color: gemA.color, from: b });
+          currentBoard[spot.row][spot.col].gem!.special = other;
+          targets.push(spot);
+        }
+      }
+    } else if (isBeamA && isBeamB) {
       combo = 'crossbeam';
       extraBlasts.push({ type: 'beam_h', row: b.row, col: b.col, color: gemA.color });
       extraBlasts.push({ type: 'beam_v', row: b.row, col: b.col, color: gemB.color });
@@ -1017,6 +1139,9 @@ export function findAllValidMoves(board: Board): HintMove[] {
         } else if (g.special === 'beam_h' || g.special === 'beam_v') {
           score += 110;
           if (bestSpecial === 'none') bestSpecial = g.special;
+        } else if (g.special === 'scout') {
+          score += 70;
+          if (bestSpecial === 'none') bestSpecial = 'scout';
         }
         for (const pt of g.cells) {
           if (board[pt.row][pt.col].ice > 0) score += 35;

@@ -1,3 +1,4 @@
+import { STORAGE_KEYS } from './storage';
 import { GameMode } from './types';
 
 export type BestScoreMode = 'campaign' | 'daily' | 'endless';
@@ -9,9 +10,9 @@ export interface BestScores {
 }
 
 export const BEST_SCORE_STORAGE_KEYS: Record<BestScoreMode, string> = {
-  campaign: 'kromatik_best_campaign',
-  daily: 'kromatik_best_daily',
-  endless: 'kromatik_best_endless',
+  campaign: STORAGE_KEYS.bestCampaign,
+  daily: STORAGE_KEYS.bestDaily,
+  endless: STORAGE_KEYS.bestEndless,
 };
 
 export function bestScoreModeFor(mode: GameMode): BestScoreMode {

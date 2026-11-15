@@ -1,0 +1,11 @@
+The icons in this folder come from asset packs by Kenney (www.kenney.nl):
+
+  - Game Icons            icons/*
+  - Game Icons Expansion  icons/flag, icons/diamond, icons/key
+
+License: Creative Commons Zero (CC0 1.0)
+http://creativecommons.org/publicdomain/zero/1.0/
+
+The assets may be used for personal, educational and commercial purposes.
+Credit is appreciated but not required. Icons were trimmed to their bounds;
+the art is otherwise unmodified.

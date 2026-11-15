@@ -1,3 +1,5 @@
+import { t } from '../i18n';
+import { readJson, STORAGE_KEYS, writeJson } from './storage';
 import {
   AnimalSkinId,
   AnimalSkinMeta,
@@ -60,6 +62,44 @@ export function createInitialDailyState(): DailySaveState {
   };
 }
 
+const VALID_SKINS: AnimalSkinId[] = ['classic', 'royal', 'winter', 'starlight'];
+
+/** Turns anything read from storage into a valid daily save state. */
+export function sanitizeDailyState(raw: unknown): DailySaveState {
+  const initial = createInitialDailyState();
+  if (!raw || typeof raw !== 'object') return initial;
+  const parsed = raw as Partial<Record<keyof DailySaveState, unknown>>;
+
+  const unlocked: AnimalSkinId[] = Array.isArray(parsed.unlockedSkins)
+    ? parsed.unlockedSkins.filter((s): s is AnimalSkinId => VALID_SKINS.includes(s as AnimalSkinId))
+    : ['classic'];
+  if (!unlocked.includes('classic')) unlocked.unshift('classic');
+
+  const equipped = unlocked.includes(parsed.equippedSkin as AnimalSkinId)
+    ? (parsed.equippedSkin as AnimalSkinId)
+    : 'classic';
+
+  return {
+    completedDates: Array.isArray(parsed.completedDates)
+      ? parsed.completedDates.filter((d): d is string => typeof d === 'string')
+      : [],
+    bonusEnergyBank:
+      typeof parsed.bonusEnergyBank === 'number' && Number.isFinite(parsed.bonusEnergyBank)
+        ? Math.max(0, Math.round(parsed.bonusEnergyBank))
+        : 0,
+    unlockedSkins: unlocked,
+    equippedSkin: equipped,
+  };
+}
+
+export function readDailyState(): DailySaveState {
+  return sanitizeDailyState(readJson(STORAGE_KEYS.daily));
+}
+
+export function writeDailyState(state: DailySaveState): void {
+  writeJson(STORAGE_KEYS.daily, state);
+}
+
 export function getDailyKey(date: Date = new Date()): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -102,11 +142,21 @@ const DAILY_TEMPLATES: DailyTemplate[] = [
       const t1 = 18 + Math.floor(rng() * 5);
       const t2 = 16 + Math.floor(rng() * 5);
       return {
-        goalSummary: `Samla ${t1} ${GEM_META[c1].nameSv} och ${t2} ${GEM_META[c2].nameSv} på 20 drag`,
+        goalSummary: t('Samla {a} {x} och {b} {y} på 20 drag', {
+          a: t1,
+          x: t(GEM_META[c1].nameSv),
+          b: t2,
+          y: t(GEM_META[c2].nameSv),
+        }),
         level: {
           id: 100,
           name: 'Djurkalas',
-          subtitle: `Samla ${t1} ${GEM_META[c1].nameSv} och ${t2} ${GEM_META[c2].nameSv}`,
+          subtitle: t('Samla {a} {x} och {b} {y}', {
+            a: t1,
+            x: t(GEM_META[c1].nameSv),
+            b: t2,
+            y: t(GEM_META[c2].nameSv),
+          }),
           moves: 20,
           colorCount,
           objectives: [
@@ -130,11 +180,11 @@ const DAILY_TEMPLATES: DailyTemplate[] = [
       }
       const target = Math.min(14, iceCells.length);
       return {
-        goalSummary: `Tina ${target} isrutor på 22 drag`,
+        goalSummary: t('Tina {n} isrutor på 22 drag', { n: target }),
         level: {
           id: 101,
           name: 'Frostens Väktare',
-          subtitle: `Tina minst ${target} frostade rutor`,
+          subtitle: t('Tina minst {n} frostade rutor', { n: target }),
           moves: 22,
           colorCount: 5,
           objectives: [{ id: 'd-ice', kind: 'ice', label: 'Isrutor', target }],
@@ -211,6 +261,8 @@ const DAILY_TEMPLATES: DailyTemplate[] = [
 ];
 
 export function getDailyChallenge(dateKey: string): DailyChallenge {
+  // The seed strings predate the game's final name. They must never change:
+  // they decide which challenge and board every player gets on a given date.
   const rng = createSeededRng(`kromatik-daily-${dateKey}`);
   const tplIdx = Math.floor(rng() * DAILY_TEMPLATES.length);
   const template = DAILY_TEMPLATES[tplIdx];

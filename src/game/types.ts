@@ -14,7 +14,7 @@ export type GemColor =
   | 'rose'
   | 'mint';
 
-export type SpecialType = 'none' | 'beam_h' | 'beam_v' | 'nova' | 'prism';
+export type SpecialType = 'none' | 'beam_h' | 'beam_v' | 'nova' | 'scout' | 'prism';
 
 export type ComboType =
   | 'crossbeam'
@@ -23,7 +23,11 @@ export type ComboType =
   | 'prism'
   | 'prism_beam'
   | 'prism_nova'
-  | 'prism_storm';
+  | 'prism_storm'
+  | 'scout_flock'
+  | 'scout_beam'
+  | 'scout_nova'
+  | 'prism_scout';
 
 export interface Gem {
   id: number;
@@ -113,10 +117,12 @@ export interface LevelConfig {
 }
 
 export interface BlastEvent {
-  type: 'beam_h' | 'beam_v' | 'nova' | 'prism' | 'ice' | 'crate' | 'chain' | 'match';
+  type: 'beam_h' | 'beam_v' | 'nova' | 'prism' | 'scout' | 'ice' | 'crate' | 'chain' | 'match';
   row: number;
   col: number;
   color?: GemColor;
+  /** For a scout: the cell it took off from (row/col is where it lands). */
+  from?: Coord;
 }
 
 export interface CascadeStep {

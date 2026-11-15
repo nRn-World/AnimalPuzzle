@@ -1,10 +1,16 @@
 @import "tailwindcss";
 
+/* Self-hosted fonts: no third-party requests, and they work offline. */
+@import "@fontsource/bangers/latin-400.css";
+@import "@fontsource/bangers/latin-ext-400.css";
+@import "@fontsource-variable/grandstander/wght.css";
+@import "@fontsource-variable/jetbrains-mono/wght.css";
+
 @layer base {
   :root {
-    --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
-    --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --font-display: 'Bangers', 'Impact', system-ui, sans-serif;
+    --font-sans: 'Grandstander Variable', 'Grandstander', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
   }
 
   html,
@@ -17,8 +23,8 @@
     margin: 0;
     padding: 0;
     font-family: var(--font-sans);
-    background-color: #0F1219;
-    color: #F1F5F9;
+    background-color: #0f1219;
+    color: #111111;
     overflow-x: hidden;
     overscroll-behavior: none;
     -webkit-tap-highlight-color: transparent;
@@ -30,6 +36,9 @@
 
 .font-display {
   font-family: var(--font-display);
+  /* Bangers has a single weight; never let the browser fake a bold. */
+  font-weight: 400 !important;
+  letter-spacing: 0.04em;
 }
 
 .font-mono-num {
@@ -349,5 +358,329 @@
   .animate-star-pop,
   .animate-combo-banner {
     animation: none !important;
+  }
+}
+
+/* Same as above, but switched on from the in-game settings. */
+html[data-reduce-motion="true"] .animate-gem-spawn,
+html[data-reduce-motion="true"] .animate-gem-clear,
+html[data-reduce-motion="true"] .animate-gem-land,
+html[data-reduce-motion="true"] .animate-gem-invalid,
+html[data-reduce-motion="true"] .animate-hint-pulse,
+html[data-reduce-motion="true"] .animate-aura-spin,
+html[data-reduce-motion="true"] .animate-board-shake,
+html[data-reduce-motion="true"] .animate-menu-float,
+html[data-reduce-motion="true"] .animate-menu-bob,
+html[data-reduce-motion="true"] .animate-menu-twinkle,
+html[data-reduce-motion="true"] .animate-menu-glow,
+html[data-reduce-motion="true"] .animate-menu-pop,
+html[data-reduce-motion="true"] .animate-menu-firefly,
+html[data-reduce-motion="true"] .pet-eyes,
+html[data-reduce-motion="true"] .dolphin-blink-frame,
+html[data-reduce-motion="true"] .animate-star-pop,
+html[data-reduce-motion="true"] .animate-combo-banner {
+  animation: none !important;
+}
+
+/* ------------------------------------------------------------------
+   Menu kit – comic book look
+   Flat colours, thick black outlines, hard offset shadows and halftone
+   dots. Everything is plain CSS; icons are Kenney "Game Icons" (CC0).
+   ------------------------------------------------------------------ */
+:root {
+  --ui-ink: #111111;
+  --ui-ink-soft: #4b4b4b;
+  --ui-paper: #c9ced6;
+  --ui-paper-light: #dde1e7;
+  --ui-cream: #e2dbb2;
+  --ui-yellow: #f2cd1c;
+  --ui-red: #ff2e4d;
+  --ui-blue: #27b8ff;
+  --ui-green: #6fe65e;
+  --ui-pink: #ff8ad1;
+}
+
+/* Dark night-blue page with faint halftone dots (in-game backdrop). */
+.ui-scene {
+  background-color: #12162e;
+  isolation: isolate;
+}
+.ui-scene::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.07) 0 3px, transparent 3.5px) 0 0 / 18px 18px,
+    radial-gradient(ellipse at 50% -10%, #2f3a7d 0%, #171c3d 55%, #0c0f22 100%);
+}
+
+/* Titles that sit directly on the dark backdrop get a light hard shadow. */
+.ui-title {
+  text-shadow: 4px 4px 0 #ffffff;
+}
+
+.ui-panel {
+  background: var(--ui-paper);
+  border: 4px solid var(--ui-ink);
+  border-radius: 6px;
+  box-shadow: 8px 8px 0 var(--ui-ink);
+  color: var(--ui-ink);
+}
+@media (max-width: 40rem) {
+  .ui-panel {
+    border-width: 3px;
+    box-shadow: 5px 5px 0 var(--ui-ink);
+  }
+}
+
+/* Black frame around content that keeps its own background. */
+.ui-frame {
+  border: 4px solid var(--ui-ink);
+}
+
+/* A caption box inside a panel. */
+.ui-inset {
+  background: var(--ui-cream);
+  border: 3px solid var(--ui-ink);
+  border-radius: 2px;
+  color: var(--ui-ink);
+}
+
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--ui-paper-light);
+  border: 3px solid var(--ui-ink);
+  border-radius: 2px;
+  box-shadow: 3px 3px 0 var(--ui-ink);
+  color: var(--ui-ink);
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 90ms ease, box-shadow 90ms ease, filter 120ms ease;
+}
+.ui-btn:hover:not(:disabled) {
+  filter: brightness(1.05) saturate(1.1);
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--ui-ink);
+}
+.ui-btn:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ui-ink);
+}
+.ui-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.ui-btn:focus-visible,
+.ui-node:focus-visible {
+  outline: 3px solid #7a2cff;
+  outline-offset: 3px;
+}
+
+/* Selected / switched-on state */
+.ui-btn-wood {
+  background: var(--ui-blue);
+  color: var(--ui-ink);
+}
+.ui-btn-red {
+  background: var(--ui-red);
+  color: #ffffff;
+}
+.ui-btn-grey {
+  background: #b4b9c1;
+  color: var(--ui-ink);
+}
+/* Big call-to-action buttons, slanted like a comic caption. */
+.ui-btn-green,
+.ui-btn-yellow {
+  background: var(--ui-green);
+  border-width: 4px;
+  box-shadow: 5px 5px 0 var(--ui-ink);
+  color: var(--ui-ink);
+  transform: skewX(-6deg);
+}
+.ui-btn-yellow {
+  background: var(--ui-yellow);
+}
+.ui-btn-green:hover:not(:disabled),
+.ui-btn-yellow:hover:not(:disabled) {
+  transform: skewX(-6deg) translate(-1px, -1px);
+  box-shadow: 6px 6px 0 var(--ui-ink);
+}
+.ui-btn-green:active:not(:disabled),
+.ui-btn-yellow:active:not(:disabled) {
+  transform: skewX(-6deg) translate(3px, 3px);
+  box-shadow: 2px 2px 0 var(--ui-ink);
+}
+
+/* Round level buttons */
+.ui-node {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ui-paper-light);
+  border: 3px solid var(--ui-ink);
+  border-radius: 9999px;
+  box-shadow: 2px 3px 0 var(--ui-ink);
+  color: var(--ui-ink);
+  cursor: pointer;
+  transition: transform 90ms ease;
+}
+.ui-node:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+.ui-node-active {
+  background: var(--ui-red);
+  color: #ffffff;
+}
+.ui-node-locked {
+  background: #aeb3bb;
+  color: #6b6f76;
+  cursor: not-allowed;
+}
+
+/* The game title: red letters, black outline, hard shadow, slight tilt. */
+.ui-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: var(--ui-red);
+  -webkit-text-stroke: 2px var(--ui-ink);
+  paint-order: stroke fill;
+  transform: rotate(-3deg);
+}
+
+/* Shout box (combo call-outs) */
+.ui-banner {
+  background: var(--ui-yellow);
+  border: 4px solid var(--ui-ink);
+  box-shadow: 5px 5px 0 var(--ui-ink);
+  color: var(--ui-ink);
+  transform: rotate(-2deg);
+}
+
+/* Single-colour icon drawn from a PNG mask, tinted with the text colour. */
+.ui-icon {
+  display: inline-block;
+  flex: none;
+  background-color: currentColor;
+  -webkit-mask: var(--ui-icon) center / contain no-repeat;
+  mask: var(--ui-icon) center / contain no-repeat;
+}
+
+/* In-game HUD cards (status above/left of the board, boosters below/right). */
+.ui-hud-card {
+  background: var(--ui-paper);
+  border: 3px solid var(--ui-ink);
+  border-radius: 6px;
+  box-shadow: 4px 4px 0 var(--ui-ink);
+  color: var(--ui-ink);
+}
+
+/* Round "moves left" badge */
+.ui-moves {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  background: var(--ui-yellow);
+  border: 3px solid var(--ui-ink);
+  border-radius: 9999px;
+  box-shadow: 3px 3px 0 var(--ui-ink);
+  color: var(--ui-ink);
+}
+.ui-moves-low {
+  background: var(--ui-red);
+  color: #ffffff;
+}
+@media (min-width: 64rem) {
+  .ui-moves {
+    border-width: 4px;
+    box-shadow: 5px 5px 0 var(--ui-ink);
+    gap: 4px;
+  }
+}
+
+/* Round booster buttons with a cost tag */
+.ui-booster {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ui-blue);
+  border: 3px solid var(--ui-ink);
+  border-radius: 9999px;
+  box-shadow: 3px 3px 0 var(--ui-ink);
+  color: var(--ui-ink);
+  cursor: pointer;
+  transition: transform 90ms ease, box-shadow 90ms ease;
+}
+.ui-booster:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--ui-ink);
+}
+.ui-booster:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ui-ink);
+}
+.ui-booster:disabled {
+  background: #aeb3bb;
+  cursor: not-allowed;
+}
+.ui-booster:disabled > :not(.ui-booster-cost) {
+  opacity: 0.45;
+}
+.ui-booster-active {
+  background: var(--ui-yellow);
+  outline: 3px solid var(--ui-red);
+  outline-offset: 2px;
+}
+.ui-booster:focus-visible {
+  outline: 3px solid #7a2cff;
+  outline-offset: 3px;
+}
+.ui-booster-cost {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  min-width: 1.75rem;
+  padding: 1px 5px;
+  background: var(--ui-paper-light);
+  border: 2px solid var(--ui-ink);
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+}
+.ui-booster-plain {
+  background: var(--ui-paper-light);
+}
+
+/* Text placed straight on the scenery: white with a hard black edge. */
+.ui-onscene {
+  color: #ffffff;
+  text-shadow: 2px 2px 0 var(--ui-ink), -1px -1px 0 var(--ui-ink), 1px -1px 0 var(--ui-ink),
+    -1px 1px 0 var(--ui-ink);
+}
+
+@media (max-width: 40rem) {
+  .ui-btn-green,
+  .ui-btn-yellow {
+    transform: skewX(-3deg);
+  }
+  .ui-btn-green:hover:not(:disabled),
+  .ui-btn-yellow:hover:not(:disabled) {
+    transform: skewX(-3deg) translate(-1px, -1px);
+  }
+  .ui-btn-green:active:not(:disabled),
+  .ui-btn-yellow:active:not(:disabled) {
+    transform: skewX(-3deg) translate(3px, 3px);
   }
 }
