@@ -21,6 +21,8 @@ export interface RewardState {
   /** Animals collected over all games, per kind. */
   album: Record<GemColor, number>;
   weekly: { weekKey: string; progress: number; claimed: boolean };
+  /** Progress in the running seasonal event. */
+  season: { key: string; progress: number; claimed: boolean };
   /** Chapter chests opened so far. */
   chests: number;
   topScores: TopScore[];
@@ -39,6 +41,7 @@ export function createInitialRewardState(): RewardState {
     lastDailyDate: null,
     album: emptyAlbum(),
     weekly: { weekKey: '', progress: 0, claimed: false },
+    season: { key: '', progress: 0, claimed: false },
     chests: 0,
     topScores: [],
   };
@@ -68,6 +71,14 @@ export function sanitizeRewardState(raw: unknown): RewardState {
       weekKey: typeof weekly.weekKey === 'string' ? weekly.weekKey : '',
       progress: count(weekly.progress),
       claimed: weekly.claimed === true,
+    };
+  }
+  if (data.season && typeof data.season === 'object') {
+    const season = data.season as Record<string, unknown>;
+    state.season = {
+      key: typeof season.key === 'string' ? season.key : '',
+      progress: count(season.progress),
+      claimed: season.claimed === true,
     };
   }
   if (Array.isArray(data.topScores)) {
@@ -187,6 +198,32 @@ export function applyCollected(
       weekly: { weekKey, progress, claimed: before.claimed || weeklyCompleted },
     },
     weeklyCompleted,
+  };
+}
+
+// --- Seasonal events --------------------------------------------------------
+
+export function seasonProgress(state: RewardState, key: string): { progress: number; claimed: boolean } {
+  return state.season.key === key
+    ? { progress: state.season.progress, claimed: state.season.claimed }
+    : { progress: 0, claimed: false };
+}
+
+/** Counts animals towards the running season. `completed` is true once, on the move that reaches the target. */
+export function applySeasonCollected(
+  state: RewardState,
+  collected: number,
+  key: string,
+  target: number
+): { nextState: RewardState; completed: boolean } {
+  const n = count(collected);
+  if (n <= 0) return { nextState: state, completed: false };
+  const before = seasonProgress(state, key);
+  const progress = before.progress + n;
+  const completed = !before.claimed && progress >= target;
+  return {
+    nextState: { ...state, season: { key, progress, claimed: before.claimed || completed } },
+    completed,
   };
 }
 

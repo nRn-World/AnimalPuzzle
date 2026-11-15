@@ -2,12 +2,14 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import { formatNumber, t } from '../i18n';
 import {
   CAMPAIGN_CHAPTER_COUNT,
+  FIRST_CHAPTER,
   LEVELS_PER_CHAPTER,
   chapterCrew,
   chapterOfLevelIdx,
   getChapter,
 } from '../game/levels';
-import { GemSvg } from './GemSvg';
+import { BossSvg, GemSvg } from './GemSvg';
+import { BiomeId, biomeOfChapter } from '../game/biomes';
 import { UiIcon } from './UiIcon';
 
 interface SagaMapProps {
@@ -50,10 +52,36 @@ const TinyStars: React.FC<{ stars: number }> = ({ stars }) => (
   </span>
 );
 
-/** The island a level sits on. `kind` varies what grows on it. */
-const Island: React.FC<{ big: boolean; locked: boolean; kind: number }> = ({ big, locked, kind }) => {
-  const sand = locked ? '#B9C2CC' : '#F1D58A';
-  const green = locked ? '#8E9AA6' : '#4FAE5A';
+interface BiomeLook {
+  ground: string;
+  /** Soft ring around the ground (shallow water, snow glow...). */
+  halo: string;
+  plant: 'palm' | 'pine' | 'cactus' | 'bush' | 'none';
+  green: string;
+  rock: string;
+  trail: string;
+  trailEdge: string;
+}
+
+const BIOME_LOOK: Record<BiomeId, BiomeLook> = {
+  skargard: { ground: '#F1D58A', halo: '#7FD6F7', plant: 'palm', green: '#4FAE5A', rock: '#9AA3AD', trail: '#FFFFFF', trailEdge: '#0E5A9C' },
+  ang: { ground: '#C9955A', halo: '#3C9438', plant: 'bush', green: '#2F8F3A', rock: '#9AA3AD', trail: '#F6E9C8', trailEdge: '#2C6E2A' },
+  oken: { ground: '#D9823B', halo: '#F7D58C', plant: 'cactus', green: '#4FAE5A', rock: '#A9642A', trail: '#FFFFFF', trailEdge: '#A8662B' },
+  vinter: { ground: '#FFFFFF', halo: '#E6F5FD', plant: 'pine', green: '#3D9C8C', rock: '#8FB3CC', trail: '#1D5E9E', trailEdge: '#FFFFFF' },
+  rymden: { ground: '#8D7BD8', halo: '#3B4A9A', plant: 'none', green: '#6657B8', rock: '#C9C2F0', trail: '#F2CD1C', trailEdge: '#2A2F66' },
+  vulkan: { ground: '#5E5A5A', halo: '#FF7A1A', plant: 'none', green: '#3F3B3B', rock: '#8A8484', trail: '#FFD23C', trailEdge: '#7A1E10' },
+};
+
+/** The patch of ground a level sits on. `kind` varies what grows on it. */
+const Island: React.FC<{ big: boolean; locked: boolean; kind: number; look: BiomeLook }> = ({
+  big,
+  locked,
+  kind,
+  look,
+}) => {
+  const sand = locked ? '#B9C2CC' : look.ground;
+  const green = locked ? '#8E9AA6' : look.green;
+  const rock = locked ? '#9AA3AD' : look.rock;
   const trunk = locked ? '#6F7780' : '#7A4B12';
   return (
     <svg
@@ -63,8 +91,7 @@ const Island: React.FC<{ big: boolean; locked: boolean; kind: number }> = ({ big
         big ? 'h-[5.6rem] w-[7rem]' : 'h-[4.5rem] w-[5.6rem]'
       }`}
     >
-      {/* Shallow water around the shore */}
-      <ellipse cx="50" cy="50" rx="48" ry="27" fill="#7FD6F7" opacity="0.55" />
+      <ellipse cx="50" cy="50" rx="48" ry="27" fill={look.halo} opacity="0.55" />
       <path
         d="M8 50 C8 34 26 26 50 26 C76 26 92 35 92 50 C92 65 74 72 50 72 C24 72 8 64 8 50 Z"
         fill={sand}
@@ -72,7 +99,7 @@ const Island: React.FC<{ big: boolean; locked: boolean; kind: number }> = ({ big
         strokeWidth="3"
         strokeLinejoin="round"
       />
-      {kind === 0 && (
+      {kind === 0 && look.plant === 'palm' && (
         <g transform="translate(80 40)">
           <path d="M0 6 q4 -14 -1 -26" fill="none" stroke="#111111" strokeWidth="6.5" strokeLinecap="round" />
           <path d="M0 6 q4 -14 -1 -26" fill="none" stroke={trunk} strokeWidth="3.5" strokeLinecap="round" />
@@ -85,16 +112,53 @@ const Island: React.FC<{ big: boolean; locked: boolean; kind: number }> = ({ big
           />
         </g>
       )}
+      {kind === 0 && look.plant === 'pine' && (
+        <g transform="translate(82 30)" stroke="#111111" strokeWidth="2.2" strokeLinejoin="round">
+          <rect x="-2.5" y="12" width="5" height="8" fill={trunk} />
+          <polygon points="0,-22 10,-4 -10,-4" fill={green} />
+          <polygon points="0,-12 13,12 -13,12" fill={green} />
+        </g>
+      )}
+      {kind === 0 && look.plant === 'cactus' && (
+        <path
+          transform="translate(82 34)"
+          d="M-4 16 V-14 a4 4 0 0 1 8 0 V16 Z M4 2 h6 v-7 a3 3 0 0 1 6 0 v13 h-12 Z"
+          fill={green}
+          stroke="#111111"
+          strokeWidth="2.2"
+          strokeLinejoin="round"
+        />
+      )}
+      {kind === 0 && look.plant === 'bush' && (
+        <g stroke="#111111" strokeWidth="2.2" strokeLinejoin="round">
+          <path d="M70 44 a9 9 0 0 1 15 -5 a8 8 0 0 1 11 7 Z" fill={green} />
+          <circle cx="78" cy="38" r="2.6" fill="#FF8AD1" />
+        </g>
+      )}
+      {kind === 0 && look.plant === 'none' && (
+        <g stroke="#111111" strokeWidth="2">
+          <ellipse cx="24" cy="48" rx="6" ry="3.5" fill={green} />
+          <ellipse cx="78" cy="56" rx="5" ry="3" fill={green} />
+        </g>
+      )}
       {kind === 1 && (
         <g stroke="#111111" strokeWidth="2.2" strokeLinejoin="round">
-          <path d="M12 46 a7 7 0 0 1 12 -4 a6 6 0 0 1 9 5 Z" fill={green} />
-          <path d="M78 58 l5 -6 l7 2 l1 6 Z" fill="#9AA3AD" />
+          {look.plant === 'none' ? (
+            <ellipse cx="22" cy="44" rx="6" ry="3.5" fill={green} />
+          ) : (
+            <path d="M12 46 a7 7 0 0 1 12 -4 a6 6 0 0 1 9 5 Z" fill={green} />
+          )}
+          <path d="M78 58 l5 -6 l7 2 l1 6 Z" fill={rock} />
         </g>
       )}
       {kind === 2 && (
         <g stroke="#111111" strokeWidth="2.2" strokeLinejoin="round">
-          <path d="M14 56 l4 -8 l8 1 l3 7 Z" fill="#9AA3AD" />
-          <path d="M76 44 a6 6 0 0 1 11 -3 a5 5 0 0 1 6 5 Z" fill={green} />
+          <path d="M14 56 l4 -8 l8 1 l3 7 Z" fill={rock} />
+          {look.plant === 'none' ? (
+            <ellipse cx="82" cy="44" rx="6" ry="3.5" fill={green} />
+          ) : (
+            <path d="M76 44 a6 6 0 0 1 11 -3 a5 5 0 0 1 6 5 Z" fill={green} />
+          )}
         </g>
       )}
     </svg>
@@ -178,11 +242,31 @@ export const SagaMap: React.FC<SagaMapProps> = ({
       className="ui-saga relative h-[17.5rem] sm:h-[19rem] overflow-y-auto overscroll-contain rounded-sm border-[3px] border-[#111111]"
     >
       <div className="relative" style={{ height: chapterTotal * CHAPTER_HEIGHT + 24 }}>
+        {/* Landscape backdrops first, so trails crossing into the next chapter stay on top */}
+        {visibleChapters.map((chapterIdx) => {
+          const biome = biomeOfChapter(chapterIdx + 1);
+          return biome === 'skargard' ? null : (
+            <div
+              key={`bg-${chapterIdx}`}
+              aria-hidden="true"
+              className={`pointer-events-none absolute inset-x-0 ui-biome-${biome}`}
+              style={{
+                top: chapterIdx * CHAPTER_HEIGHT,
+                // The last chapter also covers the padding under the trail.
+                height: CHAPTER_HEIGHT + (chapterIdx === chapterTotal - 1 ? 24 : 0),
+              }}
+            />
+          );
+        })}
         {visibleChapters.map((chapterIdx) => {
           const chapterId = chapterIdx + 1;
           const firstIdx = chapterIdx * LEVELS_PER_CHAPTER;
           const crew = chapterCrew(chapterId);
           const chapterLocked = firstIdx > highestUnlockedIdx;
+          const biome = biomeOfChapter(chapterId);
+          const look = BIOME_LOOK[biome];
+          // Chapters five and up end with a boss.
+          const hasBoss = chapterId >= FIRST_CHAPTER.boss;
           // Trail through this chapter and on to the first level of the next one.
           const points: string[] = [];
           for (let pos = 0; pos <= LEVELS_PER_CHAPTER; pos++) {
@@ -206,7 +290,7 @@ export const SagaMap: React.FC<SagaMapProps> = ({
                 <polyline
                   points={points.join(' ')}
                   fill="none"
-                  stroke="#0E5A9C"
+                  stroke={look.trailEdge}
                   strokeWidth="9"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -215,7 +299,8 @@ export const SagaMap: React.FC<SagaMapProps> = ({
                 <polyline
                   points={points.join(' ')}
                   fill="none"
-                  stroke={chapterLocked ? '#8FC3E6' : '#FFFFFF'}
+                  stroke={look.trail}
+                  opacity={chapterLocked ? 0.55 : 1}
                   strokeWidth="4"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -265,7 +350,7 @@ export const SagaMap: React.FC<SagaMapProps> = ({
                     className="absolute -translate-x-1/2 -translate-y-1/2"
                     style={{ top: nodeY(pos), left: `${trailX(idx)}%` }}
                   >
-                    <Island big={finale} locked={locked} kind={idx % 3} />
+                    <Island big={finale} locked={locked} kind={idx % 3} look={look} />
                     <button
                       type="button"
                       disabled={locked}
@@ -290,6 +375,15 @@ export const SagaMap: React.FC<SagaMapProps> = ({
                       {locked ? <UiIcon name="locked" className="h-3.5 w-3.5" /> : id}
                       {!locked && <TinyStars stars={stars} />}
                     </button>
+                    {finale && hasBoss && (
+                      <span
+                        aria-hidden="true"
+                        data-testid="saga-boss"
+                        className={`pointer-events-none absolute -right-7 -top-5 h-9 w-9 ${locked ? 'opacity-60 grayscale' : ''}`}
+                      >
+                        <BossSvg />
+                      </span>
+                    )}
                     {frontier && (
                       <span
                         aria-hidden="true"

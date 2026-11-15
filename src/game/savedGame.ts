@@ -77,11 +77,15 @@ export function reviveBoard(raw: unknown): Board | null {
           chained: rawGem.chained === true,
         };
         if (rawGem.egg === true) gem.egg = true;
+        const bomb = nonNegInt(rawGem.bomb, 99);
+        if (bomb !== null && bomb > 0) gem.bomb = bomb;
       }
       // A crate never holds an animal. (An open cell may legitimately be empty
       // when crates above it block the refill.)
       if (crate > 0 && gem !== null) return null;
-      row.push(block ? { row: r, col: c, gem, ice, crate, block } : { row: r, col: c, gem, ice, crate });
+      const cell: Cell = block ? { row: r, col: c, gem, ice, crate, block } : { row: r, col: c, gem, ice, crate };
+      if (rawCell.belt === 1 || rawCell.belt === -1) cell.belt = rawCell.belt;
+      row.push(cell);
     }
     board.push(row);
   }

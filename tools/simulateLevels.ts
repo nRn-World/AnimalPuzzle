@@ -44,22 +44,26 @@ function play(level: LevelConfig, seed: number): { won: boolean; used: number } 
   for (let move = 1; move <= level.moves; move++) {
     const moves = findAllValidMoves(board).slice(0, 14);
     if (moves.length === 0) return { won: false, used: move };
-    let best = null as null | { board: typeof board; progress: LevelProgress; value: number };
+    let best = null as null | { board: typeof board; progress: LevelProgress; value: number; exploded: boolean };
     for (const m of moves) {
-      const res = resolveSwap(board, m.from, m.to, pool, rngFrom(seed * 31 + move));
+      const res = resolveSwap(board, m.from, m.to, pool, rngFrom(seed * 31 + move), { level, moveNumber: move });
       if (!res.valid) continue;
       let p = progress;
       for (const step of res.steps) p = addStepDelta(p, step);
       // Eggs only count once they land, so reward every row they sink.
       let eggRows = 0;
       for (const row of res.finalBoard) for (const cell of row) if (cell.gem?.egg) eggRows += 7 - cell.row;
-      const value = -remaining(level, p) * 1000 - eggRows * 25 + res.totalScore / 100 + rng() * 2;
-      if (!best || value > best.value) best = { board: res.finalBoard, progress: p, value };
+      // Bombs close to zero are urgent; an explosion is the worst outcome.
+      let bombRisk = res.bombExploded ? 1e6 : 0;
+      for (const row of res.finalBoard) for (const cell of row) if (cell.gem?.bomb !== undefined) bombRisk += 400 / cell.gem.bomb;
+      const value = -remaining(level, p) * 1000 - eggRows * 25 - bombRisk + res.totalScore / 100 + rng() * 2;
+      if (!best || value > best.value) best = { board: res.finalBoard, progress: p, value, exploded: !!res.bombExploded };
     }
     if (!best) return { won: false, used: move };
     board = best.board;
     progress = best.progress;
     if (areObjectivesComplete(level.objectives, progress)) return { won: true, used: move };
+    if (best.exploded) return { won: false, used: move };
   }
   return { won: false, used: level.moves };
 }
@@ -76,7 +80,10 @@ const hasFeature = (level: LevelConfig) =>
   !feature ||
   (feature === 'honey' && !!level.honeyCells) ||
   (feature === 'egg' && !!level.eggCells) ||
-  (feature === 'holes' && !!level.holeCells);
+  (feature === 'holes' && !!level.holeCells) ||
+  (feature === 'boss' && !!level.boss) ||
+  (feature === 'bombs' && !!level.bombEvery) ||
+  (feature === 'belts' && !!level.beltRows);
 let cursor = start;
 for (let i = 0; i < levels; i++) {
   // Mix of consecutive early levels and levels spread over the whole campaign

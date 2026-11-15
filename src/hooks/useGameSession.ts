@@ -52,6 +52,7 @@ import {
   WEEKLY_SKIN,
   addTopScore,
   applyCollected,
+  applySeasonCollected,
   getWeekKey,
   getWeeklyQuest,
   openChest,
@@ -97,6 +98,24 @@ import {
   TOOL_COSTS,
   ToolType,
 } from '../game/types';
+import {
+  LivesState,
+  MAX_LIVES,
+  REFILL_COST,
+  loseLife,
+  readLives,
+  refillLives,
+  settleLives,
+  writeLives,
+} from '../game/lives';
+import {
+  ActiveSeason,
+  SEASON_REWARD_ENERGY,
+  SEASON_TARGET,
+  forcedSeason,
+  getActiveSeason,
+} from '../game/seasons';
+import { biomeOfChapter } from '../game/biomes';
 import { formatNumber, Lang, t } from '../i18n';
 
 export const MAX_ENERGY = 100;
@@ -111,6 +130,8 @@ export interface EndSnapshot {
   stars: number;
   /** Set when this win finished a chapter for the first time. */
   chest?: { energy: number; skin: AnimalSkinId | null };
+  /** The level ended because a bomb went off. */
+  lostToBomb?: boolean;
 }
 
 const EMPTY_SNAPSHOT: EndSnapshot = {
@@ -188,6 +209,20 @@ export function useGameSession(language: Lang) {
     setRewardState(next);
     writeRewardState(next);
   }, []);
+  const [lives, setLives] = useState<LivesState>(() => settleLives(readLives(), Date.now()));
+  const livesRef = useRef(lives);
+  const commitLives = useCallback((next: LivesState) => {
+    livesRef.current = next;
+    setLives(next);
+    writeLives(next);
+  }, []);
+  /** The seasonal event running today, if any (previewable with ?season=jul). */
+  const season = useMemo<ActiveSeason | null>(
+    () =>
+      (typeof window !== 'undefined' ? forcedSeason(window.location.search) : null) ?? getActiveSeason(),
+    []
+  );
+
   const commitDaily = useCallback((next: DailySaveState) => {
     dailyStateRef.current = next;
     setDailyState(next);
@@ -424,6 +459,16 @@ export function useGameSession(language: Lang) {
       playIntro = false,
       skipTutorial = false
     ) => {
+      // Campaign levels need a life. Out of lives: back to the menu, where the
+      // countdown to the next one is shown.
+      if (targetMode === 'campaign' && !skipTutorial) {
+        const settled = settleLives(livesRef.current, Date.now());
+        if (settled !== livesRef.current) commitLives(settled);
+        if (settled.lives <= 0) {
+          setPhase('TITLE_MENU');
+          return;
+        }
+      }
       runTokenRef.current += 1;
       const lvl =
         targetMode === 'campaign'
@@ -494,8 +539,32 @@ export function useGameSession(language: Lang) {
       );
       setPhase('PLAYING');
     },
-    [dailyChallenge, dailyState, energy, resetInteraction, tutorialDone]
+    [commitLives, dailyChallenge, dailyState, energy, resetInteraction, tutorialDone]
   );
+
+  // Each landscape has its own music; menus and the other modes keep the calm tune.
+  useEffect(() => {
+    const inCampaign = mode === 'campaign' && phase !== 'TITLE_MENU';
+    soundEngine.setMusicTheme(inCampaign ? biomeOfChapter(activeLevel.chapter ?? 1) : 'skargard');
+  }, [mode, phase, activeLevel]);
+
+  // Lives come back while the game is open.
+  useEffect(() => {
+    if (lives.lives >= MAX_LIVES) return;
+    const timer = window.setInterval(() => {
+      const settled = settleLives(livesRef.current, Date.now());
+      if (settled !== livesRef.current) commitLives(settled);
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [lives.lives, commitLives]);
+
+  /** Trades bonus energy for a full set of lives. */
+  const buyLives = useCallback(() => {
+    const bank = dailyStateRef.current;
+    if (bank.bonusEnergyBank < REFILL_COST) return;
+    commitDaily({ ...bank, bonusEnergyBank: bank.bonusEnergyBank - REFILL_COST });
+    commitLives(refillLives());
+  }, [commitDaily, commitLives]);
 
   const startSelected = useCallback(() => {
     if (showGuide) return;
@@ -702,6 +771,18 @@ export function useGameSession(language: Lang) {
 
       if (runTokenRef.current !== token) return false;
 
+      // End-of-move events (belts sliding, bombs ticking, new bombs and chains)
+      // only exist on the final board, so always show it.
+      if (!result.reshuffled) {
+        const hasBelt = result.finalBoard.some((row) => row.some((cell) => cell.belt));
+        setTransitionMode(hasBelt ? 'swap' : 'none');
+        setBoard(result.finalBoard);
+        if (hasBelt) {
+          await waitMs(180);
+          if (runTokenRef.current !== token) return false;
+        }
+      }
+
       // Album and weekly hunt: every animal cleared by this move counts.
       const collected: Partial<Record<GemColor, number>> = {};
       for (const step of result.steps) {
@@ -712,6 +793,26 @@ export function useGameSession(language: Lang) {
       }
       const hunt = applyCollected(rewardStateRef.current, collected, weekKey);
       commitRewards(hunt.nextState);
+      if (season) {
+        let total = 0;
+        for (const color of GEM_COLORS_ORDER) total += collected[color] ?? 0;
+        const event = applySeasonCollected(rewardStateRef.current, total, season.key, SEASON_TARGET);
+        commitRewards(event.nextState);
+        if (event.completed) {
+          const granted = grantReward(dailyStateRef.current, SEASON_REWARD_ENERGY, season.season.skin);
+          commitDaily(granted.nextState);
+          soundEngine.playSpecialCreate('prism');
+          setStatusNotice(
+            t('{name} klar! +{n} energi och nytt djur-skin', {
+              name: t(season.season.nameSv),
+              n: SEASON_REWARD_ENERGY,
+            })
+          );
+          window.setTimeout(() => {
+            if (runTokenRef.current === token) setStatusNotice(null);
+          }, 3200);
+        }
+      }
       if (hunt.weeklyCompleted) {
         const granted = grantReward(dailyStateRef.current, WEEKLY_REWARD_ENERGY, WEEKLY_SKIN);
         commitDaily(granted.nextState);
@@ -757,6 +858,19 @@ export function useGameSession(language: Lang) {
         fxRef.current?.emitBlasts([
           { type: 'honey', row: result.honeySpread.row, col: result.honeySpread.col },
         ]);
+      }
+
+      if ((result.bossAttack || result.bombsPlanted) && !result.reshuffled) {
+        setTransitionMode('none');
+        setBoard(result.finalBoard);
+        soundEngine.playBlast('crack');
+        vibrate('invalid');
+        setStatusNotice(
+          result.bossAttack ? t('Bossen kedjar fast djur!') : t('En bomb har dykt upp – matcha den i tid!')
+        );
+        window.setTimeout(() => {
+          if (runTokenRef.current === token) setStatusNotice(null);
+        }, 2000);
       }
 
       if (result.reshuffled) {
@@ -901,7 +1015,21 @@ export function useGameSession(language: Lang) {
         return true;
       }
 
-      if (updatedMoves <= 0) {
+      if (updatedMoves <= 0 || result.bombExploded) {
+        if (result.bombExploded) {
+          setTransitionMode('none');
+          setBoard(result.finalBoard);
+          soundEngine.playBlast('nova');
+          fxRef.current?.emitBlasts([
+            { type: 'nova', row: result.bombExploded.row, col: result.bombExploded.col },
+          ]);
+          setShaking(true);
+          await waitMs(520);
+          if (runTokenRef.current !== token) return false;
+          setShaking(false);
+        }
+        // A failed campaign level costs a life.
+        if (mode === 'campaign') commitLives(loseLife(livesRef.current, Date.now()));
         const best = recordBestScore(runningProgress.score);
         commitRewards(
           addTopScore(rewardStateRef.current, {
@@ -924,6 +1052,7 @@ export function useGameSession(language: Lang) {
           bonus: 0,
           specialBonus: 0,
           stars: 0,
+          lostToBomb: !!result.bombExploded,
         });
         setBusy(false);
         setPhase('GAME_OVER');
@@ -970,7 +1099,10 @@ export function useGameSession(language: Lang) {
 
       soundEngine.playSwap();
       vibrate('swap');
-      const result = resolveSwap(board, a, b, levelColorPool(activeLevel));
+      const result = resolveSwap(board, a, b, levelColorPool(activeLevel), Math.random, {
+        level: activeLevel,
+        moveNumber: Math.max(1, activeLevel.moves - movesLeft + 1),
+      });
 
       const swappedPreview = cloneBoard(board);
       const gemA = swappedPreview[a.row][a.col].gem;
@@ -1233,6 +1365,9 @@ export function useGameSession(language: Lang) {
     weeklyQuest,
     weekKey,
     todayKey,
+    lives,
+    buyLives,
+    season,
     // board
     board,
     transitionMode,

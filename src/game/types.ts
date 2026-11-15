@@ -36,6 +36,8 @@ export interface Gem {
   chained: boolean;
   /** An egg never matches; it has to be brought down to the bottom row. */
   egg?: boolean;
+  /** Moves left before this animal's bomb goes off. Matching it defuses it. */
+  bomb?: number;
 }
 
 export interface Cell {
@@ -50,6 +52,8 @@ export interface Cell {
    * in one hit but spreads on every move that clears none of it.
    */
   block?: 'hole' | 'honey';
+  /** Conveyor belt: after every move the animals on it slide one step (1 = right, -1 = left). */
+  belt?: 1 | -1;
 }
 
 /** `crate` value of a hole: high enough that nothing ever wears it down. */
@@ -64,7 +68,16 @@ export interface Coord {
 
 export type GameMode = 'campaign' | 'endless' | 'daily';
 
-export type AnimalSkinId = 'classic' | 'royal' | 'winter' | 'starlight' | 'party' | 'explorer';
+export type AnimalSkinId =
+  | 'classic'
+  | 'royal'
+  | 'winter'
+  | 'starlight'
+  | 'party'
+  | 'explorer'
+  | 'santa'
+  | 'easter'
+  | 'summer';
 
 export interface AnimalSkinMeta {
   id: AnimalSkinId;
@@ -88,6 +101,7 @@ export type ObjectiveKind =
   | 'chain'
   | 'honey'
   | 'egg'
+  | 'boss'
   | 'score'
   | 'specials'
   | 'cascade3';
@@ -133,6 +147,15 @@ export interface LevelConfig {
   holeCells?: Array<{ row: number; col: number }>;
   honeyCells?: Array<{ row: number; col: number }>;
   eggCells?: Array<{ row: number; col: number }>;
+  /** Animals that start with a ticking bomb. */
+  bombCells?: Array<{ row: number; col: number; timer: number }>;
+  /** A new bomb appears every this many moves, with `bombTimer` moves on the clock. */
+  bombEvery?: number;
+  bombTimer?: number;
+  /** Rows that work as conveyor belts. */
+  beltRows?: Array<{ row: number; dir: 1 | -1 }>;
+  /** Boss level: every `every` moves the boss chains `count` animals. */
+  boss?: { every: number; count: number };
 }
 
 export interface BlastEvent {
@@ -187,6 +210,19 @@ export interface SwapResult {
   combo?: ComboType;
   /** Cell the honey crept into because the move cleared none of it. */
   honeySpread?: Coord;
+  /** A bomb ran out of time: the level is lost. */
+  bombExploded?: Coord;
+  /** Animals that got a new bomb this move. */
+  bombsPlanted?: Coord[];
+  /** Animals the boss chained this move. */
+  bossAttack?: Coord[];
+}
+
+/** What the engine needs to know about the level to run end-of-move events. */
+export interface TurnContext {
+  level: LevelConfig;
+  /** 1-based number of the move being played. */
+  moveNumber: number;
 }
 
 export interface HintMove {

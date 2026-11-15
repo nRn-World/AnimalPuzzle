@@ -35,6 +35,10 @@ interface GameModalsProps {
   dailyReward: DailyRewardResult | null;
   /** Chapter chest opened by this win, if any. */
   chest?: { energy: number; skin: AnimalSkinId | null };
+  /** The level was lost to a bomb rather than running out of moves. */
+  lostToBomb?: boolean;
+  /** Lives left (campaign only). */
+  livesLeft?: number;
   onEquipSkin: (skin: AnimalSkinId) => void;
   /** Feedback after the share button was used; null while idle. */
   shareNotice: string | null;
@@ -88,6 +92,18 @@ const Confetti: React.FC = () => (
       />
     ))}
   </div>
+);
+
+export const HeartIcon: React.FC<{ className?: string; empty?: boolean }> = ({ className, empty }) => (
+  <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+    <path
+      d="M12 21 C5 15.5 2 12 2 8 C2 5 4.3 3 7 3 C9 3 11 4.2 12 6 C13 4.2 15 3 17 3 C19.7 3 22 5 22 8 C22 12 19 15.5 12 21 Z"
+      fill={empty ? '#AEB3BB' : '#FF2E4D'}
+      stroke="#111111"
+      strokeWidth="2.2"
+      strokeLinejoin="round"
+    />
+  </svg>
 );
 
 const ChestIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -150,6 +166,8 @@ export const GameModals: React.FC<GameModalsProps> = ({
   totalMoves,
   dailyReward,
   chest,
+  lostToBomb = false,
+  livesLeft,
   onEquipSkin,
   shareNotice,
   onShare,
@@ -442,7 +460,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
           <>
             <div className="space-y-1">
               <div className="text-xs font-extrabold uppercase tracking-wider text-[#D4002A]">
-                {t('Slut på drag')}
+                {lostToBomb ? t('Bomben smällde') : t('Slut på drag')}
               </div>
               <h2 id="modal-heading" className="font-display text-2xl font-extrabold">
                 {mode === 'campaign' || mode === 'daily'
@@ -480,12 +498,22 @@ export const GameModals: React.FC<GameModalsProps> = ({
 
             {mode === 'endless' && <ShareButton notice={shareNotice} onShare={onShare} />}
 
+            {mode === 'campaign' && livesLeft !== undefined && (
+              <div data-testid="lives-left" className="ui-inset flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-bold">
+                <HeartIcon className="h-5 w-5" />
+                {livesLeft > 0
+                  ? t('Du förlorade ett liv · {n} kvar', { n: livesLeft })
+                  : t('Liven är slut – nya fylls på i huvudmenyn')}
+              </div>
+            )}
+
             <div className="flex flex-col gap-2.5">
               <button
                 type="button"
                 data-start="true"
                 onClick={onRestart}
-                className={PRIMARY_CTA_CLASS}
+                disabled={mode === 'campaign' && livesLeft === 0}
+                className={`${PRIMARY_CTA_CLASS} disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {t('Spela igen')}
               </button>
