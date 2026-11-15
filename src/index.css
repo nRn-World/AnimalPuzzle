@@ -788,3 +788,23 @@ html[data-reduce-motion="true"] .animate-combo-banner {
 html[data-reduce-motion='true'] .ui-confetti {
   display: none;
 }
+
+/* Low, wide windows (laptops): shrink the title and the map so the menu still fits. */
+@media (min-width: 64rem) and (max-height: 46rem) {
+  .ui-menu-fit .ui-title {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+  }
+  .ui-menu-fit .ui-saga {
+    height: 15rem;
+  }
+}
+@media (min-width: 64rem) and (max-height: 40rem) {
+  .ui-menu-fit .ui-title {
+    font-size: 2.25rem;
+    margin-bottom: 0.5rem;
+  }
+  .ui-menu-fit .ui-saga {
+    height: 13rem;
+  }
+}
