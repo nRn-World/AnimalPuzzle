@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createBoard, findMatchGroups, hasValidMoves } from './engine';
+import { createBoard, findMatchGroups, hasValidMoves, landedEggs } from './engine';
 import {
   CAMPAIGN_CHAPTER_COUNT,
   CAMPAIGN_LEVELS,
   CAMPAIGN_LEVEL_COUNT,
+  FIRST_CHAPTER,
   LEVELS_PER_CHAPTER,
   chapterOfLevelIdx,
   getCampaignLevel,
@@ -56,6 +57,13 @@ test('generated levels are deterministic and well formed', () => {
       if (objective.kind === 'chain') {
         assert.ok(objective.target <= (level.chainCells ?? []).length);
       }
+      if (objective.kind === 'honey') {
+        assert.equal(objective.target, (level.honeyCells ?? []).length);
+      }
+      if (objective.kind === 'egg') {
+        assert.equal(objective.target, (level.eggCells ?? []).length);
+        assert.ok(objective.target > 0);
+      }
     }
   }
 });
@@ -70,8 +78,34 @@ test('generated levels start on a playable board without ready-made matches', ()
     const level = getCampaignLevel(idx);
     const board = createBoard(level, rng);
     assert.equal(findMatchGroups(board).length, 0, `level ${level.id} starts with a match`);
+    for (const cell of board.flat()) {
+      assert.ok(cell.crate > 0 || cell.gem, `level ${level.id} has an empty cell at ${cell.row},${cell.col}`);
+    }
+    assert.equal(landedEggs(board).length, 0, `level ${level.id} starts with a landed egg`);
     assert.equal(hasValidMoves(board), true, `level ${level.id} has no move`);
   }
+});
+
+test('holes, honey and eggs arrive later in the saga and do appear', () => {
+  const seen = { holes: 0, honey: 0, eggs: 0 };
+  for (let idx = CAMPAIGN_LEVELS.length; idx < 1200; idx++) {
+    const level = getCampaignLevel(idx);
+    const chapter = chapterOfLevelIdx(idx);
+    if (level.holeCells) {
+      seen.holes++;
+      assert.ok(chapter >= FIRST_CHAPTER.holes);
+    }
+    if (level.honeyCells) {
+      seen.honey++;
+      assert.ok(chapter >= FIRST_CHAPTER.honey);
+    }
+    if (level.eggCells) {
+      seen.eggs++;
+      assert.ok(chapter >= FIRST_CHAPTER.eggs);
+      for (const egg of level.eggCells) assert.ok(egg.row <= 1);
+    }
+  }
+  assert.ok(seen.holes > 100 && seen.honey > 40 && seen.eggs > 40, JSON.stringify(seen));
 });
 
 test('every chapter has its own name, also in English', () => {

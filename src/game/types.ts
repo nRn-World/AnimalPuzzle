@@ -34,6 +34,8 @@ export interface Gem {
   color: GemColor;
   special: SpecialType;
   chained: boolean;
+  /** An egg never matches; it has to be brought down to the bottom row. */
+  egg?: boolean;
 }
 
 export interface Cell {
@@ -42,7 +44,16 @@ export interface Cell {
   gem: Gem | null;
   ice: number; // 0 = clear, 1 = thin frost, 2 = deep permafrost
   crate: number; // 0 = open, 1 = cracked geode, 2 = solid basalt geode
+  /**
+   * What kind of blocker a cell with crate > 0 is. Unset = wooden crate.
+   * 'hole' is a gap in the board that can never be opened; 'honey' breaks
+   * in one hit but spreads on every move that clears none of it.
+   */
+  block?: 'hole' | 'honey';
 }
+
+/** `crate` value of a hole: high enough that nothing ever wears it down. */
+export const HOLE_HP = 9;
 
 export type Board = Cell[][];
 
@@ -53,7 +64,7 @@ export interface Coord {
 
 export type GameMode = 'campaign' | 'endless' | 'daily';
 
-export type AnimalSkinId = 'classic' | 'royal' | 'winter' | 'starlight';
+export type AnimalSkinId = 'classic' | 'royal' | 'winter' | 'starlight' | 'party' | 'explorer';
 
 export interface AnimalSkinMeta {
   id: AnimalSkinId;
@@ -75,6 +86,8 @@ export type ObjectiveKind =
   | 'ice'
   | 'crate'
   | 'chain'
+  | 'honey'
+  | 'egg'
   | 'score'
   | 'specials'
   | 'cascade3';
@@ -93,6 +106,8 @@ export interface LevelProgress {
   clearedIce: number;
   clearedCrates: number;
   clearedChains: number;
+  clearedHoney: number;
+  collectedEggs: number;
   specialsCreated: number;
   cascade3Count: number;
 }
@@ -114,10 +129,25 @@ export interface LevelConfig {
   iceCells?: Array<{ row: number; col: number; hp: number }>;
   crateCells?: Array<{ row: number; col: number; hp: number }>;
   chainCells?: Array<{ row: number; col: number }>;
+  /** Gaps that shape the board. */
+  holeCells?: Array<{ row: number; col: number }>;
+  honeyCells?: Array<{ row: number; col: number }>;
+  eggCells?: Array<{ row: number; col: number }>;
 }
 
 export interface BlastEvent {
-  type: 'beam_h' | 'beam_v' | 'nova' | 'prism' | 'scout' | 'ice' | 'crate' | 'chain' | 'match';
+  type:
+    | 'beam_h'
+    | 'beam_v'
+    | 'nova'
+    | 'prism'
+    | 'scout'
+    | 'ice'
+    | 'crate'
+    | 'chain'
+    | 'honey'
+    | 'egg'
+    | 'match';
   row: number;
   col: number;
   color?: GemColor;
@@ -139,6 +169,8 @@ export interface CascadeStep {
     clearedIce: number;
     clearedCrates: number;
     clearedChains: number;
+    clearedHoney: number;
+    collectedEggs: number;
   };
 }
 
@@ -153,6 +185,8 @@ export interface SwapResult {
   reshuffled: boolean;
   /** Set when two specials (or a prism and a normal gem) are combined. */
   combo?: ComboType;
+  /** Cell the honey crept into because the move cleared none of it. */
+  honeySpread?: Coord;
 }
 
 export interface HintMove {

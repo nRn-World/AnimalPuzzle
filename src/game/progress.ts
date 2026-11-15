@@ -12,6 +12,8 @@ export function addStepDelta(prev: LevelProgress, step: CascadeStep): LevelProgr
     clearedIce: prev.clearedIce + step.deltaProgress.clearedIce,
     clearedCrates: prev.clearedCrates + step.deltaProgress.clearedCrates,
     clearedChains: prev.clearedChains + step.deltaProgress.clearedChains,
+    clearedHoney: prev.clearedHoney + step.deltaProgress.clearedHoney,
+    collectedEggs: prev.collectedEggs + step.deltaProgress.collectedEggs,
     specialsCreated: prev.specialsCreated + step.spawnedSpecials.length,
     cascade3Count: prev.cascade3Count + (step.cascadeIndex === 3 ? 1 : 0),
   };

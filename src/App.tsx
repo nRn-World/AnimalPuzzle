@@ -156,6 +156,9 @@ export default function App() {
           unlockedSkins={game.dailyState.unlockedSkins}
           equippedSkin={game.dailyState.equippedSkin}
           achievementState={game.achievementState}
+          rewardState={game.rewardState}
+          weeklyQuest={game.weeklyQuest}
+          todayKey={game.todayKey}
           isFullscreen={isFullscreen}
           canFullscreen={canFullscreen}
           guideOpen={showGuide || settingsOpen}
@@ -267,6 +270,7 @@ export default function App() {
             bonusScore={game.endSnapshot.bonus}
             specialBonus={game.endSnapshot.specialBonus}
             stars={game.endSnapshot.stars}
+            chest={game.endSnapshot.chest}
             totalMoves={activeLevel.moves}
             dailyReward={game.dailyReward}
             shareNotice={game.shareNotice}

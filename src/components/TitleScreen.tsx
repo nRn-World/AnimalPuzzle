@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AchievementSaveState } from '../game/achievements';
-import { ANIMAL_SKINS, DailyChallenge, getSkinMeta } from '../game/daily';
+import { ANIMAL_SKINS, DailyChallenge, SKIN_SOURCE, getSkinMeta } from '../game/daily';
 import {
   CAMPAIGN_CHAPTER_COUNT,
   DIFFICULTY_META,
@@ -18,6 +18,19 @@ import { AchievementsModal, TitleAchievementsSummary } from './AchievementsSecti
 import { StarRating } from './StarRating';
 import titleBackdrop from '../assets/images/title-backdrop.webp';
 import { WorkshopFireCanvas } from './WorkshopFireCanvas';
+import { CollectionModal } from './CollectionModal';
+import { GemSvg } from './GemSvg';
+import { GEM_META } from '../game/types';
+import {
+  RewardState,
+  WEEKLY_REWARD_ENERGY,
+  WEEKLY_SKIN,
+  WeeklyQuest,
+  currentStreak,
+  streakBonus,
+  weeklyProgress,
+} from '../game/rewards';
+import { SagaMap } from './SagaMap';
 import { UiIcon, UiIconName } from './UiIcon';
 
 interface TitleScreenProps {
@@ -32,6 +45,9 @@ interface TitleScreenProps {
   unlockedSkins: AnimalSkinId[];
   equippedSkin: AnimalSkinId;
   achievementState: AchievementSaveState;
+  rewardState: RewardState;
+  weeklyQuest: WeeklyQuest;
+  todayKey: string;
   isFullscreen?: boolean;
   canFullscreen?: boolean;
   /** True while another dialog (guide, settings) covers the menu. */
@@ -54,6 +70,8 @@ const SKIN_TINT: Record<AnimalSkinId, string> = {
   royal: 'text-[#FDE047]',
   winter: 'text-[#7DD3FC]',
   starlight: 'text-[#D8B4FE]',
+  party: 'text-[#FF8AA8]',
+  explorer: 'text-[#E0BC43]',
 };
 
 const MODE_TABS: { mode: GameMode; label: string; icon: UiIconName }[] = [
@@ -200,6 +218,22 @@ const SkinEmblem: React.FC<{ skin: AnimalSkinId; className?: string }> = ({
   if (skin === 'royal') return <CrownEmblem className={className} />;
   if (skin === 'winter') return <SnowflakeEmblem className={className} />;
   if (skin === 'starlight') return <StarEmblem className={className} />;
+  if (skin === 'party') {
+    return (
+      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="currentColor">
+        <path d="M12 2.5 L19 20 H5 Z" />
+        <circle cx="12" cy="3" r="2.2" />
+      </svg>
+    );
+  }
+  if (skin === 'explorer') {
+    return (
+      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="currentColor">
+        <path d="M6.5 15 C6.5 8.5 9 6 12 6 C15 6 17.5 8.5 17.5 15 Z" />
+        <ellipse cx="12" cy="16" rx="10" ry="2.6" />
+      </svg>
+    );
+  }
   return <PrismButterflyMark className={className} />;
 };
 
@@ -215,6 +249,9 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   unlockedSkins,
   equippedSkin,
   achievementState,
+  rewardState,
+  weeklyQuest,
+  todayKey,
   isFullscreen = false,
   canFullscreen = false,
   guideOpen = false,
@@ -230,6 +267,12 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
 }) => {
   const [imgFailed, setImgFailed] = useState(false);
   const [achievementsOpen, setAchievementsOpen] = useState(false);
+  const [collectionOpen, setCollectionOpen] = useState(false);
+  const weekly = weeklyProgress(rewardState, weeklyQuest.weekKey);
+  const weeklyShown = Math.min(weeklyQuest.target, weekly.progress);
+  const streak = currentStreak(rewardState, todayKey);
+  // What the next daily win adds on top of the normal reward.
+  const nextStreakBonus = streakBonus(streak + 1);
   const [chapterId, setChapterId] = useState<number>(
     () => chapterOfLevelIdx(selectedLevelIdx)
   );
@@ -241,7 +284,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (achievementsOpen || guideOpen) return;
+      if (achievementsOpen || collectionOpen || guideOpen) return;
       if (e.key === 'Enter' || e.key === ' ') {
         const activeTag = document.activeElement?.tagName;
         if (activeTag === 'BUTTON') return;
@@ -251,17 +294,12 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [achievementsOpen, guideOpen, onStart]);
+  }, [achievementsOpen, collectionOpen, guideOpen, onStart]);
 
   const currentLevel = getCampaignLevel(selectedLevelIdx);
   const featuredSkinMeta = getSkinMeta(dailyChallenge.featuredSkin);
   const difficultyMeta = DIFFICULTY_META[currentLevel.difficulty ?? 'medium'];
   const starThresholds = getStarThresholds(currentLevel.moves);
-  const chapterFirstIdx = (chapterId - 1) * LEVELS_PER_CHAPTER;
-  const chapterLevels = Array.from({ length: LEVELS_PER_CHAPTER }, (_, i) => ({
-    lvl: getCampaignLevel(chapterFirstIdx + i),
-    idx: chapterFirstIdx + i,
-  }));
   const chapter = getChapter(chapterId);
   // The furthest chapter the player may look at: the one they are playing in.
   const latestChapterId = chapterOfLevelIdx(highestUnlockedIdx);
@@ -450,39 +488,13 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1.5 flex-wrap" role="group" aria-label={t('Välj nivå')}>
-                    {chapterLevels.map(({ lvl, idx }) => {
-                      const locked = idx > highestUnlockedIdx;
-                      const active = idx === selectedLevelIdx;
-                      return (
-                        <button
-                          key={lvl.id}
-                          type="button"
-                          disabled={locked}
-                          onClick={() => onSelectLevel(idx)}
-                          aria-label={`${t('Nivå {n}: {name}', { n: lvl.id, name: t(lvl.name) })}${
-                            locked ? ` ${t('(låst)')}` : ''
-                          }`}
-                          aria-pressed={active}
-                          className={`ui-node relative w-9 h-9 sm:w-10 sm:h-10 font-mono-num font-extrabold ${
-                            lvl.id > 999 ? 'text-[9px] sm:text-[10px]' : 'text-xs sm:text-sm'
-                          } ${
-                            active ? 'ui-node-active scale-110' : locked ? 'ui-node-locked' : ''
-                          }`}
-                        >
-                          {locked ? <UiIcon name="locked" className="w-3.5 h-3.5" /> : lvl.id}
-                          {bestStars[lvl.id] ? (
-                            <span
-                              aria-hidden="true"
-                              className="absolute -top-1 -right-1 flex text-[#FFB300] drop-shadow-[0_1px_0_#6D4B27]"
-                            >
-                              <UiIcon name="star" className="w-3.5 h-3.5" />
-                            </span>
-                          ) : null}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <SagaMap
+                    highestUnlockedIdx={highestUnlockedIdx}
+                    selectedLevelIdx={selectedLevelIdx}
+                    bestStars={bestStars}
+                    onSelectLevel={onSelectLevel}
+                    onChapterInView={setChapterId}
+                  />
 
                   <div className="ui-inset px-3 py-2">
                     <div className="flex items-center justify-between gap-2">
@@ -554,6 +566,22 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                       {dailyCompletedToday ? t('Avklarad idag') : t('Ej klar')}
                     </span>
                   </div>
+                  <div
+                    data-testid="daily-streak"
+                    className="flex items-center gap-1.5 border-t-2 border-dashed border-[#111111]/40 pt-1.5 text-[11px] font-bold"
+                  >
+                    <UiIcon name="up" className="h-3.5 w-3.5 text-[#D4002A]" />
+                    <span>
+                      {streak > 0
+                        ? t('Svit: {n} dagar i rad', { n: streak })
+                        : t('Ingen svit än – klara dagens för att börja')}
+                    </span>
+                    {nextStreakBonus > 0 && (
+                      <span className="ml-auto text-[10px] text-[#4B4B4B]">
+                        {t('Nästa dag: +{n} extra', { n: nextStreakBonus })}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -571,6 +599,42 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                   </span>
                 </div>
               )}
+
+              {/* Weekly hunt: collected in every mode, new animal each Monday */}
+              <div data-testid="weekly-hunt" className="ui-inset mt-2.5 flex items-center gap-2.5 px-2.5 py-1.5">
+                <span className="h-10 w-10 shrink-0">
+                  <GemSvg color={weeklyQuest.color} special="none" animationSeed={21} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-[10px] font-extrabold uppercase tracking-wider text-[#D4002A]">
+                      {t('Veckans jakt')}
+                    </span>
+                    <span className="shrink-0 font-mono-num text-[11px] font-extrabold">
+                      {formatNumber(weeklyShown)}/{formatNumber(weeklyQuest.target)}
+                    </span>
+                  </div>
+                  <span className="mt-0.5 block h-2.5 w-full border-2 border-[#111111] bg-[#FFFFFF]/50">
+                    <span
+                      className="block h-full bg-[#6FE65E]"
+                      style={{ width: `${Math.round((weeklyShown / weeklyQuest.target) * 100)}%` }}
+                    />
+                  </span>
+                  <div className="mt-0.5 text-[10px] font-semibold leading-tight text-[#4B4B4B]">
+                    {weekly.claimed
+                      ? t('Klar! Ny jakt på måndag.')
+                      : unlockedSkins.includes(WEEKLY_SKIN)
+                      ? t('Samla {name} i valfritt läge · +{n} energi', {
+                          name: t(GEM_META[weeklyQuest.color].nameSv),
+                          n: WEEKLY_REWARD_ENERGY,
+                        })
+                      : t('Samla {name} i valfritt läge · +{n} energi och Kalashattar', {
+                          name: t(GEM_META[weeklyQuest.color].nameSv),
+                          n: WEEKLY_REWARD_ENERGY,
+                        })}
+                  </div>
+                </div>
+              </div>
 
               {/* Animal skins */}
               <div className="mt-3">
@@ -633,7 +697,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                               equipped ? 'text-[#111111]' : 'text-[#50545A]'
                             }`}
                           >
-                            {equipped ? t('Aktiv') : unlocked ? t('Upplåst') : t('Lås upp i daglig')}
+                            {equipped ? t('Aktiv') : unlocked ? t('Upplåst') : t(SKIN_SOURCE[s.id].text)}
                           </span>
                         </span>
                         {equipped && (
@@ -652,6 +716,16 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                   onOpenModal={() => setAchievementsOpen(true)}
                 />
               </div>
+
+              <button
+                type="button"
+                data-testid="open-collection-btn"
+                onClick={() => setCollectionOpen(true)}
+                className="ui-btn mt-2.5 w-full px-2.5 py-1.5 text-sm"
+              >
+                <UiIcon name="leaderboardsComplex" className="w-4 h-4" />
+                {t('Album och topplista')}
+              </button>
 
               {/* CTA */}
               <div className="mt-3.5 flex flex-wrap items-stretch gap-2.5">
@@ -694,6 +768,11 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
         </div>
       </main>
 
+      <CollectionModal
+        open={collectionOpen}
+        rewardState={rewardState}
+        onClose={() => setCollectionOpen(false)}
+      />
       <AchievementsModal
         open={achievementsOpen}
         achievementState={achievementState}

@@ -23,6 +23,7 @@ export const STORAGE_KEYS = {
   legacyMuted: `${STORAGE_PREFIX}muted`,
   settings: `${STORAGE_PREFIX}settings_v1`,
   savedGame: `${STORAGE_PREFIX}saved_game_v1`,
+  rewards: `${STORAGE_PREFIX}rewards_v1`,
 } as const;
 
 /** The subset of the Storage API this module relies on (easy to fake in tests). */

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSettings } from '../hooks/useSettings';
 import { formatNumber, t } from '../i18n';
 import { AnimalSkinId, GameMode, GamePhase } from '../game/types';
 import { getSkinMeta } from '../game/daily';
@@ -11,6 +12,10 @@ export interface DailyRewardResult {
   energyGranted: number;
   unlockedNewSkin: AnimalSkinId | null;
   alreadyClaimed: boolean;
+  /** Days in a row with a completed daily challenge, including today. */
+  streak?: number;
+  /** Extra energy the streak added on top of the daily reward. */
+  streakEnergy?: number;
 }
 
 interface GameModalsProps {
@@ -28,6 +33,8 @@ interface GameModalsProps {
   stars: number;
   totalMoves: number;
   dailyReward: DailyRewardResult | null;
+  /** Chapter chest opened by this win, if any. */
+  chest?: { energy: number; skin: AnimalSkinId | null };
   onEquipSkin: (skin: AnimalSkinId) => void;
   /** Feedback after the share button was used; null while idle. */
   shareNotice: string | null;
@@ -40,18 +47,76 @@ interface GameModalsProps {
   onBackToTitle: () => void;
 }
 
+/** Counts up to `value` in under a second; jumps straight there with reduced motion. */
+const CountUp: React.FC<{ value: number }> = ({ value }) => {
+  const { reduceMotion } = useSettings();
+  const [shown, setShown] = useState(reduceMotion ? value : 0);
+  useEffect(() => {
+    if (reduceMotion || value <= 0) {
+      setShown(value);
+      return;
+    }
+    let frame = 0;
+    const started = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - started) / 900);
+      setShown(Math.round(value * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [value, reduceMotion]);
+  return <>{formatNumber(shown)}</>;
+};
+
+const CONFETTI_COLORS = ['#FF2E4D', '#27B8FF', '#6FE65E', '#F2CD1C', '#FF8AD1', '#FFFFFF'];
+
+/** Paper confetti raining over the whole screen behind the dialog. */
+const Confetti: React.FC = () => (
+  <div className="ui-confetti" aria-hidden="true">
+    {Array.from({ length: 36 }, (_, i) => (
+      <i
+        key={i}
+        style={{
+          left: `${(i * 37 + 11) % 100}%`,
+          background: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+          animationDelay: `${-((i * 0.41) % 3.4)}s`,
+          animationDuration: `${2.6 + ((i * 7) % 5) * 0.32}s`,
+          width: 7 + (i % 3) * 3,
+          height: 11 + (i % 4) * 2,
+        }}
+      />
+    ))}
+  </div>
+);
+
+const ChestIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
+    <path d="M6 20 C6 11 12 7 24 7 C36 7 42 11 42 20 Z" fill="#C97A2B" stroke="#111111" strokeWidth="3" strokeLinejoin="round" />
+    <rect x="6" y="20" width="36" height="20" fill="#E09A45" stroke="#111111" strokeWidth="3" strokeLinejoin="round" />
+    <path d="M6 20 H42" stroke="#111111" strokeWidth="3" />
+    <rect x="19.5" y="15.5" width="9" height="11" rx="1.5" fill="#F2CD1C" stroke="#111111" strokeWidth="2.6" />
+    <path d="M14 8.5 V40 M34 8.5 V40" stroke="#7A4B12" strokeWidth="3" />
+  </svg>
+);
+
 const PRIMARY_CTA_CLASS = 'ui-btn ui-btn-green w-full px-4 py-1.5 font-display text-lg tracking-wide';
 
-const ShareButton: React.FC<{ notice: string | null; onShare: () => void }> = ({
+const ShareButton: React.FC<{ notice: string | null; onShare: () => void; plain?: boolean }> = ({
   notice,
   onShare,
+  plain = false,
 }) => (
   <div className="space-y-1">
     <button
       type="button"
       data-testid="share-result-btn"
       onClick={onShare}
-      className="ui-btn ui-btn-yellow w-full px-3 py-1 text-sm"
+      className={
+        plain
+          ? 'inline-flex cursor-pointer items-center gap-1.5 bg-transparent px-2 py-1 text-sm font-bold text-[#4B4B4B] underline underline-offset-2 hover:text-[#111111]'
+          : 'ui-btn ui-btn-yellow w-full px-3 py-1 text-sm'
+      }
     >
       <UiIcon name="share2" className="w-4 h-4" />
       {t('Dela resultat')}
@@ -84,6 +149,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
   stars,
   totalMoves,
   dailyReward,
+  chest,
   onEquipSkin,
   shareNotice,
   onShare,
@@ -108,7 +174,39 @@ export const GameModals: React.FC<GameModalsProps> = ({
       aria-labelledby="modal-heading"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111111]/70"
     >
-      <div className="ui-panel w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-5">
+      <div className={`relative w-full max-w-md ${phase === 'VICTORY' ? 'pt-11' : ''}`}>
+      {phase === 'VICTORY' && (
+        <>
+          <Confetti />
+          {/* Two animals cheer from behind the panel */}
+          <span aria-hidden="true" className="pointer-events-none absolute left-[7%] top-1 h-14 w-14 animate-menu-bob">
+            <GemSvg color="ruby" special="none" animationSeed={2} />
+          </span>
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute right-[7%] top-1 h-14 w-14 animate-menu-bob"
+            style={{ animationDelay: '-1.3s' }}
+          >
+            <GemSvg color="cobalt" special="none" animationSeed={9} />
+          </span>
+        </>
+      )}
+      {phase === 'VICTORY' && (
+        <div className="ui-medal" aria-hidden="true" data-testid="victory-medal">
+          <span className="ui-medal-tail ui-medal-tail-left" />
+          <span className="ui-medal-tail ui-medal-tail-right" />
+          <span className="ui-medal-disc">
+            <span className="font-display">{Math.max(0, Math.min(3, Math.round(stars)))}</span>
+          </span>
+        </div>
+      )}
+      <div
+        className={`ui-panel relative w-full overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-5 ${
+          phase === 'VICTORY'
+            ? 'max-h-[calc(100dvh-4.75rem)] pt-[5.75rem] sm:pt-[5.75rem] text-center space-y-3.5'
+            : 'max-h-[calc(100dvh-2rem)]'
+        }`}
+      >
         {phase === 'PAUSED' && (
           <>
             <div className="space-y-1">
@@ -157,22 +255,16 @@ export const GameModals: React.FC<GameModalsProps> = ({
 
         {phase === 'VICTORY' && (
           <>
-            <div className="space-y-1">
-              <div className="text-xs font-extrabold uppercase tracking-wider text-[#0B6B2B]">
+            <div className="flex flex-col items-center gap-1.5">
+              <StarRating stars={stars} size="lg" animated tone="comic" />
+              <div className="mt-1 text-xs font-extrabold uppercase tracking-wider text-[#0B6B2B]">
                 {mode === 'daily'
                   ? t('Daglig utmaning avklarad')
                   : t('Nivå {n} avklarad', { n: levelNumber })}
               </div>
-              <h2 id="modal-heading" className="font-display text-2xl font-extrabold">
+              <h2 id="modal-heading" className="font-display text-3xl leading-none tracking-wide">
                 {t('{name} löst!', { name: t(levelName) })}
               </h2>
-            </div>
-
-            <div className="flex flex-col items-center gap-1.5 -mt-2">
-              <StarRating stars={stars} size="lg" animated tone="parchment" />
-              <div className="text-xs font-extrabold uppercase tracking-wider text-[#D4002A]">
-                {t('{n} av 3 stjärnor', { n: stars })}
-              </div>
               {nextStarGoal(movesLeft, totalMoves) && (
                 <div className="text-[11px] font-semibold text-[#4B4B4B]" data-testid="next-star-goal">
                   {nextStarGoal(movesLeft, totalMoves)}
@@ -180,24 +272,24 @@ export const GameModals: React.FC<GameModalsProps> = ({
               )}
             </div>
 
-            <div className="grid grid-cols-3 gap-2.5">
-              <div className="ui-inset p-2.5">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="ui-inset px-1 py-2">
                 <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#4B4B4B]">
                   {t('Poäng')}
                 </div>
                 <div className="font-mono-num text-lg font-bold text-[#111111] mt-0.5">
-                  {formatNumber(snapshotScore)}
+                  <CountUp value={snapshotScore} />
                 </div>
               </div>
-              <div className="ui-inset p-2.5">
+              <div className="ui-inset px-1 py-2">
                 <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#4B4B4B]">
                   {t('Drag kvar')}
                 </div>
-                <div className="font-mono-num text-lg font-bold text-[#D4002A] mt-0.5">
+                <div className="font-mono-num text-lg font-bold text-[#111111] mt-0.5">
                   {Math.round(movesLeft)}
                 </div>
               </div>
-              <div className="ui-inset p-2.5">
+              <div className="ui-inset px-1 py-2">
                 <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#4B4B4B]">
                   {t('Max kedja')}
                 </div>
@@ -209,34 +301,46 @@ export const GameModals: React.FC<GameModalsProps> = ({
 
             <div
               data-testid="victory-finale"
-              className="rounded border-2 border-[#111111] bg-[#F2D23C] p-3"
+              title={`${t('Drag kvar: {n} × 120', { n: movesLeft })} · ${t('Sparade specialdjur: +{n}', {
+                n: formatNumber(specialBonus),
+              })}`}
+              className="flex items-center justify-between gap-2 border-[3px] border-[#111111] bg-[var(--ui-yellow)] px-2.5 py-1.5 text-left"
             >
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-xs font-extrabold uppercase tracking-wider text-[#D4002A]">
-                  {t('Skördefest')}
-                </div>
-                <div className="font-mono-num text-sm font-bold text-[#111111]">
-                  {t('+{n} p', { n: formatNumber(bonusScore) })}
-                </div>
-              </div>
-              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] font-bold text-[#4B4B4B]">
-                <span>{t('Drag kvar: {n} × 120', { n: movesLeft })}</span>
-                <span>
-                  {t('Sparade specialdjur: +{n}', { n: formatNumber(specialBonus) })}
-                </span>
-              </div>
-              <div className="mt-1 text-xs font-semibold text-[#111111]">
-                {movesLeft > 0
-                  ? t('Dina kvarvarande drag och specialdjur är redan inräknade i poängen.')
-                  : t('Du klarade målet på sista draget. Dina sparade specialdjur är inräknade.')}
-              </div>
+              <span className="text-xs font-extrabold uppercase tracking-wider text-[#111111]">
+                {t('Skördefest')}
+              </span>
+              <span className="font-mono-num text-sm font-bold text-[#111111]">
+                {t('+{n} p', { n: formatNumber(bonusScore) })}
+              </span>
             </div>
+
+            {chest && (
+              <div
+                data-testid="chapter-chest"
+                className="flex items-center gap-2.5 border-[3px] border-[#111111] bg-[var(--ui-blue)] px-2.5 py-2 text-left"
+              >
+                <ChestIcon className="h-10 w-10 shrink-0 animate-star-pop" />
+                <div className="min-w-0 text-sm font-semibold leading-snug">
+                  <div className="text-xs font-extrabold uppercase tracking-wider">
+                    {t('Kapitelkista öppnad')}
+                  </div>
+                  <div>
+                    {chest.skin
+                      ? t('+{n} bonusenergi och nytt djur-skin: {name}', {
+                          n: chest.energy,
+                          name: t(getSkinMeta(chest.skin).nameSv),
+                        })
+                      : t('+{n} bonusenergi till nästa omgång', { n: chest.energy })}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Daily Challenge Reward Box */}
             {mode === 'daily' && dailyReward && (
               <div
                 data-testid="daily-reward-summary"
-                className="ui-inset p-3 space-y-2.5"
+                className="ui-inset p-3 space-y-2.5 text-left"
               >
                 <div className="text-xs font-extrabold uppercase tracking-wider text-[#D4002A]">
                   {dailyReward.alreadyClaimed
@@ -253,6 +357,17 @@ export const GameModals: React.FC<GameModalsProps> = ({
                         </span>{' '}
                         {t('Bonusenergi till nästa omgång')}
                       </div>
+                      {dailyReward.streak ? (
+                        <div data-testid="daily-streak-result">
+                          {t('Svit: {n} dagar i rad', { n: dailyReward.streak })}
+                          {dailyReward.streakEnergy ? (
+                            <span className="font-mono-num font-bold text-[#D4002A]">
+                              {' '}
+                              +{dailyReward.streakEnergy}
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : null}
                       {unlockedSkinMeta && (
                         <div>
                           {t('Nytt djur-skin:')}{' '}
@@ -287,8 +402,6 @@ export const GameModals: React.FC<GameModalsProps> = ({
               </div>
             )}
 
-            <ShareButton notice={shareNotice} onShare={onShare} />
-
             <div className="flex flex-col gap-2.5">
               {hasNextLevel ? (
                 <button
@@ -320,6 +433,8 @@ export const GameModals: React.FC<GameModalsProps> = ({
                 </button>
               </div>
             </div>
+
+            <ShareButton notice={shareNotice} onShare={onShare} plain />
           </>
         )}
 
@@ -380,6 +495,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
             </div>
           </>
         )}
+      </div>
       </div>
     </div>
   );

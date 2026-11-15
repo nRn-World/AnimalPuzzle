@@ -549,6 +549,24 @@ export const GemSvg: React.FC<GemSvgProps> = ({
         </g>
       )}
 
+      {special !== 'prism' && skin === 'party' && (
+        <g>
+          <polygon points="32,1 41.5,18 22.5,18" fill="#FF2E4D" stroke="#0F1219" strokeWidth="1.8" strokeLinejoin="round" />
+          <path d="M28.2 8 L35.8 8 M25.6 13 L38.4 13" stroke="#FDE047" strokeWidth="2.2" strokeLinecap="round" />
+          <rect x="21" y="16.5" width="22" height="3.6" rx="1.8" fill="#27B8FF" stroke="#0F1219" strokeWidth="1.4" />
+          <circle cx="32" cy="2.6" r="2.8" fill="#FDE047" stroke="#0F1219" strokeWidth="1.4" />
+        </g>
+      )}
+
+      {special !== 'prism' && skin === 'explorer' && (
+        <g>
+          <path d="M22 16 C22 8 26.5 4.5 32 4.5 C37.5 4.5 42 8 42 16 Z" fill="#C9A227" stroke="#0F1219" strokeWidth="1.8" />
+          <ellipse cx="32" cy="16.6" rx="15.5" ry="3.4" fill="#E0BC43" stroke="#0F1219" strokeWidth="1.6" />
+          <path d="M22.4 13.4 H41.6" stroke="#7A4B12" strokeWidth="2.6" />
+          <circle cx="32" cy="13.4" r="2" fill="#6FE65E" stroke="#0F1219" strokeWidth="1.1" />
+        </g>
+      )}
+
       {/* Special Power-up Overlays (kept around edges so cute faces stay visible!) */}
       {special === 'beam_h' && (
         <g>
@@ -692,5 +710,47 @@ export const ShuffleIcon: React.FC<{ className?: string }> = ({ className = 'w-5
       strokeLinecap="round"
       strokeLinejoin="round"
     />
+  </svg>
+);
+
+/** An egg: never matches, has to be brought down to the bottom row. */
+export const EggSvg: React.FC<{ className?: string }> = ({ className = 'w-full h-full' }) => (
+  <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+    <ellipse cx="32" cy="57" rx="15" ry="3.5" fill="#000000" opacity="0.28" />
+    <path
+      d="M32 7 C21 7 12.5 23 12.5 36.5 C12.5 48.5 21 56 32 56 C43 56 51.5 48.5 51.5 36.5 C51.5 23 43 7 32 7 Z"
+      fill="#FFF3D6"
+      stroke="#111111"
+      strokeWidth="3.2"
+    />
+    <path
+      d="M44.5 21 C48.5 28 50 33 50 37.5 C50 47 42.5 54 32 54.5 C41 50.5 46.5 41 44.5 21 Z"
+      fill="#E9C98E"
+    />
+    <circle cx="24" cy="30" r="3.4" fill="#FF8AA8" stroke="#111111" strokeWidth="1.6" />
+    <circle cx="36" cy="42" r="4.2" fill="#27B8FF" stroke="#111111" strokeWidth="1.6" />
+    <circle cx="38" cy="22" r="2.6" fill="#6FE65E" stroke="#111111" strokeWidth="1.6" />
+    <circle cx="23" cy="44" r="2.4" fill="#F2CD1C" stroke="#111111" strokeWidth="1.6" />
+    <path d="M22 17 C24.5 13.5 27.5 11.5 30 11" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" />
+  </svg>
+);
+
+/** A cell covered in honey: one hit clears it, but it spreads if left alone. */
+export const HoneySvg: React.FC<{ className?: string }> = ({ className = 'w-full h-full' }) => (
+  <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+    <path
+      d="M8 12 C8 8 11 5 15 5 H49 C53 5 56 8 56 12 V44 C56 49 53.5 50 52 54 C50.8 57.5 46.5 57.5 45.5 54 C44.5 50.5 41 50.5 40 54 C38.6 59.5 33 59.5 31.6 54 C30.6 50.5 27 50.5 26 53 C24.6 56.5 20.4 56.5 19.4 53 C18 49 8 51 8 44 Z"
+      fill="#F5A800"
+      stroke="#111111"
+      strokeWidth="3.2"
+      strokeLinejoin="round"
+    />
+    <path d="M14 13 C14 11 15.5 10 17.5 10 H40" fill="none" stroke="#FFE08A" strokeWidth="4" strokeLinecap="round" />
+    <g fill="none" stroke="#B86E00" strokeWidth="2.2" strokeLinejoin="round">
+      <path d="M24 20 l6 -3.5 l6 3.5 v7 l-6 3.5 l-6 -3.5 z" />
+      <path d="M36 27 l6 -3.5 l6 3.5 v7 l-6 3.5 l-6 -3.5 z" />
+      <path d="M12 27 l6 -3.5 l6 3.5 v7 l-6 3.5 l-6 -3.5 z" />
+      <path d="M24 34 l6 -3.5 l6 3.5 v7 l-6 3.5 l-6 -3.5 z" />
+    </g>
   </svg>
 );

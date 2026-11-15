@@ -19,6 +19,7 @@ import {
   equipAnimalSkin,
   getDailyChallenge,
   getDailyKey,
+  grantReward,
   MAX_ENERGY_BANK,
   readDailyState,
   writeDailyState,
@@ -35,10 +36,30 @@ import {
   resolveSwap,
 } from '../game/engine';
 import { vibrate } from '../game/haptics';
-import { CAMPAIGN_LEVEL_COUNT, ENDLESS_CONFIG, getCampaignLevel } from '../game/levels';
+import {
+  CAMPAIGN_LEVEL_COUNT,
+  ENDLESS_CONFIG,
+  LEVELS_PER_CHAPTER,
+  getCampaignLevel,
+} from '../game/levels';
 import { mergeBestStars, readBestStars, writeBestStars } from '../game/mastery';
 import { addStepDelta } from '../game/progress';
 import { BEST_SCORE_STORAGE_KEYS, nextBestScore } from '../game/records';
+import {
+  CHEST_ENERGY,
+  RewardState,
+  WEEKLY_REWARD_ENERGY,
+  WEEKLY_SKIN,
+  addTopScore,
+  applyCollected,
+  getWeekKey,
+  getWeeklyQuest,
+  openChest,
+  readRewardState,
+  registerDaily,
+  streakBonus,
+  writeRewardState,
+} from '../game/rewards';
 import {
   clearSavedGame,
   isSavedGameResumable,
@@ -66,6 +87,8 @@ import {
   Board,
   ComboType,
   Coord,
+  GEM_COLORS_ORDER,
+  GemColor,
   GameMode,
   GamePhase,
   LevelConfig,
@@ -86,6 +109,8 @@ export interface EndSnapshot {
   bonus: number;
   specialBonus: number;
   stars: number;
+  /** Set when this win finished a chapter for the first time. */
+  chest?: { energy: number; skin: AnimalSkinId | null };
 }
 
 const EMPTY_SNAPSHOT: EndSnapshot = {
@@ -153,6 +178,23 @@ export function useGameSession(language: Lang) {
   // The challenge itself is fixed by the date; only its texts depend on the language.
   const dailyChallenge = useMemo(() => getDailyChallenge(todayKey), [todayKey, language]);
   const dailyCompletedToday = dailyState.completedDates.includes(todayKey);
+
+  // Streak, weekly hunt, chapter chests, album and top list.
+  const [rewardState, setRewardState] = useState<RewardState>(() => readRewardState());
+  const rewardStateRef = useRef(rewardState);
+  const commitRewards = useCallback((next: RewardState) => {
+    if (next === rewardStateRef.current) return;
+    rewardStateRef.current = next;
+    setRewardState(next);
+    writeRewardState(next);
+  }, []);
+  const commitDaily = useCallback((next: DailySaveState) => {
+    dailyStateRef.current = next;
+    setDailyState(next);
+    writeDailyState(next);
+  }, []);
+  const weekKey = useMemo(() => getWeekKey(), []);
+  const weeklyQuest = useMemo(() => getWeeklyQuest(weekKey), [weekKey]);
 
   const [endlessTarget, setEndlessTarget] = useState<number>(ENDLESS_MILESTONE_STEP);
   const activeLevel: LevelConfig = useMemo(
@@ -600,8 +642,12 @@ export function useGameSession(language: Lang) {
         const hasBeam = step.blasts.some((b) => b.type === 'beam_h' || b.type === 'beam_v');
         const hasNova = step.blasts.some((b) => b.type === 'nova');
         const hasPrism = step.blasts.some((b) => b.type === 'prism');
-        const hasCrack = step.blasts.some((b) => b.type === 'ice' || b.type === 'crate');
+        const hasCrack = step.blasts.some(
+          (b) => b.type === 'ice' || b.type === 'crate' || b.type === 'honey'
+        );
         const hasScout = step.blasts.some((b) => b.type === 'scout');
+        const hasEgg = step.blasts.some((b) => b.type === 'egg');
+        if (hasEgg) soundEngine.playSpecialCreate('nova');
 
         if (hasPrism) {
           soundEngine.playBlast('prism');
@@ -656,6 +702,30 @@ export function useGameSession(language: Lang) {
 
       if (runTokenRef.current !== token) return false;
 
+      // Album and weekly hunt: every animal cleared by this move counts.
+      const collected: Partial<Record<GemColor, number>> = {};
+      for (const step of result.steps) {
+        for (const color of GEM_COLORS_ORDER) {
+          const n = step.deltaProgress.clearedColors[color] ?? 0;
+          if (n > 0) collected[color] = (collected[color] ?? 0) + n;
+        }
+      }
+      const hunt = applyCollected(rewardStateRef.current, collected, weekKey);
+      commitRewards(hunt.nextState);
+      if (hunt.weeklyCompleted) {
+        const granted = grantReward(dailyStateRef.current, WEEKLY_REWARD_ENERGY, WEEKLY_SKIN);
+        commitDaily(granted.nextState);
+        soundEngine.playSpecialCreate('prism');
+        setStatusNotice(
+          granted.unlockedNewSkin
+            ? t('Veckans jakt klar! +{n} energi och Kalashattar upplåsta', { n: WEEKLY_REWARD_ENERGY })
+            : t('Veckans jakt klar! +{n} energi', { n: WEEKLY_REWARD_ENERGY })
+        );
+        window.setTimeout(() => {
+          if (runTokenRef.current === token) setStatusNotice(null);
+        }, 3200);
+      }
+
       // Summarize the whole cascade in one floating label. Showing one label
       // per cascade step made fast chains overlap and become unreadable.
       if (result.steps.length > 0) {
@@ -677,6 +747,16 @@ export function useGameSession(language: Lang) {
             peakCascade >= 2 ? '#FDE047' : '#FFFFFF'
           );
         }
+      }
+
+      if (result.honeySpread && !result.reshuffled) {
+        // The honey crept over one more animal because none of it was cleared.
+        setTransitionMode('none');
+        setBoard(result.finalBoard);
+        soundEngine.playBlast('crack');
+        fxRef.current?.emitBlasts([
+          { type: 'honey', row: result.honeySpread.row, col: result.honeySpread.col },
+        ]);
       }
 
       if (result.reshuffled) {
@@ -728,6 +808,28 @@ export function useGameSession(language: Lang) {
         }
 
         const nextBest = recordBestScore(finalScore);
+        commitRewards(
+          addTopScore(rewardStateRef.current, {
+            score: finalScore,
+            mode,
+            level: mode === 'campaign' ? activeLevel.id : 0,
+            dateKey: todayKey,
+          })
+        );
+
+        // The last level of a chapter hides a chest the first time it is won.
+        let chest: EndSnapshot['chest'];
+        if (
+          mode === 'campaign' &&
+          levelIdx + 1 > highestUnlockedIdx &&
+          levelIdx % LEVELS_PER_CHAPTER === LEVELS_PER_CHAPTER - 1
+        ) {
+          const opened = openChest(rewardStateRef.current);
+          commitRewards(opened.nextState);
+          const granted = grantReward(dailyStateRef.current, CHEST_ENERGY, opened.skin);
+          commitDaily(granted.nextState);
+          chest = { energy: CHEST_ENERGY, skin: granted.unlockedNewSkin };
+        }
 
         if (
           mode === 'campaign' &&
@@ -747,12 +849,24 @@ export function useGameSession(language: Lang) {
             dailyChallenge.rewardEnergy
           );
           nextDailyCount = claimed.nextState.completedDates.length;
-          setDailyState(claimed.nextState);
-          writeDailyState(claimed.nextState);
+          // A daily win a day keeps the streak going and raises the reward.
+          let streak = rewardStateRef.current.streak;
+          let streakEnergy = 0;
+          let dailyNext = claimed.nextState;
+          if (claimed.newlyCompleted) {
+            const registered = registerDaily(rewardStateRef.current, dailyChallenge.dateKey);
+            commitRewards(registered);
+            streak = registered.streak;
+            streakEnergy = streakBonus(streak);
+            dailyNext = grantReward(dailyNext, streakEnergy, null).nextState;
+          }
+          commitDaily(dailyNext);
           setDailyReward({
             energyGranted: claimed.energyGranted,
             unlockedNewSkin: claimed.unlockedNewSkin,
             alreadyClaimed: !claimed.newlyCompleted,
+            streak,
+            streakEnergy,
           });
         }
 
@@ -780,6 +894,7 @@ export function useGameSession(language: Lang) {
           bonus,
           specialBonus,
           stars,
+          chest,
         });
         setBusy(false);
         setPhase('VICTORY');
@@ -788,6 +903,14 @@ export function useGameSession(language: Lang) {
 
       if (updatedMoves <= 0) {
         const best = recordBestScore(runningProgress.score);
+        commitRewards(
+          addTopScore(rewardStateRef.current, {
+            score: runningProgress.score,
+            mode,
+            level: mode === 'campaign' ? activeLevel.id : 0,
+            dateKey: todayKey,
+          })
+        );
 
         await waitMs(380);
         if (runTokenRef.current !== token) return false;
@@ -1106,6 +1229,10 @@ export function useGameSession(language: Lang) {
     dailyCompletedToday,
     dailyState,
     dailyReward,
+    rewardState,
+    weeklyQuest,
+    weekKey,
+    todayKey,
     // board
     board,
     transitionMode,

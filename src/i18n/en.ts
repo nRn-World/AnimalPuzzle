@@ -164,10 +164,6 @@ export const en: Record<string, string> = {
     "Moves left: {n} × 120",
   "Sparade specialdjur: +{n}":
     "Saved special animals: +{n}",
-  "Dina kvarvarande drag och specialdjur är redan inräknade i poängen.":
-    "Your remaining moves and special animals are already included in the score.",
-  "Du klarade målet på sista draget. Dina sparade specialdjur är inräknade.":
-    "You reached the goal on your very last move. Your saved special animals are included.",
   "Dagens belöning redan hämtad":
     "Today's reward already claimed",
   "Belöning upplåst":
@@ -258,8 +254,6 @@ export const en: Record<string, string> = {
     "Later levels",
   "Hinder du möter":
     "Obstacles you will meet",
-  "Is tinas av matchningar på rutan, trälådor spräcks av matchningar intill och kedjor lossar när djuret matchas.":
-    "Ice thaws when you match on the tile, wooden crates break from matches next to them and chains come off when the animal is matched.",
   "Tips: matcha bredvid hindren – inte bara på dem.":
     "Tip: match next to obstacles – not only on top of them.",
   "Is":
@@ -316,8 +310,6 @@ export const en: Record<string, string> = {
     "(locked)",
   "Välj nivå":
     "Choose level",
-  "Nivå {n}: {name}":
-    "Level {n}: {name}",
   "Bästa: {n}/3 stjärnor":
     "Best: {n}/3 stars",
   "Inte klarad än":
@@ -944,8 +936,6 @@ export const en: Record<string, string> = {
     "Collect the animals before you run out of moves",
   "Tack":
     "Thanks",
-  "ikonerna i menyerna":
-    "the menu icons",
   "typsnittet Bangers":
     "the Bangers typeface",
   "typsnittet Grandstander":
@@ -958,4 +948,80 @@ export const en: Record<string, string> = {
     "Build long cascades to reach the goal",
   "Jaga poäng – stora matchningar ger mest":
     "Chase points – big matches score the most",
+  "Is tinas av matchningar på rutan, trälådor spräcks av matchningar intill och kedjor lossar när djuret matchas. Längre fram kommer hål i brädet, honung som sprider sig varje drag du inte rensar någon, och ägg som ska lotsas ner till botten.":
+    "Ice thaws when you match on the tile, wooden crates break from matches next to them and chains come off when the animal is matched. Later on you meet holes in the board, honey that spreads every move you clear none of it, and eggs to steer down to the bottom.",
+  "ikonerna i menyerna och de inspelade ljudeffekterna":
+    "the menu icons and the recorded sound effects",
+  "Hål":
+    "Hole",
+  "Honung":
+    "Honey",
+  "Ägg":
+    "Eggs",
+  "Kapitelkista öppnad":
+    "Chapter chest opened",
+  "+{n} bonusenergi och nytt djur-skin: {name}":
+    "+{n} bonus energy and a new animal skin: {name}",
+  "+{n} bonusenergi till nästa omgång":
+    "+{n} bonus energy for your next round",
+  "Svit: {n} dagar i rad":
+    "Streak: {n} days in a row",
+  "Ingen svit än – klara dagens för att börja":
+    "No streak yet – beat today's to start one",
+  "Nästa dag: +{n} extra":
+    "Next day: +{n} extra",
+  "Veckans jakt":
+    "Weekly hunt",
+  "Klar! Ny jakt på måndag.":
+    "Done! New hunt on Monday.",
+  "Samla {name} i valfritt läge · +{n} energi":
+    "Collect {name} in any mode · +{n} energy",
+  "Samla {name} i valfritt läge · +{n} energi och Kalashattar":
+    "Collect {name} in any mode · +{n} energy and Party Hats",
+  "Album och topplista":
+    "Album and top list",
+  "Kapitel {n}":
+    "Chapter {n}",
+  "Nivå {n}":
+    "Level {n}",
+  "{n} djur samlade":
+    "{n} animals collected",
+  "Djuralbum":
+    "Animal album",
+  "Varje djur du samlar i en bana räknas. Korten stiger i rang: {tiers}.":
+    "Every animal you collect in a level counts. Cards rise in rank: {tiers}.",
+  "Ny":
+    "New",
+  "Topplista":
+    "Top list",
+  "Dina tio bästa resultat på den här enheten.":
+    "Your ten best results on this device.",
+  "Inga resultat än – spela en bana så hamnar den här.":
+    "No results yet – play a level and it shows up here.",
+  "Kalashattar":
+    "Party Hats",
+  "Randiga partyhattar (Veckans jakt)":
+    "Striped party hats (Weekly hunt)",
+  "Upptäckare":
+    "Explorers",
+  "Upptäckarhattar (Kapitelkistor)":
+    "Explorer hats (Chapter chests)",
+  "Tredje kapitelkistan":
+    "Third chapter chest",
+  "Rensa honungen – annars sprider den sig":
+    "Clear the honey – or it spreads",
+  "Matcha under äggen så att de når botten":
+    "Match below the eggs so they reach the bottom",
+  "Brons":
+    "Bronze",
+  "Silver":
+    "Silver",
+  "Guld":
+    "Gold",
+  "Diamant":
+    "Diamond",
+  "Veckans jakt klar! +{n} energi och Kalashattar upplåsta":
+    "Weekly hunt done! +{n} energy and Party Hats unlocked",
+  "Veckans jakt klar! +{n} energi":
+    "Weekly hunt done! +{n} energy",
 };
