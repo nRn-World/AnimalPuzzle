@@ -26,6 +26,7 @@ const MODE_LABELS = {
   blitz: { text: 'Tidsläge' },
   weekly: { text: 'Veckans nivå' },
   puzzle: { text: 'Dagens pussel' },
+  custom: { text: 'Eget pussel' },
 };
 
 /** The animal album (a card per animal that levels up) and the top list. */

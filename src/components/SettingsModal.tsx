@@ -1,5 +1,12 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { soundEngine } from '../game/audio';
+import {
+  CloudConfig,
+  isCloudConfigured,
+  PlayerProfile,
+  pullCloudSave,
+  pushCloudSave,
+} from '../game/cloudSync';
 import { isHapticsSupported, vibrate } from '../game/haptics';
 import { remindersSupported, requestReminders } from '../game/reminders';
 import { downloadSave, exportSyncCode, importSave, importSyncCode, parseSave, parseSyncCode } from '../game/saveFile';
@@ -13,6 +20,10 @@ import { GemSvg } from './GemSvg';
 interface SettingsModalProps {
   open: boolean;
   onClose: () => void;
+  playerProfile?: PlayerProfile;
+  onUpdatePlayerHandle?: (handle: string) => void;
+  cloudConfig?: CloudConfig;
+  onSaveCloudConfig?: (cfg: CloudConfig) => void;
 }
 
 const PREVIEW_COLORS: GemColor[] = ['ruby', 'rose', 'cobalt', 'violet', 'emerald', 'lime'];
@@ -118,13 +129,36 @@ const SliderRow: React.FC<SliderRowProps> = ({ label, value, disabled = false, t
   );
 };
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({
+  open,
+  onClose,
+  playerProfile,
+  onUpdatePlayerHandle,
+  cloudConfig,
+  onSaveCloudConfig,
+}) => {
   const settings = useSettings();
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const [syncInput, setSyncInput] = useState<string>('');
+  const [handleInput, setHandleInput] = useState<string>(playerProfile?.handle ?? '');
+  const [cloudUrlInput, setCloudUrlInput] = useState<string>(cloudConfig?.url ?? '');
+  const [cloudKeyInput, setCloudKeyInput] = useState<string>(cloudConfig?.anonKey ?? '');
+  const [cloudBusy, setCloudBusy] = useState(false);
+  const [cloudNotice, setCloudNotice] = useState<string | null>(null);
   const hapticsSupported = isHapticsSupported();
+
+  useEffect(() => {
+    setHandleInput(playerProfile?.handle ?? '');
+  }, [playerProfile?.handle]);
+
+  useEffect(() => {
+    if (cloudConfig) {
+      setCloudUrlInput(cloudConfig.url);
+      setCloudKeyInput(cloudConfig.anonKey);
+    }
+  }, [cloudConfig]);
 
   useEffect(() => {
     if (!open) return;
@@ -338,6 +372,133 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
               {saveNotice}
             </div>
           </Section>
+
+          {playerProfile && cloudConfig && (
+            <Section title={t('Molnsparning & Spelarnamn')}>
+              <div className="ui-inset p-2.5 space-y-2">
+                <div className="space-y-1">
+                  <label className="block text-xs font-extrabold">{t('Ditt spelarnamn')}</label>
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      maxLength={18}
+                      value={handleInput}
+                      data-testid="player-handle-input"
+                      onChange={(e) => setHandleInput(e.target.value)}
+                      placeholder={t('T.ex. Räven99')}
+                      className="min-w-0 flex-1 rounded border-2 border-[#111111] bg-white px-2 py-1 text-xs font-bold text-[#111111]"
+                    />
+                    <button
+                      type="button"
+                      data-testid="save-handle-btn"
+                      onClick={() => {
+                        onUpdatePlayerHandle?.(handleInput);
+                        setCloudNotice(t('Spelarnamn sparat!'));
+                      }}
+                      className="ui-btn ui-btn-yellow shrink-0 px-2.5 py-1 text-xs"
+                    >
+                      {t('Spara')}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1 border-t-2 border-dashed border-[#111111]/30 pt-2">
+                  <div className="flex items-center justify-between text-[11px] font-extrabold">
+                    <span>{t('Supabase-moln (valfritt)')}</span>
+                    <span
+                      className={`rounded border border-[#111111] px-1.5 py-0.2 text-[10px] ${
+                        isCloudConfigured({ url: cloudUrlInput, anonKey: cloudKeyInput })
+                          ? 'bg-[#A6EC98]'
+                          : 'bg-[#FFFFFF]'
+                      }`}
+                    >
+                      {isCloudConfigured({ url: cloudUrlInput, anonKey: cloudKeyInput })
+                        ? t('Kopplad')
+                        : t('Lokal')}
+                    </span>
+                  </div>
+                  <input
+                    type="url"
+                    value={cloudUrlInput}
+                    data-testid="cloud-url-input"
+                    onChange={(e) => setCloudUrlInput(e.target.value)}
+                    placeholder="https://xxx.supabase.co"
+                    className="w-full rounded border-2 border-[#111111] bg-white px-2 py-1 font-mono-num text-[11px] text-[#111111]"
+                  />
+                  <input
+                    type="password"
+                    value={cloudKeyInput}
+                    data-testid="cloud-key-input"
+                    onChange={(e) => setCloudKeyInput(e.target.value)}
+                    placeholder={t('Supabase Anon Key')}
+                    className="w-full rounded border-2 border-[#111111] bg-white px-2 py-1 font-mono-num text-[11px] text-[#111111]"
+                  />
+                  <div className="grid grid-cols-3 gap-1.5 pt-1">
+                    <button
+                      type="button"
+                      data-testid="cloud-save-cfg-btn"
+                      onClick={() => {
+                        onSaveCloudConfig?.({ url: cloudUrlInput.trim(), anonKey: cloudKeyInput.trim() });
+                        setCloudNotice(t('Molninställningar sparade!'));
+                      }}
+                      className="ui-btn px-1.5 py-1 text-[11px]"
+                    >
+                      {t('Anslut')}
+                    </button>
+                    <button
+                      type="button"
+                      data-testid="cloud-upload-btn"
+                      disabled={cloudBusy || !isCloudConfigured({ url: cloudUrlInput, anonKey: cloudKeyInput })}
+                      onClick={async () => {
+                        const cfg = { url: cloudUrlInput.trim(), anonKey: cloudKeyInput.trim() };
+                        onSaveCloudConfig?.(cfg);
+                        setCloudBusy(true);
+                        const res = await pushCloudSave(cfg, {
+                          ...playerProfile,
+                          handle: handleInput.trim() || playerProfile.handle,
+                        });
+                        setCloudBusy(false);
+                        setCloudNotice(
+                          res.ok
+                            ? t('Sparfil uppladdad till molnet!')
+                            : t('Kunde inte spara till molnet – kontrollera URL och nyckel.')
+                        );
+                      }}
+                      className="ui-btn ui-btn-green px-1.5 py-1 text-[11px] disabled:opacity-50"
+                    >
+                      {t('Spara moln')}
+                    </button>
+                    <button
+                      type="button"
+                      data-testid="cloud-download-btn"
+                      disabled={cloudBusy || !isCloudConfigured({ url: cloudUrlInput, anonKey: cloudKeyInput })}
+                      onClick={async () => {
+                        if (!window.confirm(t('Läsa in sparfilen? Det som finns sparat på den här enheten ersätts.'))) return;
+                        const cfg = { url: cloudUrlInput.trim(), anonKey: cloudKeyInput.trim() };
+                        onSaveCloudConfig?.(cfg);
+                        setCloudBusy(true);
+                        const res = await pullCloudSave(cfg, playerProfile.playerId);
+                        setCloudBusy(false);
+                        if (!res.ok) {
+                          setCloudNotice(t('Ingen molnsparning hittades för detta ID.'));
+                          return;
+                        }
+                        window.location.reload();
+                      }}
+                      className="ui-btn ui-btn-yellow px-1.5 py-1 text-[11px] disabled:opacity-50"
+                    >
+                      {t('Hämta moln')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              {cloudNotice && (
+                <div role="status" data-testid="cloud-notice" className="text-[11px] font-bold text-[#0B6B2B]">
+                  {cloudNotice}
+                </div>
+              )}
+            </Section>
+          )}
 
           <Section title={t('Tillgänglighet')}>
             <ToggleRow

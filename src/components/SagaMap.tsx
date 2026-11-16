@@ -10,6 +10,7 @@ import {
 } from '../game/levels';
 import { BossSvg, GemSvg } from './GemSvg';
 import { BiomeId, biomeOfChapter } from '../game/biomes';
+import { MasterCrownsMap } from '../game/masterMode';
 import { UiIcon } from './UiIcon';
 
 interface SagaMapProps {
@@ -17,6 +18,8 @@ interface SagaMapProps {
   selectedLevelIdx: number;
   /** Best star count per level id. */
   bestStars: Record<number, number>;
+  /** Golden crowns won in Master Mode per level id. */
+  masterCrowns?: MasterCrownsMap;
   onSelectLevel: (idx: number) => void;
   /** Called while scrolling with the chapter in the middle of the view. */
   onChapterInView: (chapterId: number) => void;
@@ -173,6 +176,7 @@ export const SagaMap: React.FC<SagaMapProps> = ({
   highestUnlockedIdx,
   selectedLevelIdx,
   bestStars,
+  masterCrowns = {},
   onSelectLevel,
   onChapterInView,
 }) => {
@@ -344,6 +348,7 @@ export const SagaMap: React.FC<SagaMapProps> = ({
                 const frontier = idx === highestUnlockedIdx;
                 const finale = pos === LEVELS_PER_CHAPTER - 1;
                 const stars = bestStars[id] ?? 0;
+                const masterCrown = (masterCrowns[id] ?? 0) > 0;
                 return (
                   <div
                     key={id}
@@ -358,7 +363,7 @@ export const SagaMap: React.FC<SagaMapProps> = ({
                       onClick={() => onSelectLevel(idx)}
                       aria-label={`${t('Nivå {n}', { n: id })}${locked ? ` ${t('(låst)')}` : ''}${
                         stars ? `, ${t('{n} av 3 stjärnor', { n: stars })}` : ''
-                      }`}
+                      }${masterCrown ? `, ${t('Mästarkrona')}` : ''}`}
                       aria-pressed={active}
                       className={`ui-node relative font-mono-num font-extrabold ${
                         finale ? 'h-12 w-12' : 'h-10 w-10'
@@ -373,6 +378,22 @@ export const SagaMap: React.FC<SagaMapProps> = ({
                       }`}
                     >
                       {locked ? <UiIcon name="locked" className="h-3.5 w-3.5" /> : id}
+                      {masterCrown && !locked && (
+                        <svg
+                          aria-hidden="true"
+                          viewBox="0 0 24 18"
+                          data-testid={`master-crown-${id}`}
+                          className="pointer-events-none absolute -top-2.5 left-1/2 h-4 w-5 -translate-x-1/2 drop-shadow-[0_1px_0_#111111]"
+                        >
+                          <path
+                            d="M2 15 L4 4 L9 9 L12 2 L15 9 L20 4 L22 15 Z"
+                            fill="#FFAA00"
+                            stroke="#111111"
+                            strokeWidth="2.2"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
                       {!locked && <TinyStars stars={stars} />}
                     </button>
                     {finale && hasBoss && (

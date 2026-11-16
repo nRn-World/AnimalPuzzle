@@ -32,6 +32,15 @@ import {
   LeagueStandingRow,
   LeagueState,
 } from '../game/league';
+import {
+  isStarRaceFinished,
+  LAVA_TRAIL_GOAL,
+  MiniEventReward,
+  MiniEventsState,
+  RaceRow,
+  STAR_RACE_GOAL,
+} from '../game/miniEvents';
+import { GlobalLeaderboardRow, LeaderboardBoard } from '../game/cloudSync';
 import { RewardState } from '../game/rewards';
 import { BlitzState, PlayStats, formatPlayTime } from '../game/stats';
 import { STORY_PAGES } from '../game/story';
@@ -40,10 +49,11 @@ import { GemSvg } from './GemSvg';
 import { IslandScene } from './IslandScene';
 import { UiIcon } from './UiIcon';
 
-export type HubTab = 'missions' | 'league' | 'companion' | 'island' | 'stats';
+export type HubTab = 'missions' | 'events' | 'league' | 'companion' | 'island' | 'stats';
 
 export const HUB_TABS: Array<{ id: HubTab; label: string }> = [
   { id: 'missions', label: 'Uppdrag' },
+  { id: 'events', label: 'Event' },
   { id: 'league', label: 'Liga' },
   { id: 'companion', label: 'Kompis' },
   { id: 'island', label: 'Din ö' },
@@ -80,6 +90,16 @@ interface HubModalProps {
   league: LeagueState;
   leagueStandings: LeagueStandingRow[];
   onClaimLeagueReward: () => void;
+  miniEvents: MiniEventsState;
+  starRaceStandings: RaceRow[] | null;
+  onStartStarRace: () => void;
+  onClaimStarRace: () => MiniEventReward | null;
+  onStartLavaTrail: () => void;
+  onClaimLavaTrail: () => MiniEventReward | null;
+  cloudConnected: boolean;
+  globalLeague: GlobalLeaderboardRow[] | null;
+  globalBlitz: GlobalLeaderboardRow[] | null;
+  onRefreshGlobal: (board: LeaderboardBoard) => void;
 }
 
 function missionLabel(mission: Mission): string {
@@ -155,7 +175,32 @@ export const HubModal: React.FC<HubModalProps> = ({
   league,
   leagueStandings,
   onClaimLeagueReward,
+  miniEvents,
+  starRaceStandings,
+  onStartStarRace,
+  onClaimStarRace,
+  onStartLavaTrail,
+  onClaimLavaTrail,
+  cloudConnected,
+  globalLeague,
+  globalBlitz,
+  onRefreshGlobal,
 }) => {
+  const [leagueView, setLeagueView] = React.useState<'local' | 'global' | 'blitz'>('local');
+  const [eventNotice, setEventNotice] = React.useState<string | null>(null);
+  const [, setTick] = React.useState(0);
+
+  useEffect(() => {
+    if (tab !== 'events' || !miniEvents.race || miniEvents.race.claimed) return;
+    const id = window.setInterval(() => setTick((n) => n + 1), 1000);
+    return () => window.clearInterval(id);
+  }, [miniEvents.race, tab]);
+
+  useEffect(() => {
+    if (tab !== 'league' || !cloudConnected) return;
+    if (leagueView === 'global') onRefreshGlobal('league');
+    else if (leagueView === 'blitz') onRefreshGlobal('blitz');
+  }, [cloudConnected, leagueView, onRefreshGlobal, tab]);
   useEffect(() => {
     if (!tab) return;
     const onKey = (e: KeyboardEvent) => {
@@ -535,11 +580,289 @@ export const HubModal: React.FC<HubModalProps> = ({
             </section>
           )}
 
+          {tab === 'events' && (() => {
+            const race = miniEvents.race;
+            const nowMs = Date.now();
+            const raceDone = race ? isStarRaceFinished(race, nowMs) : false;
+            const raceRemSec = race ? Math.max(0, Math.ceil((race.endsAt - nowMs) / 1000)) : 0;
+            const raceCountdown = `${String(Math.floor(raceRemSec / 60)).padStart(2, '0')}:${String(raceRemSec % 60).padStart(2, '0')}`;
+            const lava = miniEvents.lava;
+            const lavaReady = lava.rewardPending;
+            return (
+              <section data-testid="hub-events" className="space-y-3">
+                {eventNotice && (
+                  <div
+                    role="status"
+                    className="rounded border-2 border-[#111111] bg-[#A6EC98] px-3 py-1.5 text-xs font-extrabold text-[#111111]"
+                  >
+                    {eventNotice}
+                  </div>
+                )}
+
+                {/* Mini-event 1: Star Race (30-min sprint to 15 stars) */}
+                <div data-testid="star-race-card" className="ui-inset p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#D4002A]">
+                        {t('Snabbevent · 30 min')}
+                      </div>
+                      <h3 className="font-display text-lg leading-tight">{t('Stjärnracet')}</h3>
+                    </div>
+                    {race && !race.claimed && (
+                      <span className="rounded border-2 border-[#111111] bg-[#F2CD1C] px-2 py-0.5 font-mono-num text-xs font-extrabold">
+                        {raceDone ? t('Avslutat') : raceCountdown}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs font-semibold text-[#4B4B4B]">
+                    {t('Först till {n} stjärnor mot 4 rivaler! 1:a plats ger +{e} energi och en gratis Prisma.', {
+                      n: STAR_RACE_GOAL,
+                      e: 80,
+                    })}
+                  </p>
+
+                  {!race || race.claimed ? (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-bold text-[#4B4B4B]">
+                        {miniEvents.racesCompleted > 0
+                          ? t('Slutförda race: {n}', { n: miniEvents.racesCompleted })
+                          : t('Samla stjärnor i kampanj, daglig eller veckans nivå')}
+                      </span>
+                      <button
+                        type="button"
+                        data-testid="start-star-race-btn"
+                        onClick={() => {
+                          setEventNotice(null);
+                          onStartStarRace();
+                        }}
+                        className="ui-btn ui-btn-green px-3 py-1 text-xs"
+                      >
+                        {t('Starta Stjärnracet')}
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-1">
+                        {(starRaceStandings ?? []).map((row) => (
+                          <div
+                            key={row.id}
+                            className={`flex items-center gap-2 rounded border-2 border-[#111111] px-2 py-1 text-xs font-bold ${
+                              row.isPlayer ? 'bg-[#F2CD1C] font-extrabold' : 'bg-[#FFFFFF]/80'
+                            }`}
+                          >
+                            <span className="w-5 text-center font-mono-num font-extrabold">
+                              {row.rank}.
+                            </span>
+                            <span className="h-5 w-5 shrink-0">
+                              <GemSvg color={row.color} special="none" skin={skin} animationSeed={row.rank * 7} className="h-full w-full" />
+                            </span>
+                            <span className="min-w-0 flex-1 truncate">{row.handle}</span>
+                            <div className="w-20">
+                              <Bar share={row.stars / STAR_RACE_GOAL} color={row.isPlayer ? '#FF2E4D' : '#27B8FF'} />
+                            </div>
+                            <span className="w-10 text-right font-mono-num font-extrabold">
+                              {row.stars}/{STAR_RACE_GOAL}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      {raceDone && (
+                        <button
+                          type="button"
+                          data-testid="claim-star-race-btn"
+                          onClick={() => {
+                            const r = onClaimStarRace();
+                            if (r) {
+                              setEventNotice(
+                                r.energy > 0
+                                  ? t('Stjärnracet klart! +{n} bonusenergi', { n: r.energy })
+                                  : t('Stjärnracet avslutat – starta ett nytt race!')
+                              );
+                            }
+                          }}
+                          className="ui-btn ui-btn-yellow w-full px-3 py-1.5 text-sm"
+                        >
+                          {t('Hämta race-belöning')}
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* Mini-event 2: Lava Trail (5 wins in a row without defeat) */}
+                <div data-testid="lava-trail-card" className="ui-inset p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#D4002A]">
+                        {t('Överlevnad · {n} vinster i rad', { n: LAVA_TRAIL_GOAL })}
+                      </div>
+                      <h3 className="font-display text-lg leading-tight">{t('Lavastigen')}</h3>
+                    </div>
+                    {lava.completedCount > 0 && (
+                      <span className="rounded border-2 border-[#111111] bg-[#FF8A1E] px-2 py-0.5 font-mono-num text-xs font-extrabold">
+                        {t('{n} klara', { n: lava.completedCount })}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs font-semibold text-[#4B4B4B]">
+                    {t('Vinn {n} kampanjnivåer i rad utan att förlora. Stora skatten ger +{e} energi + 2 gratis startboosters!', {
+                      n: LAVA_TRAIL_GOAL,
+                      e: 100,
+                    })}
+                  </p>
+
+                  {/* 5 stepping stones */}
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {Array.from({ length: LAVA_TRAIL_GOAL }, (_, i) => {
+                      const step = i + 1;
+                      const reached = (lava.active || lavaReady) && lava.wins >= step;
+                      const nextStep = lava.active && lava.wins + 1 === step;
+                      return (
+                        <div
+                          key={step}
+                          className={`rounded border-2 border-[#111111] py-2 text-center font-mono-num text-xs font-extrabold ${
+                            reached
+                              ? 'bg-[#FF8A1E] text-[#111111]'
+                              : nextStep
+                              ? 'bg-[#F2CD1C] text-[#111111]'
+                              : 'bg-[#FFFFFF]/70 text-[#4B4B4B]'
+                          }`}
+                        >
+                          {reached ? '✓' : step}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {lavaReady ? (
+                    <button
+                      type="button"
+                      data-testid="claim-lava-btn"
+                      onClick={() => {
+                        const r = onClaimLavaTrail();
+                        if (r) {
+                          setEventNotice(
+                            t('Lavastigen besegrad! +{n} bonusenergi och 2 gratis boosters!', {
+                              n: r.energy,
+                            })
+                          );
+                        }
+                      }}
+                      className="ui-btn ui-btn-yellow w-full px-3 py-1.5 text-sm"
+                    >
+                      {t('Hämta lavaskatten (+{n} energi)', { n: 100 })}
+                    </button>
+                  ) : !lava.active ? (
+                    <button
+                      type="button"
+                      data-testid="start-lava-btn"
+                      onClick={() => {
+                        setEventNotice(null);
+                        onStartLavaTrail();
+                      }}
+                      className="ui-btn ui-btn-green w-full px-3 py-1.5 text-sm"
+                    >
+                      {t('Kliv ut på Lavastigen')}
+                    </button>
+                  ) : (
+                    <div className="text-center text-xs font-extrabold text-[#D4002A]">
+                      {t('Pågår: {wins}/{target} vinster – förlora inte!', {
+                        wins: lava.wins,
+                        target: LAVA_TRAIL_GOAL,
+                      })}
+                    </div>
+                  )}
+                </div>
+              </section>
+            );
+          })()}
+
           {tab === 'league' && (() => {
             const tierDef = getLeagueTier(league.tier);
             const myRow = leagueStandings.find((r) => r.isPlayer);
             return (
               <section data-testid="league-section" className="space-y-3">
+                {/* Local vs Global Top 20 toggle */}
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setLeagueView('local')}
+                    className={`ui-btn flex-1 px-2 py-1 text-xs ${leagueView === 'local' ? 'ui-btn-wood' : ''}`}
+                  >
+                    {t('Min grupp')}
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="league-global-tab"
+                    onClick={() => setLeagueView('global')}
+                    className={`ui-btn flex-1 px-2 py-1 text-xs ${leagueView === 'global' ? 'ui-btn-wood' : ''}`}
+                  >
+                    {t('Global Liga')}
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="blitz-global-tab"
+                    onClick={() => setLeagueView('blitz')}
+                    className={`ui-btn flex-1 px-2 py-1 text-xs ${leagueView === 'blitz' ? 'ui-btn-wood' : ''}`}
+                  >
+                    {t('Global Tid')}
+                  </button>
+                </div>
+
+                {leagueView !== 'local' ? (
+                  <div className="ui-inset p-3 space-y-2">
+                    {!cloudConnected ? (
+                      <p className="text-xs font-semibold text-[#4B4B4B]">
+                        {t('Koppla Supabase i Inställningar → Molnsparning för att se och tävla på den globala topp 20-listan.')}
+                      </p>
+                    ) : (() => {
+                      const rows = leagueView === 'global' ? globalLeague : globalBlitz;
+                      if (!rows) {
+                        return (
+                          <div className="flex items-center justify-between gap-2 text-xs font-semibold text-[#4B4B4B]">
+                            <span>{t('Laddar global topplista...')}</span>
+                            <button
+                              type="button"
+                              onClick={() => onRefreshGlobal(leagueView === 'global' ? 'league' : 'blitz')}
+                              className="ui-btn px-2 py-0.5 text-xs"
+                            >
+                              {t('Uppdatera')}
+                            </button>
+                          </div>
+                        );
+                      }
+                      if (rows.length === 0) {
+                        return (
+                          <p className="text-xs font-semibold text-[#4B4B4B]">
+                            {t('Inga globala poäng den här veckan än – bli den första på listan!')}
+                          </p>
+                        );
+                      }
+                      return (
+                        <div className="space-y-1">
+                          {rows.map((row) => (
+                            <div
+                              key={row.playerId}
+                              className={`flex items-center gap-2 rounded border-2 border-[#111111] px-2.5 py-1 text-xs font-bold ${
+                                row.isPlayer ? 'bg-[#F2CD1C] font-extrabold' : 'bg-[#FFFFFF]/80'
+                              }`}
+                            >
+                              <span className="w-6 text-center font-mono-num font-extrabold">{row.rank}</span>
+                              <span className="h-6 w-6 shrink-0">
+                                <GemSvg color={row.color} special="none" skin={skin} animationSeed={row.rank * 17} className="h-full w-full" />
+                              </span>
+                              <span className="min-w-0 flex-1 truncate">{row.handle}</span>
+                              <span className="font-mono-num font-extrabold">
+                                {formatNumber(row.score)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                ) : (
+                  <>
                 {/* Tier banner & progression */}
                 <div className="ui-inset p-3 space-y-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -659,6 +982,8 @@ export const HubModal: React.FC<HubModalProps> = ({
                     </div>
                   ))}
                 </div>
+                  </>
+                )}
               </section>
             );
           })()}

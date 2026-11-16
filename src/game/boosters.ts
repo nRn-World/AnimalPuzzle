@@ -32,13 +32,67 @@ export const STARTERS: readonly StarterOption[] = [
 
 export const STARTER_OPTIONS = STARTERS;
 
-export function starterSelectionCost(ids: readonly StarterId[]): number {
+export function starterSelectionCost(
+  ids: readonly StarterId[],
+  freeInventory?: Partial<Record<StarterId, number>>
+): number {
   let total = 0;
   for (const id of new Set(ids)) {
+    if ((freeInventory?.[id] ?? 0) > 0) continue;
     const opt = STARTERS.find((s) => s.id === id);
     if (opt) total += opt.cost;
   }
   return total;
+}
+
+export type FreeStarters = Record<StarterId, number>;
+
+export function createEmptyFreeStarters(): FreeStarters {
+  return { beam: 0, nova: 0, prism: 0 };
+}
+
+export function sanitizeFreeStarters(raw: unknown): FreeStarters {
+  if (!raw || typeof raw !== 'object') return createEmptyFreeStarters();
+  const obj = raw as Record<string, unknown>;
+  const clamp = (v: unknown) =>
+    typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(99, Math.round(v))) : 0;
+  return {
+    beam: clamp(obj.beam),
+    nova: clamp(obj.nova),
+    prism: clamp(obj.prism),
+  };
+}
+
+export function addFreeStarter(
+  inv: FreeStarters,
+  id: StarterId,
+  count = 1
+): FreeStarters {
+  return { ...inv, [id]: Math.min(99, inv[id] + Math.max(0, count)) };
+}
+
+export function consumeFreeStarters(
+  inv: FreeStarters,
+  ids: readonly StarterId[]
+): { nextInv: FreeStarters; paidIds: StarterId[] } {
+  const nextInv = { ...inv };
+  const paidIds: StarterId[] = [];
+  for (const id of new Set(ids)) {
+    if (nextInv[id] > 0) {
+      nextInv[id] -= 1;
+    } else {
+      paidIds.push(id);
+    }
+  }
+  return { nextInv, paidIds };
+}
+
+export function readFreeStarters(): FreeStarters {
+  return sanitizeFreeStarters(readJson(STORAGE_KEYS.freeStarters));
+}
+
+export function writeFreeStarters(inv: FreeStarters): void {
+  writeJson(STORAGE_KEYS.freeStarters, inv);
 }
 
 export const RESCUE_MOVES = 5;

@@ -13,11 +13,15 @@ import {
 } from '../game/achievements';
 import { soundEngine } from '../game/audio';
 import {
+  addFreeStarter,
   applyStartSpecials,
   canAffordRescue,
+  consumeFreeStarters,
   defuseExplodedBombs,
+  FreeStarters,
   isRescuableMode,
   MAX_RESCUES_PER_RUN,
+  readFreeStarters,
   readWinStreak,
   recordStreakWin,
   RESCUE_MOVES,
@@ -29,8 +33,72 @@ import {
   starterSelectionCost,
   WinStreakState,
   winStreakSpecials,
+  writeFreeStarters,
   writeWinStreak,
 } from '../game/boosters';
+import {
+  CloudConfig,
+  fetchGlobalLeaderboard,
+  GlobalLeaderboardRow,
+  isCloudConfigured,
+  LeaderboardBoard,
+  PlayerProfile,
+  readCloudConfig,
+  readPlayerProfile,
+  submitGlobalScore,
+  writeCloudConfig,
+  writePlayerProfile,
+} from '../game/cloudSync';
+import {
+  buildCustomPuzzleBoard,
+  CustomPuzzleSpec,
+  customPuzzleToLevel,
+  customPuzzleUrl,
+  parseCustomPuzzleFromSearch,
+} from '../game/customPuzzle';
+import {
+  advanceFever,
+  createInitialFever,
+  FEVER_DURATION_MOVES,
+  feverMultiplier,
+  FeverState,
+  isFeverActive,
+} from '../game/fever';
+import {
+  applyMasterMode,
+  canPlayMasterMode,
+  MASTER_FIRST_CLEAR_ENERGY,
+  MASTER_LEAGUE_MULTIPLIER,
+  MasterCrownsMap,
+  readMasterCrowns,
+  recordMasterClear,
+  writeMasterCrowns,
+} from '../game/masterMode';
+import {
+  addStarRaceStars,
+  buildStarRaceStandings,
+  claimLavaTrailReward,
+  claimStarRaceReward,
+  failLavaTrail,
+  MiniEventReward,
+  MiniEventsState,
+  readMiniEvents,
+  recordLavaTrailWin,
+  startLavaTrail,
+  startStarRace,
+  writeMiniEvents,
+} from '../game/miniEvents';
+import {
+  addChestStars,
+  canSpinWheel,
+  openStarChest,
+  readStarChestState,
+  spinDailyWheel,
+  StarChestReward,
+  StarChestState,
+  WheelSlice,
+  writeStarChestState,
+} from '../game/starChest';
 import {
   claimDailyReward,
   createSeededRng,
@@ -230,6 +298,10 @@ export interface EndSnapshot {
   puzzleEnergy?: number;
   /** Weekly league points awarded for this round. */
   leaguePoints?: number;
+  /** Master Mode first-clear bonus energy (awarded once per level). */
+  masterEnergy?: number;
+  /** Whether this campaign win was played in Master Mode. */
+  masterCleared?: boolean;
 }
 
 const EMPTY_SNAPSHOT: EndSnapshot = {
@@ -440,12 +512,93 @@ export function useGameSession(language: Lang) {
     setLeague(next);
     writeLeagueState(next);
   }, []);
+
+  // --- Fever, Star Chest / Wheel, Mini-Events, Master Mode, Custom Puzzles & Cloud ---
+  const [fever, setFever] = useState<FeverState>(createInitialFever);
+  const feverRef = useRef(fever);
+  const commitFever = useCallback((next: FeverState) => {
+    feverRef.current = next;
+    setFever(next);
+  }, []);
+
+  const [freeStarters, setFreeStarters] = useState<FreeStarters>(() => readFreeStarters());
+  const freeStartersRef = useRef(freeStarters);
+  const commitFreeStarters = useCallback((next: FreeStarters) => {
+    freeStartersRef.current = next;
+    setFreeStarters(next);
+    writeFreeStarters(next);
+  }, []);
+
+  const [starChest, setStarChest] = useState<StarChestState>(() => readStarChestState());
+  const starChestRef = useRef(starChest);
+  const commitStarChest = useCallback((next: StarChestState) => {
+    starChestRef.current = next;
+    setStarChest(next);
+    writeStarChestState(next);
+  }, []);
+
+  const [miniEvents, setMiniEvents] = useState<MiniEventsState>(() => readMiniEvents());
+  const miniEventsRef = useRef(miniEvents);
+  const commitMiniEvents = useCallback((next: MiniEventsState) => {
+    miniEventsRef.current = next;
+    setMiniEvents(next);
+    writeMiniEvents(next);
+  }, []);
+
+  const [bestStars, setBestStars] = useState<Record<number, number>>(() => readBestStars());
+  const [masterCrowns, setMasterCrowns] = useState<MasterCrownsMap>(() => readMasterCrowns());
+  const masterCrownsRef = useRef(masterCrowns);
+  const commitMasterCrowns = useCallback((next: MasterCrownsMap) => {
+    masterCrownsRef.current = next;
+    setMasterCrowns(next);
+    writeMasterCrowns(next);
+  }, []);
+  const [masterModeEnabled, setMasterModeEnabled] = useState<boolean>(false);
+  const masterModeRef = useRef(false);
+  masterModeRef.current = masterModeEnabled;
+
+  const [sharedCustomPuzzle, setSharedCustomPuzzle] = useState<CustomPuzzleSpec | null>(() =>
+    parseCustomPuzzleFromSearch(window.location.search)
+  );
+  const [activeCustomPuzzle, setActiveCustomPuzzle] = useState<CustomPuzzleSpec | null>(null);
+  const activeCustomPuzzleRef = useRef(activeCustomPuzzle);
+  activeCustomPuzzleRef.current = activeCustomPuzzle;
+
+  const [playerProfile, setPlayerProfile] = useState<PlayerProfile>(() => readPlayerProfile());
+  const playerProfileRef = useRef(playerProfile);
+  const commitPlayerProfile = useCallback((next: PlayerProfile) => {
+    playerProfileRef.current = next;
+    setPlayerProfile(next);
+    writePlayerProfile(next);
+  }, []);
+
+  const [cloudConfig, setCloudConfig] = useState<CloudConfig>(() => readCloudConfig());
+  const cloudConfigRef = useRef(cloudConfig);
+  const commitCloudConfig = useCallback((next: CloudConfig) => {
+    cloudConfigRef.current = next;
+    setCloudConfig(next);
+    writeCloudConfig(next);
+  }, []);
+  const [globalLeague, setGlobalLeague] = useState<GlobalLeaderboardRow[] | null>(null);
+  const [globalBlitz, setGlobalBlitz] = useState<GlobalLeaderboardRow[] | null>(null);
+
   const awardLeague = useCallback(
     (pts: number) => {
       if (pts <= 0) return;
-      commitLeague(addLeaguePoints(leagueRef.current, pts, weekKey));
+      const next = addLeaguePoints(leagueRef.current, pts, weekKey);
+      commitLeague(next);
+      if (isCloudConfigured(cloudConfigRef.current)) {
+        void submitGlobalScore(cloudConfigRef.current, {
+          board: 'league',
+          periodKey: weekKey,
+          playerId: playerProfileRef.current.playerId,
+          handle: playerProfileRef.current.handle || t('Du'),
+          color: companion,
+          score: next.points,
+        });
+      }
     },
-    [commitLeague, weekKey]
+    [commitLeague, companion, weekKey]
   );
 
   const [seenObstacles, setSeenObstacles] = useState<ObstacleIntroId[]>(() => readSeenObstacles());
@@ -458,43 +611,55 @@ export function useGameSession(language: Lang) {
   const [bossHitNonce, setBossHitNonce] = useState<number>(0);
 
   const [endlessTarget, setEndlessTarget] = useState<number>(ENDLESS_MILESTONE_STEP);
-  const activeLevel: LevelConfig = useMemo(
-    () =>
-      mode === 'campaign'
-        ? getCampaignLevel(levelIdx)
-        : mode === 'daily'
-        ? dailyChallenge.level
-        : mode === 'weekly'
-        ? weeklyLevel.level
-        : mode === 'puzzle'
-        ? dailyPuzzle.level
-        : mode === 'blitz'
-        ? {
-            ...ENDLESS_CONFIG,
-            name: 'Tidsläge',
-            subtitle: 'Så många poäng du hinner på 60 sekunder',
-            objectives: [
-              {
-                id: 'blitz-score',
-                kind: 'score',
-                label: 'Slå ditt rekord',
-                target: Math.max(blitz.best, 3000),
-              },
-            ],
-          }
-        : {
-            ...ENDLESS_CONFIG,
-            objectives: [
-              {
-                id: 'endless-score',
-                kind: 'score',
-                label: 'Nästa bonus (+5 drag)',
-                target: endlessTarget,
-              },
-            ],
+  const activeLevel: LevelConfig = useMemo(() => {
+    if (mode === 'campaign') {
+      const base = getCampaignLevel(levelIdx);
+      return masterModeEnabled && canPlayMasterMode(bestStars, base.id)
+        ? applyMasterMode(base)
+        : base;
+    }
+    if (mode === 'daily') return dailyChallenge.level;
+    if (mode === 'weekly') return weeklyLevel.level;
+    if (mode === 'puzzle') return dailyPuzzle.level;
+    if (mode === 'custom' && activeCustomPuzzle) return customPuzzleToLevel(activeCustomPuzzle);
+    if (mode === 'blitz') {
+      return {
+        ...ENDLESS_CONFIG,
+        name: 'Tidsläge',
+        subtitle: 'Så många poäng du hinner på 60 sekunder',
+        objectives: [
+          {
+            id: 'blitz-score',
+            kind: 'score',
+            label: 'Slå ditt rekord',
+            target: Math.max(blitz.best, 3000),
           },
-    [blitz.best, dailyChallenge, dailyPuzzle, endlessTarget, levelIdx, mode, weeklyLevel]
-  );
+        ],
+      };
+    }
+    return {
+      ...ENDLESS_CONFIG,
+      objectives: [
+        {
+          id: 'endless-score',
+          kind: 'score',
+          label: 'Nästa bonus (+5 drag)',
+          target: endlessTarget,
+        },
+      ],
+    };
+  }, [
+    activeCustomPuzzle,
+    bestStars,
+    blitz.best,
+    dailyChallenge,
+    dailyPuzzle,
+    endlessTarget,
+    levelIdx,
+    masterModeEnabled,
+    mode,
+    weeklyLevel,
+  ]);
 
   const [tutorialDone, setTutorialDone] = useState<boolean>(() =>
     readFlag(STORAGE_KEYS.tutorialDone)
@@ -541,7 +706,6 @@ export function useGameSession(language: Lang) {
   );
 
   const [endSnapshot, setEndSnapshot] = useState<EndSnapshot>(EMPTY_SNAPSHOT);
-  const [bestStars, setBestStars] = useState<Record<number, number>>(() => readBestStars());
   const [comboNotice, setComboNotice] = useState<{ type: ComboType; nonce: number } | null>(null);
   const comboNoticeTimerRef = useRef<number | null>(null);
 
@@ -580,8 +744,16 @@ export function useGameSession(language: Lang) {
     // scripted tutorial board is simply replayed instead of restored.
     if (busy || tutorialStep !== 'done') return;
     // A round against the clock cannot be paused over a restart, and the
-    // weekly level and daily tactical puzzle always start from their fixed boards.
-    if (mode === 'blitz' || mode === 'weekly' || mode === 'puzzle') return;
+    // weekly level, puzzles, custom levels and Master Mode always start fresh.
+    if (
+      mode === 'blitz' ||
+      mode === 'weekly' ||
+      mode === 'puzzle' ||
+      mode === 'custom' ||
+      (mode === 'campaign' && masterModeEnabled)
+    ) {
+      return;
+    }
     // Nothing worth keeping until the first move has been made.
     if (progress.score <= 0 && movesLeft >= activeLevel.moves) return;
 
@@ -647,10 +819,24 @@ export function useGameSession(language: Lang) {
     setMode(next);
   }, []);
 
-  const selectLevel = useCallback((idx: number) => {
+  const selectLevel = useCallback(
+    (idx: number) => {
+      soundEngine.playClick();
+      setLevelIdx(idx);
+      const lvl = getCampaignLevel(idx);
+      if (!canPlayMasterMode(bestStars, lvl.id)) {
+        setMasterModeEnabled(false);
+      }
+    },
+    [bestStars]
+  );
+
+  const toggleMasterMode = useCallback(() => {
+    const lvl = getCampaignLevel(levelIdx);
+    if (!canPlayMasterMode(bestStars, lvl.id)) return;
     soundEngine.playClick();
-    setLevelIdx(idx);
-  }, []);
+    setMasterModeEnabled((prev) => !prev);
+  }, [bestStars, levelIdx]);
 
   const equipSkin = useCallback((skin: AnimalSkinId) => {
     setDailyState((prev) => {
@@ -678,7 +864,9 @@ export function useGameSession(language: Lang) {
     if (pendingStreakLossRef.current) {
       pendingStreakLossRef.current = false;
       commitWinStreak(resetWinStreak(winStreakRef.current));
+      commitMiniEvents(failLavaTrail(miniEventsRef.current));
     }
+    commitFever(createInitialFever());
     soundEngine.playClick();
     setShowGuide(false);
     setActiveObstacleIntro(null);
@@ -686,11 +874,12 @@ export function useGameSession(language: Lang) {
     setShareNotice(null);
     setSavedGame(loadResumableSave(highestUnlockedIdx, todayKey));
     setPhase('TITLE_MENU');
-  }, [clearComboNotice, commitWinStreak, highestUnlockedIdx, todayKey]);
+  }, [clearComboNotice, commitFever, commitMiniEvents, commitWinStreak, highestUnlockedIdx, todayKey]);
 
   /** Clears every transient board interaction; shared by start and resume. */
   const resetInteraction = useCallback(() => {
     clearComboNotice();
+    commitFever(createInitialFever());
     setTransitionMode('none');
     setLastCascade(1);
     setSelected(null);
@@ -704,7 +893,7 @@ export function useGameSession(language: Lang) {
     setShareNotice(null);
     setFlyingGoals([]);
     setBumpedGoals({});
-  }, [clearComboNotice]);
+  }, [clearComboNotice, commitFever]);
 
   const startSession = useCallback(
     (
@@ -712,11 +901,13 @@ export function useGameSession(language: Lang) {
       targetIdx: number,
       forceTutorial = false,
       playIntro = false,
-      skipTutorial = false
+      skipTutorial = false,
+      customSpecOverride?: CustomPuzzleSpec | null
     ) => {
       if (pendingStreakLossRef.current) {
         pendingStreakLossRef.current = false;
         commitWinStreak(resetWinStreak(winStreakRef.current));
+        commitMiniEvents(failLavaTrail(miniEventsRef.current));
       }
 
       // Campaign levels need a life. Out of lives: back to the menu, where the
@@ -730,15 +921,28 @@ export function useGameSession(language: Lang) {
         }
       }
       runTokenRef.current += 1;
+      const customSpec = customSpecOverride ?? activeCustomPuzzleRef.current;
+      const isMaster =
+        targetMode === 'campaign' &&
+        masterModeRef.current &&
+        canPlayMasterMode(bestStars, getCampaignLevel(targetIdx).id);
+      if (targetMode === 'campaign' && !isMaster && masterModeRef.current) {
+        setMasterModeEnabled(false);
+      }
+
       const lvl =
         targetMode === 'campaign'
-          ? getCampaignLevel(targetIdx)
+          ? isMaster
+            ? applyMasterMode(getCampaignLevel(targetIdx))
+            : getCampaignLevel(targetIdx)
           : targetMode === 'daily'
           ? dailyChallenge.level
           : targetMode === 'weekly'
           ? weeklyLevel.level
           : targetMode === 'puzzle'
           ? dailyPuzzle.level
+          : targetMode === 'custom' && customSpec
+          ? customPuzzleToLevel(customSpec)
           : ENDLESS_CONFIG;
       if (targetMode === 'weekly') {
         commitWeeklyLevel({ ...weeklyLevelRef.current, attempts: weeklyLevelRef.current.attempts + 1 });
@@ -773,7 +977,7 @@ export function useGameSession(language: Lang) {
         setSavedGame(null);
       }
 
-      // Deduct any armed pre-game starters and compute win-streak specials.
+      // Deduct any armed pre-game starters (free tokens first, then bonus bank) and compute win-streak specials.
       let bankState = dailyStateRef.current;
       const startSpecials: SpecialType[] = [];
       let starterCount = 0;
@@ -786,8 +990,12 @@ export function useGameSession(language: Lang) {
 
         const armed = armedStartersRef.current;
         if (armed.length > 0) {
-          const cost = starterSelectionCost(armed);
+          const cost = starterSelectionCost(armed, freeStartersRef.current);
           if (bankState.bonusEnergyBank >= cost) {
+            const consumed = consumeFreeStarters(freeStartersRef.current, armed);
+            if (consumed.nextInv !== freeStartersRef.current) {
+              commitFreeStarters(consumed.nextInv);
+            }
             bankState = { ...bankState, bonusEnergyBank: bankState.bonusEnergyBank - cost };
             for (const id of armed) {
               const def = STARTERS.find((s) => s.id === id);
@@ -811,6 +1019,7 @@ export function useGameSession(language: Lang) {
       } else if (
         targetMode !== 'daily' &&
         targetMode !== 'puzzle' &&
+        targetMode !== 'custom' &&
         bankState.bonusEnergyBank > BANK_RESERVE
       ) {
         const excess = Math.min(MAX_ENERGY, bankState.bonusEnergyBank - BANK_RESERVE);
@@ -838,6 +1047,8 @@ export function useGameSession(language: Lang) {
         ? createBoard(lvl, createSeededRng(weeklyLevel.seed))
         : targetMode === 'puzzle'
         ? buildPuzzleBoard(dailyPuzzle.spec)
+        : targetMode === 'custom' && customSpec
+        ? buildCustomPuzzleBoard(customSpec)
         : targetMode === 'blitz'
         ? createBoard(lvl, createSeededRng(`animalpuzzle-challenge-${blitzSeedRef.current}`))
         : createBoard(lvl);
@@ -847,8 +1058,8 @@ export function useGameSession(language: Lang) {
         nextBoard = planted.board;
       }
 
-      // First-time obstacle mini-intro (skipped during scripted tutorial/guide or puzzle).
-      if (!runTutorial && !willShowGuide && targetMode !== 'puzzle') {
+      // First-time obstacle mini-intro (skipped during scripted tutorial/guide, puzzle or custom).
+      if (!runTutorial && !willShowGuide && targetMode !== 'puzzle' && targetMode !== 'custom') {
         const intro = detectNewObstacle(lvl, seenObstaclesRef.current);
         setActiveObstacleIntro(intro);
       } else {
@@ -865,7 +1076,9 @@ export function useGameSession(language: Lang) {
       setMaxCascade(1);
 
       let notice: string | null = null;
-      if (streakCount > 0 && starterCount > 0) {
+      if (isMaster) {
+        notice = t('Mästarläge aktivt · 2× ligapoäng!');
+      } else if (streakCount > 0 && starterCount > 0) {
         notice = t('Vinstsvit + startbonus: +{n} specialbrickor!', { n: streakCount + starterCount });
       } else if (streakCount > 0) {
         notice = t('Vinstsvit! +{n} startspecialer på brädet', { n: streakCount });
@@ -883,9 +1096,12 @@ export function useGameSession(language: Lang) {
       setPhase('PLAYING');
     },
     [
+      bestStars,
       bumpStats,
       commitDaily,
+      commitFreeStarters,
       commitLives,
+      commitMiniEvents,
       commitWeeklyLevel,
       commitWinStreak,
       dailyChallenge,
@@ -896,6 +1112,11 @@ export function useGameSession(language: Lang) {
       weeklyLevel,
     ]
   );
+
+  // Sync Fever Mode music tempo boost whenever Fever ignites/ends.
+  useEffect(() => {
+    soundEngine.setFeverMode(phase === 'PLAYING' && isFeverActive(fever));
+  }, [fever, phase]);
 
   // Each landscape has its own music; menus and the other modes keep the calm tune.
   useEffect(() => {
@@ -1082,15 +1303,133 @@ export function useGameSession(language: Lang) {
     startSession('puzzle', 0);
   }, [startSession]);
 
+  const startCustomPuzzle = useCallback(
+    (spec: CustomPuzzleSpec) => {
+      soundEngine.playClick();
+      setActiveCustomPuzzle(spec);
+      activeCustomPuzzleRef.current = spec;
+      startSession('custom', 0, false, false, false, spec);
+    },
+    [startSession]
+  );
+
+  const dismissSharedCustomPuzzle = useCallback(() => {
+    setSharedCustomPuzzle(null);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('pussel');
+      window.history.replaceState(null, '', url.pathname + url.search);
+    } catch {
+      // cosmetic
+    }
+  }, []);
+
   const toggleStarter = useCallback((id: StarterId) => {
     soundEngine.playClick();
     setArmedStarters((prev) => {
       if (prev.includes(id)) return prev.filter((item) => item !== id);
       const next = [...prev, id];
-      if (starterSelectionCost(next) > dailyStateRef.current.bonusEnergyBank) return prev;
+      if (starterSelectionCost(next, freeStartersRef.current) > dailyStateRef.current.bonusEnergyBank) {
+        return prev;
+      }
       return next;
     });
   }, []);
+
+  const claimStarChestReward = useCallback((): StarChestReward | null => {
+    const res = openStarChest(starChestRef.current);
+    if (!res.reward) return null;
+    commitStarChest(res.nextState);
+    commitDaily(grantReward(dailyStateRef.current, res.reward.energy, null).nextState);
+    commitFreeStarters(addFreeStarter(freeStartersRef.current, res.reward.starter, 1));
+    soundEngine.playVictory();
+    vibrate('victory');
+    return res.reward;
+  }, [commitDaily, commitFreeStarters, commitStarChest]);
+
+  const spinLuckyWheel = useCallback((): { sliceIndex: number; slice: WheelSlice } | null => {
+    const res = spinDailyWheel(starChestRef.current, todayKey);
+    if (!res) return null;
+    commitStarChest(res.nextState);
+    if (res.slice.kind === 'energy' && res.slice.energy) {
+      commitDaily(grantReward(dailyStateRef.current, res.slice.energy, null).nextState);
+    } else if (res.slice.kind === 'starter' && res.slice.starter) {
+      commitFreeStarters(addFreeStarter(freeStartersRef.current, res.slice.starter, 1));
+    } else if (res.slice.kind === 'lives') {
+      commitLives(refillLives());
+    }
+    return { sliceIndex: res.sliceIndex, slice: res.slice };
+  }, [commitDaily, commitFreeStarters, commitLives, commitStarChest, todayKey]);
+
+  const beginStarRace = useCallback(() => {
+    soundEngine.playClick();
+    commitMiniEvents(startStarRace(miniEventsRef.current, Date.now()));
+  }, [commitMiniEvents]);
+
+  const claimRaceReward = useCallback((): MiniEventReward | null => {
+    const res = claimStarRaceReward(miniEventsRef.current, Date.now());
+    if (!res.reward) return null;
+    commitMiniEvents(res.nextState);
+    if (res.reward.energy > 0) {
+      commitDaily(grantReward(dailyStateRef.current, res.reward.energy, null).nextState);
+    }
+    let inv = freeStartersRef.current;
+    for (const s of res.reward.starters) inv = addFreeStarter(inv, s, 1);
+    if (inv !== freeStartersRef.current) commitFreeStarters(inv);
+    soundEngine.playVictory();
+    vibrate('victory');
+    return res.reward;
+  }, [commitDaily, commitFreeStarters, commitMiniEvents]);
+
+  const beginLavaTrail = useCallback(() => {
+    soundEngine.playClick();
+    commitMiniEvents(startLavaTrail(miniEventsRef.current));
+  }, [commitMiniEvents]);
+
+  const claimLavaReward = useCallback((): MiniEventReward | null => {
+    const res = claimLavaTrailReward(miniEventsRef.current);
+    if (!res.reward) return null;
+    commitMiniEvents(res.nextState);
+    if (res.reward.energy > 0) {
+      commitDaily(grantReward(dailyStateRef.current, res.reward.energy, null).nextState);
+    }
+    let inv = freeStartersRef.current;
+    for (const s of res.reward.starters) inv = addFreeStarter(inv, s, 1);
+    if (inv !== freeStartersRef.current) commitFreeStarters(inv);
+    soundEngine.playVictory();
+    vibrate('victory');
+    return res.reward;
+  }, [commitDaily, commitFreeStarters, commitMiniEvents]);
+
+  const updatePlayerHandle = useCallback(
+    (handle: string) => {
+      commitPlayerProfile({ ...playerProfileRef.current, handle: handle.trim().slice(0, 18) });
+    },
+    [commitPlayerProfile]
+  );
+
+  const saveCloudSettings = useCallback(
+    (cfg: CloudConfig) => {
+      commitCloudConfig(cfg);
+    },
+    [commitCloudConfig]
+  );
+
+  const refreshGlobalBoard = useCallback(
+    async (boardKind: LeaderboardBoard) => {
+      if (!isCloudConfigured(cloudConfigRef.current)) return;
+      const rows = await fetchGlobalLeaderboard(
+        cloudConfigRef.current,
+        boardKind,
+        weekKey,
+        playerProfileRef.current.playerId
+      );
+      if (!rows) return;
+      if (boardKind === 'league') setGlobalLeague(rows);
+      else setGlobalBlitz(rows);
+    },
+    [weekKey]
+  );
 
   const dismissObstacleIntro = useCallback(() => {
     soundEngine.playClick();
@@ -1165,8 +1504,14 @@ export function useGameSession(language: Lang) {
 
   const nextLevel = useCallback(() => {
     soundEngine.playClick();
-    startSession('campaign', Math.min(CAMPAIGN_LEVEL_COUNT - 1, levelIdx + 1));
-  }, [levelIdx, startSession]);
+    const nextIdx = Math.min(CAMPAIGN_LEVEL_COUNT - 1, levelIdx + 1);
+    const nextId = getCampaignLevel(nextIdx).id;
+    if (!canPlayMasterMode(bestStars, nextId)) {
+      masterModeRef.current = false;
+      setMasterModeEnabled(false);
+    }
+    startSession('campaign', nextIdx);
+  }, [bestStars, levelIdx, startSession]);
 
   const replayTutorial = useCallback(() => {
     soundEngine.playClick();
@@ -1230,7 +1575,7 @@ export function useGameSession(language: Lang) {
   const recordBestScore = useCallback(
     (score: number): number => {
       // Only the three classic modes keep a best score of their own.
-      if (mode === 'weekly' || mode === 'blitz' || mode === 'puzzle') {
+      if (mode === 'weekly' || mode === 'blitz' || mode === 'puzzle' || mode === 'custom') {
         return Math.max(0, Math.round(score));
       }
       const record = nextBestScore(
@@ -1430,7 +1775,14 @@ export function useGameSession(language: Lang) {
         setBoard(step.boardAfterGravity);
 
         const prevStepProgress = runningProgress;
+        const feverMult = feverMultiplier(feverRef.current);
         runningProgress = addStepDelta(runningProgress, step);
+        if (feverMult > 1 && step.stepScore > 0) {
+          runningProgress = {
+            ...runningProgress,
+            score: runningProgress.score + step.stepScore * (feverMult - 1),
+          };
+        }
         setProgress(runningProgress);
         emitGoalFlights(step, prevStepProgress, runningProgress, activeLevel);
 
@@ -1534,24 +1886,47 @@ export function useGameSession(language: Lang) {
 
       // Summarize the whole cascade in one floating label. Showing one label
       // per cascade step made fast chains overlap and become unreadable.
+      const feverMultThisMove = feverMultiplier(feverRef.current);
       if (result.steps.length > 0) {
         const finalStep = result.steps[result.steps.length - 1];
         const anchor = finalStep.clearedCoords[Math.floor(finalStep.clearedCoords.length / 2)];
+        const peakCascade = Math.max(...result.steps.map((step) => step.cascadeIndex));
+        const specialsThisMove = result.steps.reduce((sum, step) => sum + step.spawnedSpecials.length, 0);
+
         if (anchor) {
-          const peakCascade = Math.max(...result.steps.map((step) => step.cascadeIndex));
-          const totalStepScore = result.steps.reduce((sum, step) => sum + step.stepScore, 0);
+          const totalStepScore =
+            result.steps.reduce((sum, step) => sum + step.stepScore, 0) * feverMultThisMove;
           const cheerSource = cascadeCheer(peakCascade);
           const cheer = cheerSource ? t(cheerSource) : '';
           const formattedScore = formatNumber(totalStepScore);
+          const feverTag = feverMultThisMove > 1 ? ' ×2' : '';
           const label = cheer
-            ? `${cheer} ×${peakCascade}  +${formattedScore}`
-            : `+${formattedScore}`;
+            ? `${cheer} ×${peakCascade}  +${formattedScore}${feverTag}`
+            : `+${formattedScore}${feverTag}`;
           fxRef.current?.emitFloatingText(
             anchor.row,
             anchor.col,
             label,
-            peakCascade >= 2 ? '#FDE047' : '#FFFFFF'
+            feverMultThisMove > 1 || peakCascade >= 2 ? '#FDE047' : '#FFFFFF'
           );
+        }
+
+        // Advance Fever (Frenzy) Mode meter
+        if (mode !== 'puzzle' && mode !== 'custom') {
+          const feverStep = advanceFever(feverRef.current, {
+            peakCascade,
+            specialsCreated: specialsThisMove,
+            combo: result.combo ?? null,
+          });
+          commitFever(feverStep.nextState);
+          if (feverStep.triggered) {
+            soundEngine.playFeverTrigger();
+            vibrate('victory');
+            setStatusNotice(t('FEBERLÄGE! ×2 poäng i {n} drag!', { n: FEVER_DURATION_MOVES }));
+            window.setTimeout(() => {
+              if (runTokenRef.current === token) setStatusNotice(null);
+            }, 2600);
+          }
         }
       }
 
@@ -1623,21 +1998,15 @@ export function useGameSession(language: Lang) {
         }
       }
 
-      // Check victory (Campaign, Daily, Weekly or Daily Tactical Puzzle)
+      // Check victory (Campaign, Daily, Weekly, Daily Tactical Puzzle or Custom Puzzle)
       const currentObjectives =
-        mode === 'campaign'
-          ? getCampaignLevel(levelIdx).objectives
-          : mode === 'daily'
-          ? dailyChallenge.level.objectives
-          : mode === 'weekly'
-          ? weeklyLevel.level.objectives
-          : mode === 'puzzle'
-          ? dailyPuzzle.level.objectives
+        mode === 'campaign' || mode === 'daily' || mode === 'weekly' || mode === 'puzzle' || mode === 'custom'
+          ? activeLevel.objectives
           : null;
 
       if (currentObjectives && areObjectivesComplete(currentObjectives, runningProgress)) {
         // Endgame celebration: turn leftover moves into festive board blasts!
-        if (updatedMoves > 0 && mode !== 'puzzle' && !prefersReducedMotion()) {
+        if (updatedMoves > 0 && mode !== 'puzzle' && mode !== 'custom' && !prefersReducedMotion()) {
           const celebrationCount = Math.min(6, updatedMoves);
           setStatusNotice(t('Segerbonus! Extra drag blir sprängningar!'));
           const celebrationBoard = cloneBoard(result.finalBoard);
@@ -1668,14 +2037,41 @@ export function useGameSession(language: Lang) {
         const finalProgress = { ...runningProgress, score: finalScore };
         setProgress(finalProgress);
 
+        const isMasterWin =
+          mode === 'campaign' &&
+          masterModeRef.current &&
+          canPlayMasterMode(bestStars, activeLevel.id);
+        let masterEnergy: number | undefined;
+
         if (mode === 'campaign') {
           const nextStars = mergeBestStars(bestStars, activeLevel.id, stars);
           if (nextStars !== bestStars) {
             setBestStars(nextStars);
             writeBestStars(nextStars);
           }
-          // Extend win streak!
+          if (isMasterWin) {
+            const masterRes = recordMasterClear(masterCrownsRef.current, activeLevel.id, stars);
+            if (masterRes.nextCrowns !== masterCrownsRef.current) {
+              commitMasterCrowns(masterRes.nextCrowns);
+            }
+            if (masterRes.firstClear) {
+              commitDaily(
+                grantReward(dailyStateRef.current, MASTER_FIRST_CLEAR_ENERGY, null).nextState
+              );
+              masterEnergy = MASTER_FIRST_CLEAR_ENERGY;
+            }
+          }
+          // Extend win streak, Star Chest, Star Race & Lava Trail!
           commitWinStreak(recordStreakWin(winStreakRef.current));
+          commitStarChest(addChestStars(starChestRef.current, stars + (isMasterWin ? 1 : 0)));
+          const nowTs = Date.now();
+          let nextMini = addStarRaceStars(miniEventsRef.current, stars, nowTs);
+          nextMini = recordLavaTrailWin(nextMini);
+          if (nextMini !== miniEventsRef.current) commitMiniEvents(nextMini);
+        } else if (mode === 'daily' || mode === 'weekly') {
+          commitStarChest(addChestStars(starChestRef.current, stars));
+          const nextMini = addStarRaceStars(miniEventsRef.current, stars, Date.now());
+          if (nextMini !== miniEventsRef.current) commitMiniEvents(nextMini);
         }
 
         reportMission({ wins: 1, score: bonus });
@@ -1717,10 +2113,11 @@ export function useGameSession(language: Lang) {
           }
         }
 
-        // Weekly league points.
+        // Weekly league points (Master Mode doubles points!).
         let leaguePoints = 0;
-        if (mode === 'campaign') leaguePoints = stars * 15;
-        else if (mode === 'daily') leaguePoints = 35;
+        if (mode === 'campaign') {
+          leaguePoints = stars * 15 * (isMasterWin ? MASTER_LEAGUE_MULTIPLIER : 1);
+        } else if (mode === 'daily') leaguePoints = 35;
         else if (mode === 'weekly') leaguePoints = 50;
         else if (mode === 'puzzle' && puzzleNewlySolved) leaguePoints = 30;
         if (leaguePoints > 0) awardLeague(leaguePoints);
@@ -1813,6 +2210,8 @@ export function useGameSession(language: Lang) {
           weeklyEnergy,
           puzzleEnergy,
           leaguePoints,
+          masterEnergy,
+          masterCleared: isMasterWin,
         });
         setBusy(false);
         setPhase('VICTORY');
@@ -1832,11 +2231,11 @@ export function useGameSession(language: Lang) {
           if (runTokenRef.current !== token) return false;
           setShaking(false);
         }
-        // A failed campaign level costs a life and marks the win streak as pending
-        // reset (preserved if the player rescues the run with +5 moves).
+        // A failed campaign level costs a life and marks the win streak / lava
+        // trail as pending reset (preserved if the player rescues with +5 moves).
         if (mode === 'campaign') {
           commitLives(loseLife(livesRef.current, Date.now()));
-          if (winStreakRef.current.streak > 0) {
+          if (winStreakRef.current.streak > 0 || miniEventsRef.current.lava.active) {
             pendingStreakLossRef.current = true;
           }
         }
@@ -1879,8 +2278,12 @@ export function useGameSession(language: Lang) {
       bumpStats,
       commitDaily,
       commitDailyPuzzle,
+      commitFever,
       commitLives,
+      commitMasterCrowns,
+      commitMiniEvents,
       commitRewards,
+      commitStarChest,
       commitWeeklyLevel,
       commitWinStreak,
       companion,
@@ -2130,6 +2533,16 @@ export function useGameSession(language: Lang) {
     commitRewards(addTopScore(rewardStateRef.current, { score, mode: 'blitz', level: 0, dateKey: todayKey }));
     const leaguePts = Math.min(40, Math.floor(score / 250));
     if (leaguePts > 0) awardLeague(leaguePts);
+    if (isCloudConfigured(cloudConfigRef.current) && score > 0) {
+      void submitGlobalScore(cloudConfigRef.current, {
+        board: 'blitz',
+        periodKey: weekKey,
+        playerId: playerProfileRef.current.playerId,
+        handle: playerProfileRef.current.handle || t('Du'),
+        color: companion,
+        score: res.nextState.best,
+      });
+    }
     soundEngine.playVictory();
     vibrate('victory');
     setEndSnapshot({
@@ -2249,6 +2662,8 @@ export function useGameSession(language: Lang) {
       url:
         mode === 'blitz' && blitzSeedRef.current
           ? challengeUrl(getShareUrl(), { seed: blitzSeedRef.current, score: endSnapshot.score })
+          : mode === 'custom' && activeCustomPuzzleRef.current
+          ? customPuzzleUrl(getShareUrl(), activeCustomPuzzleRef.current)
           : getShareUrl(),
     });
     const outcome = await shareText(text);
@@ -2276,9 +2691,18 @@ export function useGameSession(language: Lang) {
   const rescueEligible = isRescuableMode(mode) && rescuesUsed < MAX_RESCUES_PER_RUN;
   const canRescue = canAffordRescue(mode, rescuesUsed, dailyState.bonusEnergyBank, energy);
 
+  const playerHandleLabel = playerProfile.handle || t('Du');
   const leagueStandings = useMemo(
-    () => buildLeagueStandings(league, t('Du'), companion),
-    [companion, language, league]
+    () => buildLeagueStandings(league, playerHandleLabel, companion),
+    [companion, language, league, playerHandleLabel]
+  );
+
+  const starRaceStandings = useMemo(
+    () =>
+      miniEvents.race
+        ? buildStarRaceStandings(miniEvents.race, playerHandleLabel, companion, Date.now())
+        : null,
+    [companion, miniEvents.race, playerHandleLabel]
   );
 
   return {
@@ -2292,6 +2716,35 @@ export function useGameSession(language: Lang) {
     bestEndlessScore,
     endSnapshot,
     savedGame,
+    // new pro features
+    fever,
+    feverActive: isFeverActive(fever),
+    freeStarters,
+    starChest,
+    canSpinToday: canSpinWheel(starChest, todayKey),
+    claimStarChestReward,
+    spinLuckyWheel,
+    miniEvents,
+    starRaceStandings,
+    beginStarRace,
+    claimRaceReward,
+    beginLavaTrail,
+    claimLavaReward,
+    masterModeEnabled,
+    toggleMasterMode,
+    masterCrowns,
+    sharedCustomPuzzle,
+    activeCustomPuzzle,
+    startCustomPuzzle,
+    dismissSharedCustomPuzzle,
+    playerProfile,
+    updatePlayerHandle,
+    cloudConfig,
+    cloudConnected: isCloudConfigured(cloudConfig),
+    saveCloudSettings,
+    globalLeague,
+    globalBlitz,
+    refreshGlobalBoard,
     // daily + cosmetics
     dailyChallenge,
     dailyCompletedToday,

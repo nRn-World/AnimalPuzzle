@@ -5,6 +5,7 @@ import { CAMPAIGN_LEVEL_COUNT } from '../game/levels';
 import { UiIcon } from './UiIcon';
 import { biomeOfChapter } from '../game/biomes';
 import { getCompanion } from '../game/companions';
+import { FEVER_MAX_CHARGE, FeverState, isFeverActive } from '../game/fever';
 import { GemColor } from '../game/types';
 import {
   AnimalSkinId,
@@ -53,6 +54,10 @@ interface GameHudProps {
   bumpedGoals?: Record<string, number>;
   /** Current campaign win streak count (shown as a small badge). */
   winStreak?: number;
+  /** Fever (Frenzy) mode meter & active countdown. */
+  fever?: FeverState;
+  /** Playing a campaign level in Master Mode. */
+  masterActive?: boolean;
   companion: GemColor;
   /** A short line the companion says, shown as a speech bubble. */
   companionSay?: { text: string; id: number } | null;
@@ -87,6 +92,8 @@ export const GameHud: React.FC<GameHudProps> = ({
   bossHitNonce = 0,
   bumpedGoals,
   winStreak = 0,
+  fever,
+  masterActive = false,
   companion,
   companionSay = null,
   powerCharge,
@@ -98,6 +105,12 @@ export const GameHud: React.FC<GameHudProps> = ({
   onPause,
 }) => {
   const energyPct = Math.min(100, Math.round((energy / maxEnergy) * 100));
+  const feverActive = fever ? isFeverActive(fever) : false;
+  const feverPct = fever
+    ? feverActive
+      ? 100
+      : Math.min(100, Math.round((fever.charge / FEVER_MAX_CHARGE) * 100))
+    : 0;
   const timed = timeLeft !== undefined;
   const lowMoves = timed ? timeLeft <= 10 : movesLeft <= 4;
   const powerDef = getCompanion(companion);
@@ -145,12 +158,22 @@ export const GameHud: React.FC<GameHudProps> = ({
                   ? t('Daglig')
                   : mode === 'puzzle'
                   ? t('Dagens pussel')
+                  : mode === 'custom'
+                  ? t('Eget pussel')
                   : mode === 'blitz'
                   ? t('60 sekunder')
                   : mode === 'weekly'
                   ? t('Veckans utmaning')
                   : t('Oändligt')}
               </span>
+              {mode === 'campaign' && masterActive && (
+                <span
+                  data-testid="hud-master-badge"
+                  className="shrink-0 rounded-full border border-[#111111] bg-[#FF8A1E] px-1.5 py-0.2 text-[9px] font-extrabold text-[#111111]"
+                >
+                  {t('Mästare')}
+                </span>
+              )}
               {mode === 'campaign' && winStreak > 0 && (
                 <span
                   data-testid="hud-win-streak"
@@ -381,6 +404,34 @@ export const GameHud: React.FC<GameHudProps> = ({
               style={{ transform: `scaleX(${energyPct / 100})` }}
             />
           </div>
+          {fever && mode !== 'puzzle' && mode !== 'custom' && (
+            <div className="mt-1.5" data-testid="hud-fever">
+              <div className="flex items-center justify-between gap-1">
+                <span
+                  className={`truncate text-[10px] font-extrabold uppercase tracking-wider ${
+                    feverActive ? 'text-[#FDE047] animate-pulse' : ''
+                  }`}
+                >
+                  {feverActive
+                    ? t('FEBER ×2 · {n} drag', { n: fever.movesLeft })
+                    : t('Feberläge')}
+                </span>
+                <span className="font-mono-num text-[10px] font-bold text-[#FFAA33]">
+                  {feverActive ? '×2' : `${feverPct}%`}
+                </span>
+              </div>
+              <div className="mt-0.5 w-full h-2 bg-[#1B2147] rounded-sm overflow-hidden border-2 border-[#111111]">
+                <div
+                  className={`h-full transition-transform duration-300 origin-left ${
+                    feverActive
+                      ? 'bg-gradient-to-r from-[#FF2E4D] via-[#FFAA00] to-[#FDE047]'
+                      : 'bg-[#FF6B1A]'
+                  }`}
+                  style={{ transform: `scaleX(${feverPct / 100})` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="ui-play-tools">

@@ -38,6 +38,12 @@ export const STORAGE_KEYS = {
   seenObstacles: `${STORAGE_PREFIX}seen_obstacles_v1`,
   dailyPuzzle: `${STORAGE_PREFIX}daily_puzzle_v1`,
   league: `${STORAGE_PREFIX}league_v1`,
+  starChest: `${STORAGE_PREFIX}star_chest_v1`,
+  miniEvents: `${STORAGE_PREFIX}mini_events_v1`,
+  masterMode: `${STORAGE_PREFIX}master_mode_v1`,
+  freeStarters: `${STORAGE_PREFIX}free_starters_v1`,
+  cloudConfig: `${STORAGE_PREFIX}cloud_config_v1`,
+  playerProfile: `${STORAGE_PREFIX}player_profile_v1`,
 } as const;
 
 /** The subset of the Storage API this module relies on (easy to fake in tests). */
