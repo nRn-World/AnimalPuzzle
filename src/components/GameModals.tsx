@@ -43,8 +43,24 @@ interface GameModalsProps {
   challengeScore?: number;
   /** Weekly special level: energy paid for this win (0 = already won this week). */
   weeklyEnergy?: number;
+  /** Daily tactical puzzle: energy paid for today's solve (0 = already solved). */
+  puzzleEnergy?: number;
+  /** Weekly league points earned from this round. */
+  leaguePoints?: number;
+  /** Current campaign win streak count. */
+  winStreak?: number;
+  /** Cost in energy to rescue a Game Over run with +5 moves. */
+  rescueCost?: number;
+  /** Whether Rescue (+5 moves) is available in this mode / attempt count. */
+  rescueEligible?: boolean;
+  /** Whether the player currently has enough energy to rescue. */
+  canRescue?: boolean;
+  onRescue?: () => void;
   /** Lives left (campaign only). */
   livesLeft?: number;
+  isFullscreen?: boolean;
+  canFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
   onEquipSkin: (skin: AnimalSkinId) => void;
   /** Feedback after the share button was used; null while idle. */
   shareNotice: string | null;
@@ -177,7 +193,17 @@ export const GameModals: React.FC<GameModalsProps> = ({
   blitzRank,
   challengeScore,
   weeklyEnergy,
+  puzzleEnergy,
+  leaguePoints = 0,
+  winStreak = 0,
+  rescueCost = 40,
+  rescueEligible = false,
+  canRescue = false,
+  onRescue,
   livesLeft,
+  isFullscreen = false,
+  canFullscreen = false,
+  onToggleFullscreen,
   onEquipSkin,
   shareNotice,
   onShare,
@@ -243,6 +269,8 @@ export const GameModals: React.FC<GameModalsProps> = ({
                   ? t('Nivå {n} · {name}', { n: levelNumber, name: t(levelName) })
                   : mode === 'daily'
                   ? t(levelName)
+                  : mode === 'puzzle'
+                  ? t('Dagens pussel')
                   : mode === 'blitz'
                   ? t('Tidsläge')
                   : mode === 'weekly'
@@ -269,6 +297,18 @@ export const GameModals: React.FC<GameModalsProps> = ({
               >
                 {t('Inställningar')}
               </button>
+              {canFullscreen && onToggleFullscreen && (
+                <button
+                  type="button"
+                  data-testid="pause-fullscreen-btn"
+                  onClick={onToggleFullscreen}
+                  aria-pressed={isFullscreen}
+                  className={SECONDARY_BTN_CLASS}
+                >
+                  <UiIcon name={isFullscreen ? 'smaller' : 'larger'} className="w-4 h-4" />
+                  {isFullscreen ? t('Avsluta hel skärm') : t('Hel skärm')}
+                </button>
+              )}
               {mode === 'campaign' && onReplayTutorial && (
                 <button type="button" onClick={onReplayTutorial} className={SECONDARY_BTN_CLASS}>
                   {t('Visa interaktiv guide')}
@@ -292,6 +332,8 @@ export const GameModals: React.FC<GameModalsProps> = ({
               <div className="mt-1 text-xs font-extrabold uppercase tracking-wider text-[#0B6B2B]">
                 {mode === 'daily'
                   ? t('Daglig utmaning avklarad')
+                  : mode === 'puzzle'
+                  ? t('Dagens pussel avklarat')
                   : t('Nivå {n} avklarad', { n: levelNumber })}
               </div>
               <h2 id="modal-heading" className="font-display text-3xl leading-none tracking-wide">
@@ -373,6 +415,29 @@ export const GameModals: React.FC<GameModalsProps> = ({
                 {weeklyEnergy > 0
                   ? t('Veckans specialnivå klarad! +{n} bonusenergi', { n: weeklyEnergy })
                   : t('Klarad igen – veckans pris är redan hämtat')}
+              </div>
+            )}
+
+            {mode === 'puzzle' && puzzleEnergy !== undefined && (
+              <div data-testid="puzzle-reward" className="ui-inset px-3 py-2 text-sm font-extrabold">
+                {puzzleEnergy > 0
+                  ? t('Pusslet löst! +{n} bonusenergi', { n: puzzleEnergy })
+                  : t('Löst igen – dagens pusselpris är redan hämtat')}
+              </div>
+            )}
+
+            {(leaguePoints > 0 || (mode === 'campaign' && winStreak > 0)) && (
+              <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-extrabold">
+                {leaguePoints > 0 && (
+                  <span className="rounded-full border-2 border-[#111111] bg-[#27B8FF] px-2.5 py-0.5 text-[#111111]">
+                    {t('+{n} ligapoäng', { n: leaguePoints })}
+                  </span>
+                )}
+                {mode === 'campaign' && winStreak > 0 && (
+                  <span className="rounded-full border-2 border-[#111111] bg-[#F2CD1C] px-2.5 py-0.5 text-[#111111]">
+                    {t('Vinstsvit: {n} i rad', { n: winStreak })}
+                  </span>
+                )}
               </div>
             )}
 
@@ -485,7 +550,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
                 {mode === 'blitz' ? t('Tiden är ute') : lostToBomb ? t('Bomben smällde') : t('Slut på drag')}
               </div>
               <h2 id="modal-heading" className="font-display text-2xl font-extrabold">
-                {mode === 'campaign' || mode === 'daily' || mode === 'weekly'
+                {mode === 'campaign' || mode === 'daily' || mode === 'weekly' || mode === 'puzzle'
                   ? t('{name} — Försök igen', { name: t(levelName) })
                   : t('Omgången avslutad')}
               </h2>
@@ -552,6 +617,24 @@ export const GameModals: React.FC<GameModalsProps> = ({
             )}
 
             <div className="flex flex-col gap-2.5">
+              {rescueEligible && onRescue && (
+                <div className="space-y-1">
+                  <button
+                    type="button"
+                    data-testid="rescue-btn"
+                    onClick={onRescue}
+                    disabled={!canRescue}
+                    className="ui-btn ui-btn-yellow w-full px-4 py-2 font-display text-lg tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {t('Rädda omgången (+5 drag · {cost} energi)', { cost: rescueCost })}
+                  </button>
+                  {mode === 'campaign' && winStreak > 0 && canRescue && (
+                    <div className="text-center text-[11px] font-bold text-[#0B6B2B]">
+                      {t('Behåller din vinstsvit ({n}) och sparar ditt liv!', { n: winStreak })}
+                    </div>
+                  )}
+                </div>
+              )}
               <button
                 type="button"
                 data-start="true"

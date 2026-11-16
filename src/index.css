@@ -1063,3 +1063,613 @@ html[data-reduce-motion='true'] .animate-boss-rage {
     height: clamp(8.5rem, calc(100dvh - 36.75rem), 17.5rem);
   }
 }
+
+/* ------------------------------------------------------------------
+   Full-screen playfield layout (mobile portrait, mobile landscape,
+   tablets and widescreen desktop)
+   ------------------------------------------------------------------ */
+html:fullscreen,
+html:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
+  background-color: #0f1219;
+}
+
+body[data-state='playing'],
+body[data-state='paused'],
+body[data-state='gameover'] {
+  overflow: hidden;
+}
+
+.ui-play-shell {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+  padding-top: max(0.25rem, env(safe-area-inset-top));
+  padding-right: max(0.25rem, env(safe-area-inset-right));
+  padding-bottom: max(0.375rem, env(safe-area-inset-bottom));
+  padding-left: max(0.25rem, env(safe-area-inset-left));
+}
+
+.ui-play-status {
+  width: 100%;
+  max-width: 48rem;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0 0.25rem;
+}
+
+.ui-play-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.ui-play-level-name {
+  font-size: 1.35rem;
+}
+
+.ui-play-action-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.ui-play-action-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.ui-play-metrics {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.ui-play-moves {
+  width: 4.35rem;
+  height: 4.35rem;
+}
+
+.ui-play-moves-num {
+  font-size: 2.4rem;
+}
+
+.ui-play-moves-label {
+  font-size: 8.5px;
+}
+
+.ui-play-goals {
+  flex: 1 1 0%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem 0.75rem;
+  border-radius: 1rem;
+  padding: 0.35rem 0.65rem;
+}
+
+.ui-play-goals-heading {
+  display: none;
+}
+
+.ui-play-goal-row {
+  gap: 0.25rem;
+}
+
+.ui-play-goal-icon {
+  width: 2rem;
+  height: 2rem;
+}
+
+.ui-play-goal-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ui-play-goal-value {
+  font-size: 1.35rem;
+}
+
+.ui-play-score {
+  text-align: right;
+}
+
+.ui-play-score-val {
+  font-size: 2.1rem;
+}
+
+.ui-play-center {
+  width: 100%;
+}
+
+.ui-play-boosters {
+  width: 100%;
+  max-width: 48rem;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0 0.25rem 0.125rem;
+}
+
+.ui-play-energy {
+  width: 100%;
+  max-width: 20rem;
+}
+
+.ui-play-tools {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(0.5rem, 3.5vw, 1.25rem);
+  width: 100%;
+}
+
+.ui-play-booster-btn {
+  width: clamp(3.35rem, 15vw, 4.1rem);
+  height: clamp(3.35rem, 15vw, 4.1rem);
+}
+
+.ui-play-tool-icon {
+  width: 56%;
+  height: 56%;
+}
+
+.ui-play-tool-label {
+  font-size: 10px;
+  max-width: 4.5rem;
+}
+
+.ui-play-speech {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Larger portrait viewports (tablets / big phones) */
+@media (min-width: 37.5rem) and (max-aspect-ratio: 11/10) {
+  .ui-play-shell {
+    gap: 0.45rem;
+    padding-top: max(0.45rem, env(safe-area-inset-top));
+    padding-right: max(0.6rem, env(safe-area-inset-right));
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    padding-left: max(0.6rem, env(safe-area-inset-left));
+  }
+
+  .ui-play-level-name {
+    font-size: 1.75rem;
+  }
+
+  .ui-play-action-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .ui-play-moves {
+    width: 5.25rem;
+    height: 5.25rem;
+  }
+
+  .ui-play-moves-num {
+    font-size: 3rem;
+  }
+
+  .ui-play-moves-label {
+    font-size: 10px;
+  }
+
+  .ui-play-goal-icon {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+
+  .ui-play-goal-value {
+    font-size: 1.6rem;
+  }
+
+  .ui-play-score-val {
+    font-size: 2.75rem;
+  }
+
+  .ui-play-booster-btn {
+    width: 4.35rem;
+    height: 4.35rem;
+  }
+}
+
+/* Landscape / wide screens: desktop, laptops, tablets & phones in landscape */
+@media (min-aspect-ratio: 11/10) and (min-width: 35rem) {
+  .ui-play-shell {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.5rem, 1.5vw, 1.5rem);
+    padding-top: max(0.375rem, env(safe-area-inset-top));
+    padding-right: max(0.625rem, env(safe-area-inset-right));
+    padding-bottom: max(0.375rem, env(safe-area-inset-bottom));
+    padding-left: max(0.625rem, env(safe-area-inset-left));
+  }
+
+  .ui-play-status {
+    width: clamp(11rem, 17.5vw, 14.5rem);
+    max-width: none;
+    max-height: 100%;
+    align-self: center;
+    gap: 0.75rem;
+    padding: 0;
+  }
+
+  .ui-play-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .ui-play-title-block {
+    width: 100%;
+    text-align: center;
+  }
+
+  .ui-play-level-name {
+    font-size: clamp(1.35rem, 2.2vw, 1.9rem);
+  }
+
+  .ui-play-action-btn {
+    width: 2.6rem;
+    height: 2.6rem;
+  }
+
+  .ui-play-action-icon {
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+
+  .ui-play-metrics {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .ui-play-moves {
+    width: clamp(5.5rem, 11vh, 7.75rem);
+    height: clamp(5.5rem, 11vh, 7.75rem);
+    border-width: 4px;
+    box-shadow: 4px 4px 0 var(--ui-ink);
+    gap: 3px;
+  }
+
+  .ui-play-moves-num {
+    font-size: clamp(2.85rem, 6vh, 4.25rem);
+  }
+
+  .ui-play-moves-label {
+    font-size: 10px;
+  }
+
+  .ui-play-goals {
+    width: 100%;
+    flex: 0 1 auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.45rem;
+    border-radius: 0.5rem;
+    padding: 0.55rem 0.65rem;
+  }
+
+  .ui-play-goals-heading {
+    display: block;
+  }
+
+  .ui-play-goal-row {
+    gap: 0.5rem;
+  }
+
+  .ui-play-goal-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .ui-play-goal-label {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    clip: auto;
+    white-space: nowrap;
+  }
+
+  .ui-play-goal-value {
+    font-size: 1.4rem;
+  }
+
+  .ui-play-score {
+    width: 100%;
+    text-align: center;
+  }
+
+  .ui-play-score-val {
+    font-size: clamp(2.25rem, 5vh, 3.5rem);
+  }
+
+  .ui-play-center {
+    width: auto;
+    height: 100%;
+  }
+
+  .ui-play-boosters {
+    width: clamp(5.75rem, 8.5vw, 7rem);
+    max-width: none;
+    max-height: 100%;
+    align-self: center;
+    gap: 0.85rem;
+    padding: 0;
+  }
+
+  .ui-play-energy {
+    width: 100%;
+    max-width: none;
+  }
+
+  .ui-play-energy-head {
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .ui-play-tools {
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(0.6rem, 1.8vh, 1.15rem);
+  }
+
+  .ui-play-booster-btn {
+    width: clamp(3.75rem, 9vh, 4.75rem);
+    height: clamp(3.75rem, 9vh, 4.75rem);
+  }
+
+  .ui-play-tool-label {
+    font-size: 11px;
+    max-width: 5.5rem;
+  }
+
+  .ui-play-speech {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
+
+  .ui-play-speech::after {
+    left: auto;
+    right: 1.75rem;
+    transform: translateY(-6px) rotate(45deg);
+  }
+}
+
+/* Short landscape (phones in landscape & compact wide windows) */
+@media (min-aspect-ratio: 11/10) and (min-width: 35rem) and (max-height: 36.25rem) {
+  .ui-play-shell {
+    gap: 0.5rem;
+    padding-top: max(0.25rem, env(safe-area-inset-top));
+    padding-right: max(0.5rem, env(safe-area-inset-right));
+    padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
+    padding-left: max(0.5rem, env(safe-area-inset-left));
+  }
+
+  .ui-play-status {
+    width: clamp(9.5rem, 23vw, 12.25rem);
+    gap: 0.375rem;
+  }
+
+  .ui-play-header {
+    gap: 0.25rem;
+  }
+
+  .ui-play-level-name {
+    font-size: 1.15rem;
+  }
+
+  .ui-play-action-btn {
+    width: 2.15rem;
+    height: 2.15rem;
+  }
+
+  .ui-play-action-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .ui-play-metrics {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+  }
+
+  .ui-play-moves {
+    order: 1;
+    width: 3.85rem;
+    height: 3.85rem;
+    border-width: 3px;
+    box-shadow: 2px 2px 0 var(--ui-ink);
+    gap: 1px;
+  }
+
+  .ui-play-moves-num {
+    font-size: 2.1rem;
+  }
+
+  .ui-play-moves-label {
+    font-size: 7.5px;
+  }
+
+  .ui-play-score {
+    order: 2;
+    text-align: right;
+  }
+
+  .ui-play-score-val {
+    font-size: 1.85rem;
+  }
+
+  .ui-play-goals {
+    order: 3;
+    grid-column: 1 / -1;
+    gap: 0.2rem;
+    padding: 0.35rem 0.5rem;
+  }
+
+  .ui-play-goals-heading {
+    display: none;
+  }
+
+  .ui-play-goal-icon {
+    width: 1.65rem;
+    height: 1.65rem;
+  }
+
+  .ui-play-goal-value {
+    font-size: 1.15rem;
+  }
+
+  .ui-play-boosters {
+    width: clamp(7.5rem, 18vw, 9.25rem);
+    gap: 0.45rem;
+  }
+
+  .ui-play-energy-head {
+    flex-direction: row;
+  }
+
+  .ui-play-tools {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-items: center;
+    gap: 0.5rem 0.6rem;
+  }
+
+  .ui-play-booster-btn {
+    width: 3.15rem;
+    height: 3.15rem;
+  }
+
+  .ui-play-tool-label {
+    font-size: 9px;
+    max-width: 3.75rem;
+  }
+}
+
+@media (min-aspect-ratio: 11/10) and (min-width: 35rem) and (max-height: 28.75rem) {
+  .ui-play-goal-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+/* Flying objective collectibles & HUD impact feedback */
+.ui-fly-goal {
+  position: fixed;
+  width: 2.1rem;
+  height: 2.1rem;
+  margin-left: -1.05rem;
+  margin-top: -1.05rem;
+  will-change: transform, opacity;
+  animation: fly-to-goal 480ms cubic-bezier(0.22, 0.9, 0.32, 1) both;
+}
+
+@keyframes fly-to-goal {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.75);
+  }
+  15% {
+    opacity: 1;
+    transform: translate3d(calc(var(--fly-dx) * 0.16), calc(var(--fly-dy) * 0.16 + var(--fly-arc)), 0) scale(1.18);
+  }
+  80% {
+    opacity: 1;
+    transform: translate3d(calc(var(--fly-dx) * 0.92), calc(var(--fly-dy) * 0.92), 0) scale(0.92);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--fly-dx), var(--fly-dy), 0) scale(0.5);
+  }
+}
+
+.animate-goal-bump {
+  animation: goal-bump 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes goal-bump {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.24);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-boss-hit {
+  animation: boss-hit 360ms ease-out;
+}
+
+@keyframes boss-hit {
+  0%,
+  100% {
+    transform: translateX(0) scale(1);
+    filter: brightness(1);
+  }
+  25% {
+    transform: translateX(-5px) scale(1.14);
+    filter: brightness(1.6) saturate(1.5);
+  }
+  60% {
+    transform: translateX(5px) scale(0.94);
+    filter: brightness(1.3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-fly-goal,
+  .animate-goal-bump,
+  .animate-boss-hit {
+    animation: none !important;
+  }
+  .ui-fly-goal {
+    display: none;
+  }
+}
+
+html[data-reduce-motion='true'] .ui-fly-goal,
+html[data-reduce-motion='true'] .animate-goal-bump,
+html[data-reduce-motion='true'] .animate-boss-hit {
+  animation: none !important;
+}
+
+html[data-reduce-motion='true'] .ui-fly-goal {
+  display: none;
+}
+
+

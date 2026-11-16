@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { AchievementSaveState } from '../game/achievements';
+import {
+  StarterId,
+  STARTERS,
+  starterSelectionCost,
+  WinStreakState,
+  winStreakSpecials,
+} from '../game/boosters';
 import { ANIMAL_SKINS, DailyChallenge, SEASONAL_SKINS, SKIN_SOURCE, getSkinMeta } from '../game/daily';
+import { DAILY_PUZZLE_REWARD_ENERGY, DailyPuzzleInstance } from '../game/dailyPuzzle';
+import { LeagueStandingRow, LeagueState } from '../game/league';
 import {
   CAMPAIGN_CHAPTER_COUNT,
   DIFFICULTY_META,
@@ -92,6 +101,15 @@ interface TitleScreenProps {
   weeklyLevel: LevelConfig;
   weeklyLevelState: WeeklyLevelState;
   onStartWeekly: () => void;
+  dailyPuzzle: DailyPuzzleInstance;
+  dailyPuzzleSolvedToday: boolean;
+  onStartDailyPuzzle: () => void;
+  winStreak: WinStreakState;
+  armedStarters: StarterId[];
+  onToggleStarter: (id: StarterId) => void;
+  league: LeagueState;
+  leagueStandings: LeagueStandingRow[];
+  onClaimLeagueReward: () => void;
   stats: PlayStats;
   blitz: BlitzState;
   storyPage: StoryPage | null;
@@ -372,6 +390,15 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   weeklyLevel,
   weeklyLevelState,
   onStartWeekly,
+  dailyPuzzle,
+  dailyPuzzleSolvedToday,
+  onStartDailyPuzzle,
+  winStreak,
+  armedStarters,
+  onToggleStarter,
+  league,
+  leagueStandings,
+  onClaimLeagueReward,
   stats,
   blitz,
   storyPage,
@@ -766,6 +793,64 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                         })}
                       </div>
                     </div>
+
+                    {/* Win streak bonus & pre-game starter boosters */}
+                    <div className="mt-2 space-y-1.5 border-t-2 border-dashed border-[#111111]/35 pt-2">
+                      <div
+                        data-testid="win-streak-banner"
+                        className="flex flex-wrap items-center justify-between gap-1 text-[11px] font-extrabold"
+                      >
+                        <span className="text-[#D4002A]">
+                          {winStreak.streak > 0
+                            ? t('Vinstsvit: {n} i rad', { n: winStreak.streak })
+                            : t('Vinstsvit: 0')}
+                        </span>
+                        <span className="text-[10px] font-bold text-[#4B4B4B]">
+                          {winStreak.streak > 0
+                            ? t('+{n} gratis startspecialer', {
+                                n: winStreakSpecials(winStreak.streak).length,
+                              })
+                            : t('Vinn i rad för gratis startspecialer')}
+                        </span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-[#4B4B4B]">
+                          <span>{t('Startboosters (valfritt)')}</span>
+                          <span className="font-mono-num text-[#111111]">
+                            {t('Bank: {n}', { n: bonusEnergyBank })}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {STARTERS.map((starter) => {
+                            const armed = armedStarters.includes(starter.id);
+                            const nextCost = armed
+                              ? starterSelectionCost(armedStarters.filter((id) => id !== starter.id))
+                              : starterSelectionCost([...armedStarters, starter.id]);
+                            const canAfford = armed || nextCost <= bonusEnergyBank;
+                            return (
+                              <button
+                                key={starter.id}
+                                type="button"
+                                data-testid={`starter-${starter.id}`}
+                                aria-pressed={armed}
+                                disabled={!canAfford}
+                                onClick={() => onToggleStarter(starter.id)}
+                                title={t(starter.descSv)}
+                                className={`ui-btn px-1 py-1 text-[11px] disabled:cursor-not-allowed disabled:opacity-50 ${
+                                  armed ? 'ui-btn-yellow' : ''
+                                }`}
+                              >
+                                <span className="truncate">{t(starter.nameSv)}</span>
+                                <span className="font-mono-num text-[10px] font-extrabold">
+                                  {armed ? '✓' : starter.cost}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -816,6 +901,40 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                         {t('Nästa dag: +{n} extra', { n: nextStreakBonus })}
                       </span>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {mode === 'daily' && (
+                <div data-testid="daily-puzzle-panel" className="ui-inset mt-2.5 px-3 py-2 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-[#D4002A]">
+                      <UiIcon name="star" className="w-3.5 h-3.5" />
+                      {t('Dagens taktikpussel')} · {t(dailyPuzzle.spec.nameSv)}
+                    </span>
+                    <span
+                      className={`rounded border-2 border-[#111111] px-1.5 py-0.5 text-[10px] font-extrabold ${
+                        dailyPuzzleSolvedToday ? 'bg-[#A6EC98]' : 'bg-[#F2CD1C]'
+                      }`}
+                    >
+                      {dailyPuzzleSolvedToday ? t('Löst idag') : `+${DAILY_PUZZLE_REWARD_ENERGY}`}
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-[13px] font-semibold leading-snug">
+                    {t(dailyPuzzle.spec.descSv)}
+                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-bold text-[#4B4B4B]">
+                      {t('Klara på {moves} drag · ingen slump', { moves: dailyPuzzle.spec.moves })}
+                    </span>
+                    <button
+                      type="button"
+                      data-testid="start-puzzle-btn"
+                      onClick={onStartDailyPuzzle}
+                      className="ui-btn ui-btn-green px-3 py-1 text-sm"
+                    >
+                      {t('Spela pussel')}
+                    </button>
                   </div>
                 </div>
               )}
@@ -1075,8 +1194,8 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               </div>
               </div>
 
-              {/* Missions, companion, island, statistics and the album */}
-              <div className="order-1 mt-2.5 grid grid-cols-5 gap-1.5">
+              {/* Missions, league, companion, island, statistics and the album */}
+              <div className="order-1 mt-2.5 grid grid-cols-3 sm:grid-cols-6 gap-1.5">
                 {HUB_TABS.map((entry) => (
                   <button
                     key={entry.id}
@@ -1089,6 +1208,11 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                     {entry.id === 'missions' && (
                       <span className="absolute -right-1.5 -top-2 border-2 border-[#111111] bg-[#F2CD1C] px-1 font-mono-num text-[10px] font-extrabold leading-tight">
                         {missionsDone(missionState, missions)}/3
+                      </span>
+                    )}
+                    {entry.id === 'league' && league.pendingReward && (
+                      <span className="absolute -right-1.5 -top-2 border-2 border-[#111111] bg-[#FF2E4D] px-1 font-mono-num text-[10px] font-extrabold leading-tight text-white">
+                        !
                       </span>
                     )}
                   </button>
@@ -1175,6 +1299,9 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
         levelsCleared={highestUnlockedIdx}
         seenPages={seenPages}
         onReadStory={onReadStory}
+        league={league}
+        leagueStandings={leagueStandings}
+        onClaimLeagueReward={onClaimLeagueReward}
       />
       <StoryModal page={storyPage} skin={equippedSkin} onClose={onCloseStory} />
       <CollectionModal

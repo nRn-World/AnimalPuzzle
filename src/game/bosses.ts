@@ -75,3 +75,20 @@ export const BOSSES: Record<BiomeId, BossDef> = {
     introSv: 'Spottar en bomb med nedräkning var sjätte drag',
   },
 };
+
+/** Effective moves between boss attacks; enraged bosses strike one move sooner (min 3). */
+export function bossAttackInterval(every: number, enraged: boolean): number {
+  return enraged ? Math.max(3, every - 1) : Math.max(3, every);
+}
+
+/** How many player moves remain until the boss attacks next (1 = attacks on the next move). */
+export function movesUntilBossAttack(
+  every: number,
+  movesUsed: number,
+  enraged: boolean
+): number {
+  const interval = bossAttackInterval(every, enraged);
+  const rem = interval - (Math.max(0, movesUsed) % interval);
+  return rem === 0 ? interval : rem;
+}
+

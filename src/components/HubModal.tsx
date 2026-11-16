@@ -26,6 +26,12 @@ import {
   starsAvailable,
 } from '../game/island';
 import { ALL_DONE_BONUS, Mission, MissionState, missionsDone } from '../game/missions';
+import {
+  getLeagueTier,
+  LEAGUE_TIERS,
+  LeagueStandingRow,
+  LeagueState,
+} from '../game/league';
 import { RewardState } from '../game/rewards';
 import { BlitzState, PlayStats, formatPlayTime } from '../game/stats';
 import { STORY_PAGES } from '../game/story';
@@ -34,10 +40,11 @@ import { GemSvg } from './GemSvg';
 import { IslandScene } from './IslandScene';
 import { UiIcon } from './UiIcon';
 
-export type HubTab = 'missions' | 'companion' | 'island' | 'stats';
+export type HubTab = 'missions' | 'league' | 'companion' | 'island' | 'stats';
 
 export const HUB_TABS: Array<{ id: HubTab; label: string }> = [
   { id: 'missions', label: 'Uppdrag' },
+  { id: 'league', label: 'Liga' },
   { id: 'companion', label: 'Kompis' },
   { id: 'island', label: 'Din ö' },
   { id: 'stats', label: 'Statistik' },
@@ -70,6 +77,9 @@ interface HubModalProps {
   levelsCleared: number;
   seenPages: string[];
   onReadStory: (id: string) => void;
+  league: LeagueState;
+  leagueStandings: LeagueStandingRow[];
+  onClaimLeagueReward: () => void;
 }
 
 function missionLabel(mission: Mission): string {
@@ -142,6 +152,9 @@ export const HubModal: React.FC<HubModalProps> = ({
   levelsCleared,
   seenPages,
   onReadStory,
+  league,
+  leagueStandings,
+  onClaimLeagueReward,
 }) => {
   useEffect(() => {
     if (!tab) return;
@@ -521,6 +534,134 @@ export const HubModal: React.FC<HubModalProps> = ({
               </div>
             </section>
           )}
+
+          {tab === 'league' && (() => {
+            const tierDef = getLeagueTier(league.tier);
+            const myRow = leagueStandings.find((r) => r.isPlayer);
+            return (
+              <section data-testid="league-section" className="space-y-3">
+                {/* Tier banner & progression */}
+                <div className="ui-inset p-3 space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="inline-block h-4 w-4 rounded-full border-2 border-[#111111]"
+                        style={{ backgroundColor: tierDef.accent }}
+                      />
+                      <span className="font-display text-lg">{t(tierDef.nameSv)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs font-extrabold">
+                      {myRow && (
+                        <span className="rounded border-2 border-[#111111] bg-[#F2CD1C] px-2 py-0.5">
+                          {t('Plats #{n}', { n: myRow.rank })}
+                        </span>
+                      )}
+                      {league.trophies > 0 && (
+                        <span className="rounded border-2 border-[#111111] bg-[#FFFFFF] px-2 py-0.5">
+                          {t('{n} pokaler', { n: league.trophies })}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 5-tier ladder */}
+                  <div className="grid grid-cols-5 gap-1">
+                    {LEAGUE_TIERS.map((tier) => {
+                      const active = tier.id === league.tier;
+                      return (
+                        <div
+                          key={tier.id}
+                          className={`truncate rounded border-2 border-[#111111] px-1 py-0.5 text-center text-[10px] font-extrabold ${
+                            active ? 'text-[#111111] shadow-[2px_2px_0_#111111]' : 'bg-[#FFFFFF]/60 text-[#4B4B4B]'
+                          }`}
+                          style={active ? { backgroundColor: tier.accent } : undefined}
+                        >
+                          {t(tier.nameSv)}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <p className="text-[11px] font-semibold text-[#4B4B4B]">
+                    {tierDef.promoteTop > 0
+                      ? t('Tjäna ligapoäng från stjärnor, dagliga pussel och utmaningar. Topp {n} går upp nästa vecka!', {
+                          n: tierDef.promoteTop,
+                        })
+                      : t('Du är i högsta ligan! Håll dig kvar i toppen för största veckobelöningen.')}
+                  </p>
+                </div>
+
+                {/* Claimable last-week reward */}
+                {league.pendingReward && (
+                  <div
+                    data-testid="league-reward-banner"
+                    className="flex flex-wrap items-center justify-between gap-2 border-[3px] border-[#111111] bg-[var(--ui-yellow)] px-3 py-2"
+                  >
+                    <div className="text-xs font-extrabold">
+                      {league.pendingReward.outcome === 'promoted'
+                        ? t('Uppflyttad till {tier}! Plats #{rank}', {
+                            tier: t(getLeagueTier(league.pendingReward.newTier).nameSv),
+                            rank: league.pendingReward.rank,
+                          })
+                        : t('Förra veckans resultat: Plats #{rank}', {
+                            rank: league.pendingReward.rank,
+                          })}
+                    </div>
+                    <button
+                      type="button"
+                      data-testid="claim-league-reward-btn"
+                      onClick={onClaimLeagueReward}
+                      className="ui-btn ui-btn-green px-3 py-1 text-xs"
+                    >
+                      {league.pendingReward.energy > 0
+                        ? t('Hämta +{n} energi', { n: league.pendingReward.energy })
+                        : t('Stäng')}
+                    </button>
+                  </div>
+                )}
+
+                {/* 15-player bracket table */}
+                <div className="space-y-1">
+                  {leagueStandings.map((row) => (
+                    <div
+                      key={row.id}
+                      data-player={row.isPlayer}
+                      className={`flex items-center gap-2 rounded border-2 border-[#111111] px-2.5 py-1 text-xs font-bold ${
+                        row.isPlayer
+                          ? 'bg-[#F2CD1C] font-extrabold shadow-[2px_2px_0_#111111]'
+                          : row.zone === 'promote'
+                          ? 'bg-[#D7F7CF]'
+                          : row.zone === 'demote'
+                          ? 'bg-[#FFD6DC]'
+                          : 'bg-[#FFFFFF]/80'
+                      }`}
+                    >
+                      <span className="w-6 text-center font-mono-num font-extrabold">
+                        {row.rank}
+                      </span>
+                      <span className="h-6 w-6 shrink-0">
+                        <GemSvg color={row.color} special="none" skin={skin} animationSeed={row.rank * 13} className="h-full w-full" />
+                      </span>
+                      <span className="min-w-0 flex-1 truncate">{row.handle}</span>
+                      {row.zone === 'promote' && (
+                        <span className="text-[10px] font-extrabold uppercase text-[#0B6B2B]">
+                          ▲
+                        </span>
+                      )}
+                      {row.zone === 'demote' && (
+                        <span className="text-[10px] font-extrabold uppercase text-[#D4002A]">
+                          ▼
+                        </span>
+                      )}
+                      <span className="font-mono-num font-extrabold">
+                        {t('{n} p', { n: formatNumber(row.points) })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+          })()}
         </div>
       </div>
     </div>

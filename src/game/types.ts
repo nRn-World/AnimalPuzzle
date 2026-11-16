@@ -68,7 +68,7 @@ export interface Coord {
   col: number;
 }
 
-export type GameMode = 'campaign' | 'endless' | 'daily' | 'blitz' | 'weekly';
+export type GameMode = 'campaign' | 'endless' | 'daily' | 'blitz' | 'weekly' | 'puzzle';
 
 export type AnimalSkinId =
   | 'classic'

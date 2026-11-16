@@ -6,6 +6,7 @@ import { STORAGE_PREFIX, StorageLike } from './storage';
 
 export const SAVE_FILE_APP = 'AnimalPuzzle';
 export const SAVE_FILE_VERSION = 1;
+export const SYNC_CODE_PREFIX = 'AP1:';
 /** A save is a few kilobytes; anything far bigger is not one of ours. */
 const MAX_VALUE_LENGTH = 2_000_000;
 
@@ -92,3 +93,53 @@ export function downloadSave(): void {
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+function encodeUtf8Base64Url(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function decodeUtf8Base64Url(code: string): string | null {
+  try {
+    const padded = code.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = padded.length % 4 === 0 ? '' : '='.repeat(4 - (padded.length % 4));
+    const binary = atob(padded + pad);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  } catch {
+    return null;
+  }
+}
+
+/** Packs the current save into a compact copy-pasteable code for moving between phone and computer. */
+export function exportSyncCode(storage: StorageLike | null = browserStorage(), now = new Date()): string {
+  const payload = JSON.stringify(exportSave(storage, now));
+  return `${SYNC_CODE_PREFIX}${encodeUtf8Base64Url(payload)}`;
+}
+
+/** Validates a sync code (or raw save JSON) and returns its key-value entries, or null if invalid. */
+export function parseSyncCode(code: string): Record<string, string> | null {
+  const trimmed = code.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith(SYNC_CODE_PREFIX)) {
+    const decoded = decodeUtf8Base64Url(trimmed.slice(SYNC_CODE_PREFIX.length));
+    if (!decoded) return null;
+    return parseSave(decoded);
+  }
+  return parseSave(trimmed);
+}
+
+/** Imports a sync code into storage, replacing existing game keys. */
+export function importSyncCode(code: string, storage: StorageLike | null = browserStorage()): boolean {
+  const trimmed = code.trim();
+  if (trimmed.startsWith(SYNC_CODE_PREFIX)) {
+    const decoded = decodeUtf8Base64Url(trimmed.slice(SYNC_CODE_PREFIX.length));
+    if (!decoded) return false;
+    return importSave(decoded, storage);
+  }
+  return importSave(trimmed, storage);
+}
+

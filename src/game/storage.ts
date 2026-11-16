@@ -34,6 +34,10 @@ export const STORAGE_KEYS = {
   weeklyLevel: `${STORAGE_PREFIX}weekly_level_v1`,
   calendar: `${STORAGE_PREFIX}calendar_v1`,
   seasonPass: `${STORAGE_PREFIX}season_pass_v1`,
+  winStreak: `${STORAGE_PREFIX}win_streak_v1`,
+  seenObstacles: `${STORAGE_PREFIX}seen_obstacles_v1`,
+  dailyPuzzle: `${STORAGE_PREFIX}daily_puzzle_v1`,
+  league: `${STORAGE_PREFIX}league_v1`,
 } as const;
 
 /** The subset of the Storage API this module relies on (easy to fake in tests). */

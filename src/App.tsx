@@ -5,12 +5,15 @@ import titleBackdrop from './assets/images/title-backdrop.webp';
 import { useCallback, useEffect, useState } from 'react';
 import { AchievementUnlockToast } from './components/AchievementsSection';
 import { ComboBanner } from './components/ComboBanner';
+import { FlyingGoalsOverlay } from './components/FlyingGoalsOverlay';
 import { GameBoard } from './components/GameBoard';
 import { GameHud } from './components/GameHud';
 import { GameModals } from './components/GameModals';
+import { ObstacleIntroModal } from './components/ObstacleIntroModal';
 import { TitleScreen } from './components/TitleScreen';
 import { TutorialBanner } from './components/TutorialBanner';
 import { soundEngine } from './game/audio';
+import { biomeOfChapter } from './game/biomes';
 import { CAMPAIGN_LEVEL_COUNT } from './game/levels';
 import { useBoardSize } from './hooks/useBoardSize';
 import { useFullscreen } from './hooks/useFullscreen';
@@ -25,14 +28,12 @@ export default function App() {
   const settings = useSettings();
   const game = useGameSession(settings.language);
   useReminders(settings.reminders, game.lives);
-  const { isFullscreen, canFullscreen, toggleFullscreen } = useFullscreen();
+  const { isFullscreen, canFullscreen, enterFullscreen, toggleFullscreen } = useFullscreen();
 
-  // Phones and tablets: go true full screen as soon as a round starts.
-  const enterFullscreenOnTouch = () => {
-    if (!canFullscreen || isFullscreen) return;
-    if (typeof window.matchMedia !== 'function') return;
-    if (window.matchMedia('(pointer: coarse)').matches) toggleFullscreen();
-  };
+  // Go true full screen when entering the playfield on both desktop web and mobile.
+  const enterPlayFullscreen = useCallback(() => {
+    enterFullscreen();
+  }, [enterFullscreen]);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const {
@@ -50,7 +51,7 @@ export default function App() {
   } = game;
 
   const inGame = phase !== 'TITLE_MENU';
-  const { boardStageRef, boardSide, boardHeight } = useBoardSize(phase === 'PLAYING' || phase === 'PAUSED');
+  const { boardStageRef, boardSide, boardHeight } = useBoardSize(inGame);
 
   const toggleMute = useCallback(() => {
     soundEngine.toggleMute();
@@ -89,7 +90,7 @@ export default function App() {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       // Dialogs on top of the game handle their own keys.
-      if (settingsOpen || showGuide) return;
+      if (settingsOpen || showGuide || game.activeObstacleIntro) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const key = e.key.toLowerCase();
 
@@ -130,6 +131,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [
     busy,
+    game.activeObstacleIntro,
     pause,
     phase,
     restart,
@@ -182,11 +184,29 @@ export default function App() {
             pass={game.pass}
             onClaimPass={game.claimPassRewards}
             challenge={game.challenge}
-            onStartChallenge={game.startChallenge}
+            onStartChallenge={() => {
+              enterPlayFullscreen();
+              game.startChallenge();
+            }}
             onDismissChallenge={game.dismissChallenge}
             weeklyLevel={game.weeklyLevel}
             weeklyLevelState={game.weeklyLevelState}
-            onStartWeekly={game.startWeekly}
+            onStartWeekly={() => {
+              enterPlayFullscreen();
+              game.startWeekly();
+            }}
+            dailyPuzzle={game.dailyPuzzle}
+            dailyPuzzleSolvedToday={game.dailyPuzzleSolvedToday}
+            onStartDailyPuzzle={() => {
+              enterPlayFullscreen();
+              game.startDailyPuzzle();
+            }}
+            winStreak={game.winStreak}
+            armedStarters={game.armedStarters}
+            onToggleStarter={game.toggleStarter}
+            league={game.league}
+            leagueStandings={game.leagueStandings}
+            onClaimLeagueReward={game.claimWeeklyLeagueReward}
             stats={game.stats}
             blitz={game.blitz}
             storyPage={game.bossStoryPage ?? game.storyPage}
@@ -199,7 +219,7 @@ export default function App() {
           guideOpen={showGuide || settingsOpen}
           savedGame={game.savedGame}
           onResumeSaved={() => {
-            enterFullscreenOnTouch();
+            enterPlayFullscreen();
             game.resumeSaved();
           }}
           onOpenSettings={openSettings}
@@ -209,12 +229,12 @@ export default function App() {
           onToggleFullscreen={toggleFullscreen}
           onShowGuide={game.openGuide}
           onStart={() => {
-            enterFullscreenOnTouch();
+            enterPlayFullscreen();
             game.startSelected();
           }}
         />
       ) : (
-        <div className="fixed inset-0 z-10 flex flex-col overflow-hidden ui-scene">
+        <div className="fixed inset-0 z-10 flex h-[100dvh] w-full flex-col overflow-hidden ui-scene">
           {/* Scenery behind the board, dimmed so the animals stay in focus */}
           <img
             src={titleBackdrop}
@@ -223,7 +243,7 @@ export default function App() {
             className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover"
           />
           <div className="pointer-events-none absolute inset-0 bg-[#0B101A]/45" />
-          <div className="relative flex min-h-0 flex-1 flex-col items-stretch gap-1.5 px-1.5 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.6rem,env(safe-area-inset-bottom))] pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] sm:px-4 sm:py-3 lg:flex-row lg:items-center lg:justify-center lg:gap-6 lg:px-6 lg:py-4">
+          <div className="ui-play-shell relative flex min-h-0 flex-1">
             <GameHud
               level={activeLevel}
               mode={mode}
@@ -240,6 +260,10 @@ export default function App() {
               busy={busy}
               timeLeft={mode === 'blitz' ? game.blitzLeft : undefined}
               bossEnraged={game.bossEnraged}
+              movesUntilBoss={game.movesUntilBoss}
+              bossHitNonce={game.bossHitNonce}
+              bumpedGoals={game.bumpedGoals}
+              winStreak={game.winStreak.streak}
               companion={game.companion}
               companionSay={game.companionSay}
               powerCharge={game.powerCharge}
@@ -254,7 +278,7 @@ export default function App() {
               onBackToTitle={game.backToTitle}
             />
 
-            <div className="order-2 flex min-h-0 w-full flex-1 flex-col items-center gap-1.5 sm:gap-2 lg:h-full lg:min-w-0">
+            <div className="ui-play-center order-2 flex min-h-0 min-w-0 flex-1 flex-col items-center gap-1">
               {game.tutorialPrompt && (
                 <TutorialBanner prompt={game.tutorialPrompt} onSkip={game.skipTutorial} />
               )}
@@ -285,21 +309,26 @@ export default function App() {
                   size={boardSide}
                   height={boardHeight}
                 />
+                {game.statusNotice && (
+                  <div
+                    role="status"
+                    className="pointer-events-none absolute inset-x-0 bottom-2 z-40 flex justify-center px-2"
+                  >
+                    <span className="max-w-[92%] truncate rounded-full border-2 border-[#111111] bg-[#111111]/88 px-3 py-1 text-[11px] sm:text-xs font-extrabold text-[#FDE047] shadow-[2px_2px_0_#111111]">
+                      {game.statusNotice}
+                    </span>
+                  </div>
+                )}
               </div>
-
-              {game.statusNotice && (
-                <div
-                  role="status"
-                  className="flex min-h-4 sm:min-h-5 items-center justify-center text-center"
-                >
-                  <span className="text-[11px] sm:text-xs font-bold text-[#FDE047] truncate max-w-[92vw]">
-                    {game.statusNotice}
-                  </span>
-                </div>
-              )}
             </div>
           </div>
 
+          <FlyingGoalsOverlay tokens={game.flyingGoals} />
+          <ObstacleIntroModal
+            intro={game.activeObstacleIntro}
+            biome={biomeOfChapter(activeLevel.chapter ?? 1)}
+            onDismiss={game.dismissObstacleIntro}
+          />
           <StoryModal
             page={game.bossStoryPage}
             skin={game.dailyState.equippedSkin}
@@ -323,10 +352,20 @@ export default function App() {
             blitzRank={game.endSnapshot.blitzRank}
             challengeScore={game.endSnapshot.challengeScore}
             weeklyEnergy={game.endSnapshot.weeklyEnergy}
+            puzzleEnergy={game.endSnapshot.puzzleEnergy}
+            leaguePoints={game.endSnapshot.leaguePoints}
+            winStreak={game.winStreak.streak}
+            rescueCost={game.rescueCostNow}
+            rescueEligible={game.rescueEligible}
+            canRescue={game.canRescue}
+            onRescue={game.rescueRun}
             livesLeft={game.lives.lives}
             totalMoves={activeLevel.moves}
             dailyReward={game.dailyReward}
             shareNotice={game.shareNotice}
+            isFullscreen={isFullscreen}
+            canFullscreen={canFullscreen}
+            onToggleFullscreen={toggleFullscreen}
             onShare={game.shareResult}
             onOpenSettings={openSettings}
             onEquipSkin={game.equipSkin}

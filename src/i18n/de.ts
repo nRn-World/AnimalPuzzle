@@ -1605,4 +1605,196 @@ export const de: Record<string, string> = {
     "Weniger anzeigen",
   "Veckans jakt, djur-gäng och utmärkelser":
     "Wochenjagd, Tiertruppe und Erfolge",
+  "Dagens pussel":
+    "Tagesrätsel",
+  "Svit {n}":
+    "Serie {n}",
+  "Attack om {n}":
+    "Angriff in {n}",
+  "Dagens pussel avklarat":
+    "Tagesrätsel gelöst",
+  "Pusslet löst! +{n} bonusenergi":
+    "Rätsel gelöst! +{n} Bonusenergie",
+  "Löst igen – dagens pusselpris är redan hämtat":
+    "Erneut gelöst – der heutige Rätselpreis wurde schon abgeholt",
+  "+{n} ligapoäng":
+    "+{n} Ligapunkte",
+  "Vinstsvit: {n} i rad":
+    "Siegesserie: {n} in Folge",
+  "Rädda omgången (+5 drag · {cost} energi)":
+    "Runde retten (+5 Züge · {cost} Energie)",
+  "Behåller din vinstsvit ({n}) och sparar ditt liv!":
+    "Behält deine Siegesserie ({n}) und rettet dein Leben!",
+  "Plats #{n}":
+    "Platz #{n}",
+  "{n} pokaler":
+    "{n} Pokale",
+  "Tjäna ligapoäng från stjärnor, dagliga pussel och utmaningar. Topp {n} går upp nästa vecka!":
+    "Sammle Ligapunkte durch Sterne, Tagesrätsel und Herausforderungen. Die Top {n} steigen nächste Woche auf!",
+  "Du är i högsta ligan! Håll dig kvar i toppen för största veckobelöningen.":
+    "Du bist in der höchsten Liga! Bleib ganz oben für die größte Wochenbelohnung.",
+  "Uppflyttad till {tier}! Plats #{rank}":
+    "Aufgestiegen in die {tier}! Platz #{rank}",
+  "Förra veckans resultat: Plats #{rank}":
+    "Ergebnis letzte Woche: Platz #{rank}",
+  "Hämta +{n} energi":
+    "+{n} Energie abholen",
+  "{n} p":
+    "{n} Pkt",
+  "Liga":
+    "Liga",
+  "Jag förstår!":
+    "Verstanden!",
+  "Snabbsynk mellan enheter":
+    "Schnellsync zwischen Geräten",
+  "Synkkoden är kopierad! Klistra in den på din andra enhet.":
+    "Sync-Code kopiert! Füge ihn auf deinem anderen Gerät ein.",
+  "Synkkod skapad – kopiera texten i rutan.":
+    "Sync-Code erstellt – kopiere den Text im Feld.",
+  "Kopiera synkkod":
+    "Sync-Code kopieren",
+  "Klistra in AP1:-kod här":
+    "AP1:-Code hier einfügen",
+  "Ogiltig synkkod – kontrollera att hela koden kopierades.":
+    "Ungültiger Sync-Code – prüfe, ob der gesamte Code kopiert wurde.",
+  "Synkkoden kunde inte läsas in.":
+    "Sync-Code konnte nicht geladen werden.",
+  "Läs in":
+    "Laden",
+  "Vinstsvit: 0":
+    "Siegesserie: 0",
+  "+{n} gratis startspecialer":
+    "+{n} gratis Start-Spezialsteine",
+  "Vinn i rad för gratis startspecialer":
+    "Gewinne in Folge für gratis Start-Spezialsteine",
+  "Startboosters (valfritt)":
+    "Start-Booster (optional)",
+  "Bank: {n}":
+    "Vorrat: {n}",
+  "Dagens taktikpussel":
+    "Taktikrätsel des Tages",
+  "Löst idag":
+    "Heute gelöst",
+  "Klara på {moves} drag · ingen slump":
+    "In {moves} Zügen lösen · kein Zufall",
+  "Spela pussel":
+    "Rätsel spielen",
+  "Stråle":
+    "Strahl",
+  "Börjar nivån med en slumpmässig stråle på brädet.":
+    "Startet das Level mit einem zufälligen Strahl auf dem Feld.",
+  "Börjar nivån med en 3×3-Nova färdig på brädet.":
+    "Startet das Level mit einer 3×3-Nova auf dem Feld.",
+  "Börjar nivån med en Prisma som rensar en hel färg.":
+    "Startet das Level mit einem Prisma, das eine ganze Farbe entfernt.",
+  "Korseld":
+    "Kreuzfeuer",
+  "Kombinera två strålar i mitten för att rensa hela korset av is!":
+    "Kombiniere zwei Strahlen in der Mitte, um das ganze Eiskreuz zu räumen!",
+  "Tina is":
+    "Eis schmelzen",
+  "Supernovavalvet":
+    "Supernova-Tresor",
+  "Slå ihop två Novor för en 5×5-explosion mitt i isfästningen!":
+    "Kombiniere zwei Novas für eine 5×5-Explosion mitten in der Eisfestung!",
+  "Äggexpressen":
+    "Ei-Express",
+  "Rensa kolumnen under guldäggen med en lodrät stråle!":
+    "Räume die Spalte unter den goldenen Eiern mit einem senkrechten Strahl!",
+  "Samla ägg":
+    "Eier sammeln",
+  "Kedjebrytaren":
+    "Kettenbrecher",
+  "Skapa en stråle eller kombinera specialbrickor för att krossa alla kedjor i ett drag!":
+    "Kombiniere Spezialsteine, um alle Ketten in einem Zug zu sprengen!",
+  "Bryt kedjor":
+    "Ketten brechen",
+  "Honungsstjärnan":
+    "Honigstern",
+  "Utlös Stjärnfall (Nova + Stråle) för att rensa all honung innan den sprider sig!":
+    "Löse einen Sternenfall (Nova + Strahl) aus, um allen Honig zu entfernen!",
+  "Rensa honung":
+    "Honig entfernen",
+  "Flygarflocken":
+    "Späherschwarm",
+  "Byt två flygare med varandra så jagar tre flygare upp lådorna i hörnen!":
+    "Tausche zwei Späher, damit drei Späher die Kisten in den Ecken knacken!",
+  "Krossa lådor":
+    "Kisten zerstören",
+  "Rensa bort hindret mellan prismorna eller kombinera dem direkt för total rensning!":
+    "Kombiniere beide Prismen direkt für eine komplette Brett-Räumung!",
+  "Tvåstegs-raketen":
+    "Zweistufen-Rakete",
+  "Gör först en matchning som flyttar strålen i läge, och kombinera den sedan med Novan!":
+    "Mach zuerst eine Reihe, damit der Strahl an die Nova rutscht, und kombiniere beide!",
+  "Desarmeringen":
+    "Entschärfung",
+  "Kombinera Prisma med rävarnas färg för att desarmera alla bomber på en gång!":
+    "Kombiniere das Prisma mit einem Fuchs, um alle Bomben auf einmal zu entschärfen!",
+  "Samla Rävar":
+    "Füchse sammeln",
+  "Strålregnet":
+    "Strahlenregen",
+  "Para ihop Prismat med en Stråle – varje djur i färgen förvandlas till en egen stråle!":
+    "Verbinde das Prisma mit einem Strahl – jedes Tier dieser Farbe wird zum Strahl!",
+  "Bronsligan":
+    "Bronzeliga",
+  "Silverligan":
+    "Silberliga",
+  "Guldligan":
+    "Goldliga",
+  "Kristalligan":
+    "Kristallliga",
+  "Legendligan":
+    "Legendenliga",
+  "Nytt hinder: Frost & Is":
+    "Neues Hindernis: Frost & Eis",
+  "Matcha djur ovanpå isrutor för att tina bort frosten. Tjock is behöver två träffar!":
+    "Kombiniere Tiere auf Eisfeldern, um den Frost zu tauen. Dickes Eis braucht zwei Treffer!",
+  "Nytt hinder: Trälådor":
+    "Neues Hindernis: Holzkisten",
+  "Gör matchningar precis intill en trälåda eller träffa den med en specialbricka för att spräcka den.":
+    "Kombiniere direkt neben einer Kiste oder triff sie mit einem Spezialstein, um sie zu sprengen.",
+  "Nytt hinder: Kedjor":
+    "Neues Hindernis: Ketten",
+  "Kedjade djur går inte att flytta, men matcha dem på plats för att slå sönder kedjan!":
+    "Angekettete Tiere lassen sich nicht bewegen, aber eine Kombination an Ort und Stelle bricht die Kette!",
+  "Nytt hinder: Honung":
+    "Neues Hindernis: Honig",
+  "Rensa honung genom att matcha intill den. Varje drag utan rensad honung låter den sprida sig en ruta!":
+    "Entferne Honig durch Kombinationen daneben. Jeder Zug ohne Honig-Treffer lässt ihn weiterkriechen!",
+  "Nytt mål: Guldägg":
+    "Neues Ziel: Goldene Eier",
+  "Ägg kan inte matchas – rensa djuren under dem så att äggen faller hela vägen ner till botten!":
+    "Eier können nicht kombiniert werden – räume darunter auf, damit sie ganz nach unten fallen!",
+  "Varning: Tickande bomb":
+    "Achtung: Tickende Bombe",
+  "Bomben räknar ner ett steg varje drag. Matcha eller spräng djuret innan räknaren når noll!":
+    "Die Bombe zählt jeden Zug eins herunter. Kombiniere oder sprenge das Tier vor Null!",
+  "Ny mekanik: Rullband":
+    "Neue Mechanik: Förderbänder",
+  "Efter varje drag glider djuren på rullbandet ett steg i pilarnas riktning – utnyttja det för kedjor!":
+    "Nach jedem Zug gleiten Tiere auf dem Band ein Feld weiter – nutze das für Ketten!",
+  "Ny mekanik: Portaler":
+    "Neue Mechanik: Portale",
+  "Portaler i samma färg byter djur med varandra efter varje drag.":
+    "Gleichfarbige Portale tauschen nach jedem Zug ihre Tiere miteinander.",
+  "Bossstrid!":
+    "Bosskampf!",
+  "Varje rensat djur skadar bossen! Vid halva hälsan blir den rasande och attackerar oftare.":
+    "Jedes abgeräumte Tier schadet dem Boss! Bei halber Energie wird er wütend und greift öfter an.",
+  "AnimalPuzzle · Dagens pussel {date}":
+    "AnimalPuzzle · Tagesrätsel {date}",
+  "Vinstsvit + startbonus: +{n} specialbrickor!":
+    "Siegesserie + Startbonus: +{n} Spezialsteine!",
+  "Vinstsvit! +{n} startspecialer på brädet":
+    "Siegesserie! +{n} Start-Spezialsteine auf dem Feld",
+  "Startbonus aktiverad! +{n} specialer":
+    "Startbonus aktiv! +{n} Spezialsteine",
+  "+{n} extra drag – kör på!":
+    "+{n} Extrazüge – weiter geht's!",
+  "Segerbonus! Extra drag blir sprängningar!":
+    "Siegesbonus! Übrige Züge werden zu Explosionen!",
+  "Du":
+    "Du",
 };
