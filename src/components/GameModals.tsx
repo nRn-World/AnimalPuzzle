@@ -47,6 +47,10 @@ interface GameModalsProps {
   puzzleEnergy?: number;
   /** Weekly league points earned from this round. */
   leaguePoints?: number;
+  /** First-clear Master Mode bonus energy, if earned. */
+  masterEnergy?: number;
+  /** Whether this win was cleared in Master Mode. */
+  masterCleared?: boolean;
   /** Current campaign win streak count. */
   winStreak?: number;
   /** Cost in energy to rescue a Game Over run with +5 moves. */
@@ -195,6 +199,8 @@ export const GameModals: React.FC<GameModalsProps> = ({
   weeklyEnergy,
   puzzleEnergy,
   leaguePoints = 0,
+  masterEnergy,
+  masterCleared = false,
   winStreak = 0,
   rescueCost = 40,
   rescueEligible = false,
@@ -271,6 +277,8 @@ export const GameModals: React.FC<GameModalsProps> = ({
                   ? t(levelName)
                   : mode === 'puzzle'
                   ? t('Dagens pussel')
+                  : mode === 'custom'
+                  ? t('Eget pussel')
                   : mode === 'blitz'
                   ? t('Tidsläge')
                   : mode === 'weekly'
@@ -334,6 +342,10 @@ export const GameModals: React.FC<GameModalsProps> = ({
                   ? t('Daglig utmaning avklarad')
                   : mode === 'puzzle'
                   ? t('Dagens pussel avklarat')
+                  : mode === 'custom'
+                  ? t('Eget pussel avklarat')
+                  : masterCleared
+                  ? t('Mästarläge · Nivå {n} avklarad', { n: levelNumber })
                   : t('Nivå {n} avklarad', { n: levelNumber })}
               </div>
               <h2 id="modal-heading" className="font-display text-3xl leading-none tracking-wide">
@@ -423,6 +435,19 @@ export const GameModals: React.FC<GameModalsProps> = ({
                 {puzzleEnergy > 0
                   ? t('Pusslet löst! +{n} bonusenergi', { n: puzzleEnergy })
                   : t('Löst igen – dagens pusselpris är redan hämtat')}
+              </div>
+            )}
+
+            {masterCleared && (
+              <div
+                data-testid="master-reward"
+                className="flex items-center justify-center gap-2 border-[3px] border-[#111111] bg-[#FF8A1E] px-3 py-1.5 text-sm font-extrabold text-[#111111]"
+              >
+                <span>
+                  {masterEnergy
+                    ? t('Mästarkrona upplåst! +{n} bonusenergi', { n: masterEnergy })
+                    : t('Mästarläge avklarat · 2× ligapoäng')}
+                </span>
               </div>
             )}
 
@@ -539,7 +564,12 @@ export const GameModals: React.FC<GameModalsProps> = ({
               </div>
             </div>
 
-            <ShareButton notice={shareNotice} onShare={onShare} plain />
+            <ShareButton
+              notice={shareNotice}
+              onShare={onShare}
+              plain
+              label={mode === 'custom' ? t('Dela pussellänk') : undefined}
+            />
           </>
         )}
 
@@ -550,7 +580,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
                 {mode === 'blitz' ? t('Tiden är ute') : lostToBomb ? t('Bomben smällde') : t('Slut på drag')}
               </div>
               <h2 id="modal-heading" className="font-display text-2xl font-extrabold">
-                {mode === 'campaign' || mode === 'daily' || mode === 'weekly' || mode === 'puzzle'
+                {mode === 'campaign' || mode === 'daily' || mode === 'weekly' || mode === 'puzzle' || mode === 'custom'
                   ? t('{name} — Försök igen', { name: t(levelName) })
                   : t('Omgången avslutad')}
               </h2>

@@ -1797,4 +1797,196 @@ export const tr: Record<string, string> = {
     "Zafer bonusu! Kalan hamleler patlamaya dönüşüyor!",
   "Du":
     "Sen",
+  "Eget pussel":
+    "Özel bulmaca",
+  "Mästare":
+    "Usta",
+  "FEBER ×2 · {n} drag":
+    "ATEŞ ×2 · {n} hamle",
+  "Feberläge":
+    "Ateş modu",
+  "Eget pussel avklarat":
+    "Özel bulmaca tamamlandı",
+  "Mästarläge · Nivå {n} avklarad":
+    "Usta Modu · Seviye {n} geçildi",
+  "Mästarkrona upplåst! +{n} bonusenergi":
+    "Usta Tacı açıldı! +{n} bonus enerji",
+  "Mästarläge avklarat · 2× ligapoäng":
+    "Usta Modu geçildi · 2× lig puanı",
+  "Dela pussellänk":
+    "Bulmaca bağlantısını paylaş",
+  "Snabbevent · 30 min":
+    "Hızlı etkinlik · 30 dk",
+  "Stjärnracet":
+    "Yıldız Yarışı",
+  "Avslutat":
+    "Bitti",
+  "Först till {n} stjärnor mot 4 rivaler! 1:a plats ger +{e} energi och en gratis Prisma.":
+    "4 rakibe karşı ilk {n} yıldıza ulaş! 1. sıra +{e} enerji ve ücretsiz Prizma kazandırır.",
+  "Slutförda race: {n}":
+    "Tamamlanan yarış: {n}",
+  "Samla stjärnor i kampanj, daglig eller veckans nivå":
+    "Macera, günlük veya haftalık bölümlerde yıldız topla",
+  "Starta Stjärnracet":
+    "Yıldız Yarışını Başlat",
+  "Stjärnracet klart! +{n} bonusenergi":
+    "Yıldız Yarışı bitti! +{n} bonus enerji",
+  "Stjärnracet avslutat – starta ett nytt race!":
+    "Yıldız Yarışı sona erdi – yeni yarış başlat!",
+  "Hämta race-belöning":
+    "Yarış ödülünü al",
+  "Överlevnad · {n} vinster i rad":
+    "Hayatta kalma · Üst üste {n} galibiyet",
+  "Lavastigen":
+    "Lav Yolu",
+  "{n} klara":
+    "{n} tamamlandı",
+  "Vinn {n} kampanjnivåer i rad utan att förlora. Stora skatten ger +{e} energi + 2 gratis startboosters!":
+    "Kaybetmeden üst üste {n} macera bölümü kazan. Büyük hazine +{e} enerji ve 2 ücretsiz başlangıç güçlendiricisi verir!",
+  "Lavastigen besegrad! +{n} bonusenergi och 2 gratis boosters!":
+    "Lav Yolu aşıldı! +{n} bonus enerji ve 2 ücretsiz güçlendirici!",
+  "Hämta lavaskatten (+{n} energi)":
+    "Lav hazinesini al (+{n} enerji)",
+  "Kliv ut på Lavastigen":
+    "Lav Yoluna Çık",
+  "Pågår: {wins}/{target} vinster – förlora inte!":
+    "Devam ediyor: {wins}/{target} galibiyet – kaybetme!",
+  "Min grupp":
+    "Grubum",
+  "Global Liga":
+    "Küresel Lig",
+  "Global Tid":
+    "Küresel Süreli",
+  "Koppla Supabase i Inställningar → Molnsparning för att se och tävla på den globala topp 20-listan.":
+    "Küresel İlk 20 sıralamasında yarışmak için Ayarlar → Bulut Kaydı bölümünden Supabase bağla.",
+  "Laddar global topplista...":
+    "Küresel sıralama yükleniyor...",
+  "Uppdatera":
+    "Yenile",
+  "Inga globala poäng den här veckan än – bli den första på listan!":
+    "Bu hafta henüz küresel skor yok – listede ilk sen ol!",
+  "Event":
+    "Etkinlik",
+  "Dagens lyckohjul":
+    "Günlük Şans Çarkı",
+  "Du vann: {prize}!":
+    "Kazandın: {prize}!",
+  "Ett gratis snurr varje dag – vinn bonusenergi, gratis boosters eller fulla liv!":
+    "Her gün 1 ücretsiz çevirme – bonus enerji, ücretsiz güçlendirici veya tam can kazan!",
+  "Dagens snurr är använt. Kom tillbaka imorgon!":
+    "Bugünkü çevirme kullanıldı. Yarın tekrar gel!",
+  "Snurrar...":
+    "Dönüyor...",
+  "Snurra gratis!":
+    "Ücretsiz çevir!",
+  "Kom tillbaka imorgon":
+    "Yarın tekrar gel",
+  "Banlänk kopierad! Skicka den till en vän.":
+    "Bölüm bağlantısı kopyalandı! Bir arkadaşına gönder.",
+  "Kunde inte kopiera länken automatiskt.":
+    "Bağlantı otomatik olarak kopyalanamadı.",
+  "Pusselbyggare":
+    "Bulmaca Tasarımcısı",
+  "Bannamn":
+    "Bölüm adı",
+  "Drag":
+    "Hamle",
+  "Antal mål":
+    "Hedef sayısı",
+  "Måltyp":
+    "Hedef türü",
+  "Testspela bana":
+    "Bölümü test et",
+  "Kopiera delningslänk":
+    "Paylaşım bağlantısını kopyala",
+  "Återställ mall":
+    "Şablonu sıfırla",
+  "Stråle ↔":
+    "Işın ↔",
+  "Stråle ↕":
+    "Işın ↕",
+  "Sudda":
+    "Sil",
+  "Mästarkrona":
+    "Usta Tacı",
+  "Molnsparning & Spelarnamn":
+    "Bulut Kaydı ve Oyuncu Adı",
+  "Ditt spelarnamn":
+    "Oyuncu adın",
+  "T.ex. Räven99":
+    "Örn. Tilki99",
+  "Spelarnamn sparat!":
+    "Oyuncu adı kaydedildi!",
+  "Spara":
+    "Kaydet",
+  "Supabase-moln (valfritt)":
+    "Supabase Bulut (isteğe bağlı)",
+  "Kopplad":
+    "Bağlı",
+  "Lokal":
+    "Yerel",
+  "Supabase Anon Key":
+    "Supabase Anon Anahtarı",
+  "Molninställningar sparade!":
+    "Bulut ayarları kaydedildi!",
+  "Anslut":
+    "Bağlan",
+  "Sparfil uppladdad till molnet!":
+    "Kayıt buluta yüklendi!",
+  "Kunde inte spara till molnet – kontrollera URL och nyckel.":
+    "Buluta yüklenemedi – URL ve anahtarı kontrol et.",
+  "Spara moln":
+    "Buluta yükle",
+  "Ingen molnsparning hittades för detta ID.":
+    "Bu kimlik için bulut kaydı bulunamadı.",
+  "Hämta moln":
+    "Buluttan al",
+  "Delat pussel från en vän":
+    "Bir arkadaştan paylaşılan bulmaca",
+  "{n} drag":
+    "{n} hamle",
+  "Stjärnkista öppnad! +{n} energi + gratis {booster}":
+    "Yıldız Sandığı açıldı! +{n} enerji + ücretsiz {booster}",
+  "Samla {n} stjärnor till för att öppna Stjärnkistan!":
+    "Yıldız Sandığını açmak için {n} yıldız daha topla!",
+  "Öppna kista!":
+    "Sandığı aç!",
+  "Lyckohjul":
+    "Şans Çarkı",
+  "Bygg bana":
+    "Bölüm yap",
+  "Mästarkrona tagen · 2× ligapoäng":
+    "Usta Tacı kazanıldı · 2× lig puanı",
+  "Mästarläge: färre drag · +{n} energi första vinsten":
+    "Usta Modu: daha az hamle · ilk galibiyette +{n} enerji",
+  "Mästare PÅ":
+    "Usta AÇIK",
+  "Mästarläge":
+    "Usta Modu",
+  "Gratis":
+    "Ücretsiz",
+  "Egen taktikbana":
+    "Özel taktik bölümü",
+  "AnimalPuzzle · Egen bana: {name}":
+    "AnimalPuzzle · Özel bölüm: {name}",
+  "+25 energi":
+    "+25 enerji",
+  "Gratis Stråle":
+    "Ücretsiz Işın",
+  "+40 energi":
+    "+40 enerji",
+  "Fulla liv!":
+    "Tam can!",
+  "+60 energi":
+    "+60 enerji",
+  "Gratis Nova":
+    "Ücretsiz Nova",
+  "Gratis Prisma":
+    "Ücretsiz Prizma",
+  "+100 energi!":
+    "+100 enerji!",
+  "Mästarläge aktivt · 2× ligapoäng!":
+    "Usta Modu aktif · 2× lig puanı!",
+  "FEBERLÄGE! ×2 poäng i {n} drag!":
+    "ATEŞ MODU! {n} hamle boyunca ×2 puan!",
 };

@@ -150,7 +150,14 @@ export default function App() {
       {/* Loaded after the first paint: neither is needed to show the menu */}
       <Suspense fallback={null}>
         <HowToPlayGuide open={showGuide} onClose={game.closeGuide} />
-        <SettingsModal open={settingsOpen} onClose={closeSettings} />
+        <SettingsModal
+          open={settingsOpen}
+          onClose={closeSettings}
+          playerProfile={game.playerProfile}
+          onUpdatePlayerHandle={game.updatePlayerHandle}
+          cloudConfig={game.cloudConfig}
+          onSaveCloudConfig={game.saveCloudSettings}
+        />
       </Suspense>
 
       {!inGame ? (
@@ -203,7 +210,31 @@ export default function App() {
             }}
             winStreak={game.winStreak}
             armedStarters={game.armedStarters}
+            freeStarters={game.freeStarters}
             onToggleStarter={game.toggleStarter}
+            starChest={game.starChest}
+            canSpinToday={game.canSpinToday}
+            onClaimStarChest={game.claimStarChestReward}
+            onSpinWheel={game.spinLuckyWheel}
+            miniEvents={game.miniEvents}
+            starRaceStandings={game.starRaceStandings}
+            onStartStarRace={game.beginStarRace}
+            onClaimStarRace={game.claimRaceReward}
+            onStartLavaTrail={game.beginLavaTrail}
+            onClaimLavaTrail={game.claimLavaReward}
+            masterModeEnabled={game.masterModeEnabled}
+            onToggleMasterMode={game.toggleMasterMode}
+            masterCrowns={game.masterCrowns}
+            sharedCustomPuzzle={game.sharedCustomPuzzle}
+            onStartCustomPuzzle={(spec) => {
+              enterPlayFullscreen();
+              game.startCustomPuzzle(spec);
+            }}
+            onDismissSharedCustomPuzzle={game.dismissSharedCustomPuzzle}
+            cloudConnected={game.cloudConnected}
+            globalLeague={game.globalLeague}
+            globalBlitz={game.globalBlitz}
+            onRefreshGlobal={game.refreshGlobalBoard}
             league={game.league}
             leagueStandings={game.leagueStandings}
             onClaimLeagueReward={game.claimWeeklyLeagueReward}
@@ -264,6 +295,8 @@ export default function App() {
               bossHitNonce={game.bossHitNonce}
               bumpedGoals={game.bumpedGoals}
               winStreak={game.winStreak.streak}
+              fever={game.fever}
+              masterActive={mode === 'campaign' && game.masterModeEnabled && (game.bestStars[activeLevel.id] ?? 0) >= 1}
               companion={game.companion}
               companionSay={game.companionSay}
               powerCharge={game.powerCharge}
@@ -303,6 +336,7 @@ export default function App() {
                   shaking={game.shaking}
                   busy={busy}
                   cheering={phase === 'VICTORY'}
+                  feverActive={game.feverActive}
                   fxRef={game.fxRef}
                   onCellClick={game.clickCell}
                   onSwipeSwap={game.attemptSwap}
@@ -354,6 +388,8 @@ export default function App() {
             weeklyEnergy={game.endSnapshot.weeklyEnergy}
             puzzleEnergy={game.endSnapshot.puzzleEnergy}
             leaguePoints={game.endSnapshot.leaguePoints}
+            masterEnergy={game.endSnapshot.masterEnergy}
+            masterCleared={game.endSnapshot.masterCleared}
             winStreak={game.winStreak.streak}
             rescueCost={game.rescueCostNow}
             rescueEligible={game.rescueEligible}

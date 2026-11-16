@@ -1,15 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import { AchievementSaveState } from '../game/achievements';
 import {
+  FreeStarters,
   StarterId,
   STARTERS,
   starterSelectionCost,
   WinStreakState,
   winStreakSpecials,
 } from '../game/boosters';
+import { GlobalLeaderboardRow, LeaderboardBoard } from '../game/cloudSync';
+import { CustomPuzzleSpec } from '../game/customPuzzle';
 import { ANIMAL_SKINS, DailyChallenge, SEASONAL_SKINS, SKIN_SOURCE, getSkinMeta } from '../game/daily';
 import { DAILY_PUZZLE_REWARD_ENERGY, DailyPuzzleInstance } from '../game/dailyPuzzle';
 import { LeagueStandingRow, LeagueState } from '../game/league';
+import {
+  applyMasterMode,
+  canPlayMasterMode,
+  MASTER_FIRST_CLEAR_ENERGY,
+  MasterCrownsMap,
+} from '../game/masterMode';
+import {
+  MiniEventReward,
+  MiniEventsState,
+  RaceRow,
+} from '../game/miniEvents';
+import {
+  readyChestCount,
+  STAR_CHEST_GOAL,
+  StarChestReward,
+  StarChestState,
+  WheelSlice,
+} from '../game/starChest';
 import {
   CAMPAIGN_CHAPTER_COUNT,
   DIFFICULTY_META,
@@ -32,6 +53,8 @@ import { PassState } from '../game/seasonPass';
 import { Challenge } from '../game/challenge';
 import { CollectionModal } from './CollectionModal';
 import { HUB_TABS, HubModal, HubTab } from './HubModal';
+import { LuckyWheelModal } from './LuckyWheelModal';
+import { PuzzleEditorModal } from './PuzzleEditorModal';
 import { StoryModal } from './StoryModal';
 import { IslandState, totalStars } from '../game/island';
 import { Mission, MissionState, missionsDone } from '../game/missions';
@@ -106,7 +129,28 @@ interface TitleScreenProps {
   onStartDailyPuzzle: () => void;
   winStreak: WinStreakState;
   armedStarters: StarterId[];
+  freeStarters: FreeStarters;
   onToggleStarter: (id: StarterId) => void;
+  starChest: StarChestState;
+  canSpinToday: boolean;
+  onClaimStarChest: () => StarChestReward | null;
+  onSpinWheel: () => { sliceIndex: number; slice: WheelSlice } | null;
+  miniEvents: MiniEventsState;
+  starRaceStandings: RaceRow[] | null;
+  onStartStarRace: () => void;
+  onClaimStarRace: () => MiniEventReward | null;
+  onStartLavaTrail: () => void;
+  onClaimLavaTrail: () => MiniEventReward | null;
+  masterModeEnabled: boolean;
+  onToggleMasterMode: () => void;
+  masterCrowns: MasterCrownsMap;
+  sharedCustomPuzzle: CustomPuzzleSpec | null;
+  onStartCustomPuzzle: (spec: CustomPuzzleSpec) => void;
+  onDismissSharedCustomPuzzle: () => void;
+  cloudConnected: boolean;
+  globalLeague: GlobalLeaderboardRow[] | null;
+  globalBlitz: GlobalLeaderboardRow[] | null;
+  onRefreshGlobal: (board: LeaderboardBoard) => void;
   league: LeagueState;
   leagueStandings: LeagueStandingRow[];
   onClaimLeagueReward: () => void;
@@ -395,7 +439,28 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   onStartDailyPuzzle,
   winStreak,
   armedStarters,
+  freeStarters,
   onToggleStarter,
+  starChest,
+  canSpinToday,
+  onClaimStarChest,
+  onSpinWheel,
+  miniEvents,
+  starRaceStandings,
+  onStartStarRace,
+  onClaimStarRace,
+  onStartLavaTrail,
+  onClaimLavaTrail,
+  masterModeEnabled,
+  onToggleMasterMode,
+  masterCrowns,
+  sharedCustomPuzzle,
+  onStartCustomPuzzle,
+  onDismissSharedCustomPuzzle,
+  cloudConnected,
+  globalLeague,
+  globalBlitz,
+  onRefreshGlobal,
   league,
   leagueStandings,
   onClaimLeagueReward,
@@ -424,6 +489,9 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   // Phones: the hunt, skins and achievements are folded away until asked for.
   const [moreOpen, setMoreOpen] = useState(false);
   const [collectionOpen, setCollectionOpen] = useState(false);
+  const [wheelOpen, setWheelOpen] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [chestToast, setChestToast] = useState<string | null>(null);
   const [hubTab, setHubTab] = useState<HubTab | null>(null);
   const { canInstall, install } = useInstallPrompt();
   // Tick once a second while a life is on its way back.
@@ -453,7 +521,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (achievementsOpen || collectionOpen || hubTab || storyPage || guideOpen) return;
+      if (achievementsOpen || collectionOpen || wheelOpen || editorOpen || hubTab || storyPage || guideOpen) return;
       if (e.key === 'Enter' || e.key === ' ') {
         const activeTag = document.activeElement?.tagName;
         if (activeTag === 'BUTTON') return;
@@ -463,9 +531,13 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [achievementsOpen, collectionOpen, guideOpen, hubTab, onStart, storyPage]);
+  }, [achievementsOpen, collectionOpen, editorOpen, guideOpen, hubTab, onStart, storyPage, wheelOpen]);
 
-  const currentLevel = getCampaignLevel(selectedLevelIdx);
+  const baseLevel = getCampaignLevel(selectedLevelIdx);
+  const masterEligible = canPlayMasterMode(bestStars, baseLevel.id);
+  const currentLevel =
+    masterModeEnabled && masterEligible ? applyMasterMode(baseLevel) : baseLevel;
+  const chestReady = readyChestCount(starChest) > 0;
   const featuredSkinMeta = getSkinMeta(dailyChallenge.featuredSkin);
   const difficultyMeta = DIFFICULTY_META[currentLevel.difficulty ?? 'medium'];
   const starThresholds = getStarThresholds(currentLevel.moves);
@@ -675,6 +747,112 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                 </button>
               )}
 
+              {/* Shared Custom Puzzle banner from ?pussel= URL */}
+              {sharedCustomPuzzle && (
+                <div
+                  data-testid="shared-puzzle-banner"
+                  className="mb-2.5 flex flex-wrap items-center justify-between gap-2 border-[3px] border-[#111111] bg-[#27B8FF] px-3 py-2 text-[#111111]"
+                >
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-extrabold uppercase tracking-wider">
+                      {t('Delat pussel från en vän')}
+                    </div>
+                    <div className="truncate font-display text-base leading-tight">
+                      {sharedCustomPuzzle.heading} · {t('{n} drag', { n: sharedCustomPuzzle.moves })}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      data-testid="play-shared-puzzle-btn"
+                      onClick={() => onStartCustomPuzzle(sharedCustomPuzzle)}
+                      className="ui-btn ui-btn-green px-3 py-1 text-xs"
+                    >
+                      {t('Spela pussel')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onDismissSharedCustomPuzzle}
+                      className="ui-btn px-2 py-1 text-xs"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Quick rewards & creator bar: Star Chest · Lucky Wheel · Puzzle Builder */}
+              <div className="mb-2 grid grid-cols-3 gap-1.5">
+                <button
+                  type="button"
+                  data-testid="star-chest-btn"
+                  onClick={() => {
+                    if (chestReady) {
+                      const reward = onClaimStarChest();
+                      if (reward) {
+                        const starterMeta = STARTERS.find((s) => s.id === reward.starter);
+                        setChestToast(
+                          t('Stjärnkista öppnad! +{n} energi + gratis {booster}', {
+                            n: reward.energy,
+                            booster: t(starterMeta?.nameSv ?? 'Nova'),
+                          })
+                        );
+                        window.setTimeout(() => setChestToast(null), 4000);
+                      }
+                    } else {
+                      setChestToast(
+                        t('Samla {n} stjärnor till för att öppna Stjärnkistan!', {
+                          n: Math.max(0, STAR_CHEST_GOAL - starChest.stars),
+                        })
+                      );
+                      window.setTimeout(() => setChestToast(null), 2600);
+                    }
+                  }}
+                  className={`ui-btn relative px-1.5 py-1 text-[11px] ${
+                    chestReady ? 'ui-btn-yellow animate-pulse' : ''
+                  }`}
+                >
+                  <UiIcon name="star" className="w-3.5 h-3.5 text-[#E09A00]" />
+                  <span className="truncate">
+                    {chestReady
+                      ? t('Öppna kista!')
+                      : `${Math.min(STAR_CHEST_GOAL, starChest.stars)}/${STAR_CHEST_GOAL}`}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  data-testid="open-wheel-btn"
+                  onClick={() => setWheelOpen(true)}
+                  className={`ui-btn relative px-1.5 py-1 text-[11px] ${
+                    canSpinToday ? 'ui-btn-yellow' : ''
+                  }`}
+                >
+                  <span className="truncate">{t('Lyckohjul')}</span>
+                  {canSpinToday && (
+                    <span className="absolute -right-1 -top-1.5 border-2 border-[#111111] bg-[#FF2E4D] px-1 text-[9px] font-extrabold text-white">
+                      !
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  data-testid="open-editor-btn"
+                  onClick={() => setEditorOpen(true)}
+                  className="ui-btn px-1.5 py-1 text-[11px]"
+                >
+                  <span className="truncate">{t('Bygg bana')}</span>
+                </button>
+              </div>
+              {chestToast && (
+                <div
+                  role="status"
+                  data-testid="star-chest-toast"
+                  className="mb-2 rounded border-2 border-[#111111] bg-[#A6EC98] px-2.5 py-1 text-center text-xs font-extrabold text-[#111111]"
+                >
+                  {chestToast}
+                </div>
+              )}
+
               {/* Mode switch */}
               <div role="tablist" aria-label={t('Spelläge')} className="flex items-stretch gap-1.5">
                 {MODE_TABS.map((tab) => {
@@ -754,6 +932,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                     highestUnlockedIdx={highestUnlockedIdx}
                     selectedLevelIdx={selectedLevelIdx}
                     bestStars={bestStars}
+                    masterCrowns={masterCrowns}
                     onSelectLevel={onSelectLevel}
                     onChapterInView={setChapterId}
                   />
@@ -792,6 +971,30 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                           three: starThresholds.three,
                         })}
                       </div>
+                      {masterEligible && (
+                        <div className="mt-1.5 flex items-center justify-between gap-2 rounded border-2 border-[#111111] bg-[#FFF2D6] px-2 py-1">
+                          <div className="min-w-0 text-[10px] font-extrabold leading-tight">
+                            <div className="text-[#B84A00]">
+                              {masterCrowns[baseLevel.id]
+                                ? t('Mästarkrona tagen · 2× ligapoäng')
+                                : t('Mästarläge: färre drag · +{n} energi första vinsten', {
+                                    n: MASTER_FIRST_CLEAR_ENERGY,
+                                  })}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            data-testid="master-mode-toggle"
+                            aria-pressed={masterModeEnabled}
+                            onClick={onToggleMasterMode}
+                            className={`ui-btn shrink-0 px-2 py-0.5 text-[10px] ${
+                              masterModeEnabled ? 'ui-btn-yellow' : ''
+                            }`}
+                          >
+                            {masterModeEnabled ? t('Mästare PÅ') : t('Mästarläge')}
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {/* Win streak bonus & pre-game starter boosters */}
@@ -824,9 +1027,13 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                         <div className="grid grid-cols-3 gap-1.5">
                           {STARTERS.map((starter) => {
                             const armed = armedStarters.includes(starter.id);
+                            const freeCount = freeStarters[starter.id] ?? 0;
                             const nextCost = armed
-                              ? starterSelectionCost(armedStarters.filter((id) => id !== starter.id))
-                              : starterSelectionCost([...armedStarters, starter.id]);
+                              ? starterSelectionCost(
+                                  armedStarters.filter((id) => id !== starter.id),
+                                  freeStarters
+                                )
+                              : starterSelectionCost([...armedStarters, starter.id], freeStarters);
                             const canAfford = armed || nextCost <= bonusEnergyBank;
                             return (
                               <button
@@ -843,7 +1050,11 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                               >
                                 <span className="truncate">{t(starter.nameSv)}</span>
                                 <span className="font-mono-num text-[10px] font-extrabold">
-                                  {armed ? '✓' : starter.cost}
+                                  {armed
+                                    ? '✓'
+                                    : freeCount > 0
+                                    ? `${t('Gratis')} ×${freeCount}`
+                                    : starter.cost}
                                 </span>
                               </button>
                             );
@@ -1194,8 +1405,8 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               </div>
               </div>
 
-              {/* Missions, league, companion, island, statistics and the album */}
-              <div className="order-1 mt-2.5 grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+              {/* Missions, events, league, companion, island, statistics and the album */}
+              <div className="order-1 mt-2.5 grid grid-cols-4 sm:grid-cols-7 gap-1.5">
                 {HUB_TABS.map((entry) => (
                   <button
                     key={entry.id}
@@ -1208,6 +1419,11 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                     {entry.id === 'missions' && (
                       <span className="absolute -right-1.5 -top-2 border-2 border-[#111111] bg-[#F2CD1C] px-1 font-mono-num text-[10px] font-extrabold leading-tight">
                         {missionsDone(missionState, missions)}/3
+                      </span>
+                    )}
+                    {entry.id === 'events' && (miniEvents.race || miniEvents.lava.active) && (
+                      <span className="absolute -right-1.5 -top-2 border-2 border-[#111111] bg-[#FF8A1E] px-1 font-mono-num text-[10px] font-extrabold leading-tight text-[#111111]">
+                        ★
                       </span>
                     )}
                     {entry.id === 'league' && league.pendingReward && (
@@ -1302,6 +1518,31 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
         league={league}
         leagueStandings={leagueStandings}
         onClaimLeagueReward={onClaimLeagueReward}
+        miniEvents={miniEvents}
+        starRaceStandings={starRaceStandings}
+        onStartStarRace={onStartStarRace}
+        onClaimStarRace={onClaimStarRace}
+        onStartLavaTrail={onStartLavaTrail}
+        onClaimLavaTrail={onClaimLavaTrail}
+        cloudConnected={cloudConnected}
+        globalLeague={globalLeague}
+        globalBlitz={globalBlitz}
+        onRefreshGlobal={onRefreshGlobal}
+      />
+      <LuckyWheelModal
+        open={wheelOpen}
+        canSpin={canSpinToday}
+        onSpin={onSpinWheel}
+        onClose={() => setWheelOpen(false)}
+      />
+      <PuzzleEditorModal
+        open={editorOpen}
+        skin={equippedSkin}
+        onPlay={(spec) => {
+          setEditorOpen(false);
+          onStartCustomPuzzle(spec);
+        }}
+        onClose={() => setEditorOpen(false)}
       />
       <StoryModal page={storyPage} skin={equippedSkin} onClose={onCloseStory} />
       <CollectionModal

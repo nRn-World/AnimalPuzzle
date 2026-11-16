@@ -33,6 +33,7 @@ class SoundEngine {
 
   private musicWanted = false;
   private musicTheme: MusicThemeId = 'skargard';
+  private feverMode = false;
   private musicTimer: number | null = null;
   private nextBarTime = 0;
   private barIndex = 0;
@@ -197,16 +198,61 @@ class SoundEngine {
     }
   }
 
+  /** Switches the music tempo up during Fever Mode (×2 score). */
+  setFeverMode(active: boolean): void {
+    this.feverMode = active;
+  }
+
+  /** Bright ascending golden arpeggio when Fever Mode ignites. */
+  playFeverTrigger(): void {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const notes = [523.25, 659.25, 783.99, 1046.5, 1318.51];
+    notes.forEach((freq, i) => {
+      const start = now + i * 0.045;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, start);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.linearRampToValueAtTime(0.14, start + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.34);
+      osc.connect(gain);
+      gain.connect(this.sfxOut(ctx));
+      osc.start(start);
+      osc.stop(start + 0.36);
+    });
+  }
+
   private scheduleMusic(): void {
     const ctx = this.ctx;
     if (!ctx || ctx.state !== 'running') return;
     // After a long pause, skip ahead instead of stacking missed bars.
     if (this.nextBarTime < ctx.currentTime) this.nextBarTime = ctx.currentTime + 0.1;
+    const tempoScale = this.feverMode ? 0.78 : 1;
     while (this.nextBarTime < ctx.currentTime + MUSIC_LOOKAHEAD_SECONDS) {
       const bar = planMusicBar(this.barIndex, Math.random, MUSIC_THEMES[this.musicTheme]);
-      for (const note of bar.pad) this.playPadNote(ctx, note, this.nextBarTime);
-      for (const note of bar.melody) this.playMelodyNote(ctx, note, this.nextBarTime);
-      this.nextBarTime += MUSIC_BAR_SECONDS;
+      for (const note of bar.pad) {
+        this.playPadNote(
+          ctx,
+          { ...note, start: note.start * tempoScale, duration: note.duration * tempoScale },
+          this.nextBarTime
+        );
+      }
+      for (const note of bar.melody) {
+        this.playMelodyNote(
+          ctx,
+          {
+            ...note,
+            start: note.start * tempoScale,
+            duration: note.duration * tempoScale,
+            freq: this.feverMode ? note.freq * 1.12246 : note.freq,
+          },
+          this.nextBarTime
+        );
+      }
+      this.nextBarTime += MUSIC_BAR_SECONDS * tempoScale;
       this.barIndex += 1;
     }
   }

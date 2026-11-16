@@ -44,6 +44,8 @@ interface GameBoardProps {
   onBoardTilt?: (nx: number, ny: number) => void;
   /** The level is won: every animal jumps for joy. */
   cheering?: boolean;
+  /** Fever (Frenzy) mode active: golden pulsing border & aura. */
+  feverActive?: boolean;
   /** Pixel width of the board, measured from the available viewport space. */
   size?: number;
   /** Pixel height; defaults to the width (square board). */
@@ -160,6 +162,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   size,
   height,
   cheering = false,
+  feverActive = false,
 }) => {
   // A little life on the board: now and then a random animal hops in place.
   const [hopId, setHopId] = useState<number | null>(null);
@@ -373,10 +376,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         onPointerLeave={handleBoardPointerLeave}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
+        data-fever={feverActive ? 'true' : undefined}
         style={size ? { width: size, height: height ?? size } : undefined}
         className={`preserve-3d relative p-1 sm:p-2 lg:p-2.5 rounded-lg bg-[#0B1030]/75 backdrop-blur-[2px] border-[3px] sm:border-4 ${
           activeTool
             ? 'border-[#FF2E4D] shadow-[4px_4px_0_#FF2E4D]'
+            : feverActive
+            ? 'ui-fever-board border-[#F2CD1C]'
             : 'border-[#C9CED6] shadow-[4px_4px_0_#111111]'
         } select-none ${
           shaking ? 'animate-board-shake' : ''

@@ -1797,4 +1797,196 @@ export const de: Record<string, string> = {
     "Siegesbonus! Übrige Züge werden zu Explosionen!",
   "Du":
     "Du",
+  "Eget pussel":
+    "Eigenes Rätsel",
+  "Mästare":
+    "Meister",
+  "FEBER ×2 · {n} drag":
+    "FIEBER ×2 · {n} Züge",
+  "Feberläge":
+    "Fiebermodus",
+  "Eget pussel avklarat":
+    "Eigenes Rätsel gelöst",
+  "Mästarläge · Nivå {n} avklarad":
+    "Meistermodus · Level {n} geschafft",
+  "Mästarkrona upplåst! +{n} bonusenergi":
+    "Meisterkrone freigeschaltet! +{n} Bonusenergie",
+  "Mästarläge avklarat · 2× ligapoäng":
+    "Meistermodus geschafft · 2× Ligapunkte",
+  "Dela pussellänk":
+    "Rätsel-Link teilen",
+  "Snabbevent · 30 min":
+    "Kurzevent · 30 Min.",
+  "Stjärnracet":
+    "Sternenrennen",
+  "Avslutat":
+    "Beendet",
+  "Först till {n} stjärnor mot 4 rivaler! 1:a plats ger +{e} energi och en gratis Prisma.":
+    "Erreiche als Erster {n} Sterne gegen 4 Rivalen! Platz 1 bringt +{e} Energie und ein Gratis-Prisma.",
+  "Slutförda race: {n}":
+    "Beendete Rennen: {n}",
+  "Samla stjärnor i kampanj, daglig eller veckans nivå":
+    "Sammle Sterne in Kampagne, Tages- oder Wochenleveln",
+  "Starta Stjärnracet":
+    "Sternenrennen starten",
+  "Stjärnracet klart! +{n} bonusenergi":
+    "Sternenrennen geschafft! +{n} Bonusenergie",
+  "Stjärnracet avslutat – starta ett nytt race!":
+    "Sternenrennen vorbei – starte ein neues Rennen!",
+  "Hämta race-belöning":
+    "Renn-Belohnung holen",
+  "Överlevnad · {n} vinster i rad":
+    "Überleben · {n} Siege in Folge",
+  "Lavastigen":
+    "Lavapfad",
+  "{n} klara":
+    "{n} geschafft",
+  "Vinn {n} kampanjnivåer i rad utan att förlora. Stora skatten ger +{e} energi + 2 gratis startboosters!":
+    "Gewinne {n} Kampagnenlevel in Folge ohne Niederlage. Der große Schatz bringt +{e} Energie + 2 Gratis-Startbooster!",
+  "Lavastigen besegrad! +{n} bonusenergi och 2 gratis boosters!":
+    "Lavapfad bezwungen! +{n} Bonusenergie und 2 Gratis-Booster!",
+  "Hämta lavaskatten (+{n} energi)":
+    "Lavaschatz holen (+{n} Energie)",
+  "Kliv ut på Lavastigen":
+    "Lavapfad betreten",
+  "Pågår: {wins}/{target} vinster – förlora inte!":
+    "Läuft: {wins}/{target} Siege – nicht verlieren!",
+  "Min grupp":
+    "Meine Gruppe",
+  "Global Liga":
+    "Globale Liga",
+  "Global Tid":
+    "Globale Zeit",
+  "Koppla Supabase i Inställningar → Molnsparning för att se och tävla på den globala topp 20-listan.":
+    "Verbinde Supabase unter Einstellungen → Cloud-Speicher, um in der globalen Top 20 anzutreten.",
+  "Laddar global topplista...":
+    "Globale Bestenliste wird geladen...",
+  "Uppdatera":
+    "Aktualisieren",
+  "Inga globala poäng den här veckan än – bli den första på listan!":
+    "Diese Woche noch keine globalen Punkte – sei der Erste!",
+  "Event":
+    "Events",
+  "Dagens lyckohjul":
+    "Tägliches Glücksrad",
+  "Du vann: {prize}!":
+    "Du gewinnst: {prize}!",
+  "Ett gratis snurr varje dag – vinn bonusenergi, gratis boosters eller fulla liv!":
+    "Ein Gratis-Dreh pro Tag – gewinne Bonusenergie, Gratis-Booster oder volle Leben!",
+  "Dagens snurr är använt. Kom tillbaka imorgon!":
+    "Heutiger Dreh verbraucht. Komm morgen wieder!",
+  "Snurrar...":
+    "Dreht...",
+  "Snurra gratis!":
+    "Gratis drehen!",
+  "Kom tillbaka imorgon":
+    "Komm morgen wieder",
+  "Banlänk kopierad! Skicka den till en vän.":
+    "Level-Link kopiert! Schick ihn an einen Freund.",
+  "Kunde inte kopiera länken automatiskt.":
+    "Link konnte nicht automatisch kopiert werden.",
+  "Pusselbyggare":
+    "Rätsel-Editor",
+  "Bannamn":
+    "Levelname",
+  "Drag":
+    "Züge",
+  "Antal mål":
+    "Zielanzahl",
+  "Måltyp":
+    "Zieltyp",
+  "Testspela bana":
+    "Level testen",
+  "Kopiera delningslänk":
+    "Teilen-Link kopieren",
+  "Återställ mall":
+    "Vorlage zurücksetzen",
+  "Stråle ↔":
+    "Strahl ↔",
+  "Stråle ↕":
+    "Strahl ↕",
+  "Sudda":
+    "Löschen",
+  "Mästarkrona":
+    "Meisterkrone",
+  "Molnsparning & Spelarnamn":
+    "Cloud-Speicher & Spielername",
+  "Ditt spelarnamn":
+    "Dein Spielername",
+  "T.ex. Räven99":
+    "Z. B. Fuchs99",
+  "Spelarnamn sparat!":
+    "Spielername gespeichert!",
+  "Spara":
+    "Speichern",
+  "Supabase-moln (valfritt)":
+    "Supabase-Cloud (optional)",
+  "Kopplad":
+    "Verbunden",
+  "Lokal":
+    "Lokal",
+  "Supabase Anon Key":
+    "Supabase Anon Key",
+  "Molninställningar sparade!":
+    "Cloud-Einstellungen gespeichert!",
+  "Anslut":
+    "Verbinden",
+  "Sparfil uppladdad till molnet!":
+    "Spielstand in die Cloud hochgeladen!",
+  "Kunde inte spara till molnet – kontrollera URL och nyckel.":
+    "Cloud-Upload fehlgeschlagen – prüfe URL und Schlüssel.",
+  "Spara moln":
+    "Cloud sichern",
+  "Ingen molnsparning hittades för detta ID.":
+    "Kein Cloud-Spielstand für diese ID gefunden.",
+  "Hämta moln":
+    "Cloud laden",
+  "Delat pussel från en vän":
+    "Geteiltes Rätsel eines Freundes",
+  "{n} drag":
+    "{n} Züge",
+  "Stjärnkista öppnad! +{n} energi + gratis {booster}":
+    "Sternentruhe geöffnet! +{n} Energie + Gratis-{booster}",
+  "Samla {n} stjärnor till för att öppna Stjärnkistan!":
+    "Sammle noch {n} Sterne für die Sternentruhe!",
+  "Öppna kista!":
+    "Truhe öffnen!",
+  "Lyckohjul":
+    "Glücksrad",
+  "Bygg bana":
+    "Level bauen",
+  "Mästarkrona tagen · 2× ligapoäng":
+    "Meisterkrone geholt · 2× Ligapunkte",
+  "Mästarläge: färre drag · +{n} energi första vinsten":
+    "Meistermodus: weniger Züge · +{n} Energie beim 1. Sieg",
+  "Mästare PÅ":
+    "Meister AN",
+  "Mästarläge":
+    "Meistermodus",
+  "Gratis":
+    "Gratis",
+  "Egen taktikbana":
+    "Eigenes Taktiklevel",
+  "AnimalPuzzle · Egen bana: {name}":
+    "AnimalPuzzle · Eigenes Level: {name}",
+  "+25 energi":
+    "+25 Energie",
+  "Gratis Stråle":
+    "Gratis Strahl",
+  "+40 energi":
+    "+40 Energie",
+  "Fulla liv!":
+    "Volle Leben!",
+  "+60 energi":
+    "+60 Energie",
+  "Gratis Nova":
+    "Gratis Nova",
+  "Gratis Prisma":
+    "Gratis Prisma",
+  "+100 energi!":
+    "+100 Energie!",
+  "Mästarläge aktivt · 2× ligapoäng!":
+    "Meistermodus aktiv · 2× Ligapunkte!",
+  "FEBERLÄGE! ×2 poäng i {n} drag!":
+    "FIEBERMODUS! ×2 Punkte für {n} Züge!",
 };

@@ -1796,4 +1796,196 @@ export const en: Record<string, string> = {
     "Victory bonus! Extra moves turn into blasts!",
   "Du":
     "You",
+  "Eget pussel":
+    "Custom puzzle",
+  "Mästare":
+    "Master",
+  "FEBER ×2 · {n} drag":
+    "FEVER ×2 · {n} moves",
+  "Feberläge":
+    "Fever mode",
+  "Eget pussel avklarat":
+    "Custom puzzle cleared",
+  "Mästarläge · Nivå {n} avklarad":
+    "Master Mode · Level {n} cleared",
+  "Mästarkrona upplåst! +{n} bonusenergi":
+    "Master Crown unlocked! +{n} bonus energy",
+  "Mästarläge avklarat · 2× ligapoäng":
+    "Master Mode cleared · 2× league points",
+  "Dela pussellänk":
+    "Share puzzle link",
+  "Snabbevent · 30 min":
+    "Quick event · 30 min",
+  "Stjärnracet":
+    "Star Race",
+  "Avslutat":
+    "Finished",
+  "Först till {n} stjärnor mot 4 rivaler! 1:a plats ger +{e} energi och en gratis Prisma.":
+    "First to {n} stars against 4 rivals! 1st place wins +{e} energy and a free Prism.",
+  "Slutförda race: {n}":
+    "Races completed: {n}",
+  "Samla stjärnor i kampanj, daglig eller veckans nivå":
+    "Earn stars in campaign, daily, or weekly levels",
+  "Starta Stjärnracet":
+    "Start Star Race",
+  "Stjärnracet klart! +{n} bonusenergi":
+    "Star Race finished! +{n} bonus energy",
+  "Stjärnracet avslutat – starta ett nytt race!":
+    "Star Race ended – start a new race!",
+  "Hämta race-belöning":
+    "Claim race reward",
+  "Överlevnad · {n} vinster i rad":
+    "Survival · {n} wins in a row",
+  "Lavastigen":
+    "Lava Trail",
+  "{n} klara":
+    "{n} cleared",
+  "Vinn {n} kampanjnivåer i rad utan att förlora. Stora skatten ger +{e} energi + 2 gratis startboosters!":
+    "Win {n} campaign levels in a row without losing. The grand chest gives +{e} energy + 2 free starter boosters!",
+  "Lavastigen besegrad! +{n} bonusenergi och 2 gratis boosters!":
+    "Lava Trail conquered! +{n} bonus energy and 2 free boosters!",
+  "Hämta lavaskatten (+{n} energi)":
+    "Claim lava treasure (+{n} energy)",
+  "Kliv ut på Lavastigen":
+    "Step onto Lava Trail",
+  "Pågår: {wins}/{target} vinster – förlora inte!":
+    "In progress: {wins}/{target} wins – don't lose!",
+  "Min grupp":
+    "My group",
+  "Global Liga":
+    "Global League",
+  "Global Tid":
+    "Global Blitz",
+  "Koppla Supabase i Inställningar → Molnsparning för att se och tävla på den globala topp 20-listan.":
+    "Connect Supabase in Settings → Cloud Save to view and compete on the global Top 20 leaderboard.",
+  "Laddar global topplista...":
+    "Loading global leaderboard...",
+  "Uppdatera":
+    "Refresh",
+  "Inga globala poäng den här veckan än – bli den första på listan!":
+    "No global scores this week yet – be the first on the board!",
+  "Event":
+    "Events",
+  "Dagens lyckohjul":
+    "Daily Lucky Wheel",
+  "Du vann: {prize}!":
+    "You won: {prize}!",
+  "Ett gratis snurr varje dag – vinn bonusenergi, gratis boosters eller fulla liv!":
+    "One free spin every day – win bonus energy, free boosters, or full lives!",
+  "Dagens snurr är använt. Kom tillbaka imorgon!":
+    "Today's spin is used. Come back tomorrow!",
+  "Snurrar...":
+    "Spinning...",
+  "Snurra gratis!":
+    "Spin for free!",
+  "Kom tillbaka imorgon":
+    "Come back tomorrow",
+  "Banlänk kopierad! Skicka den till en vän.":
+    "Level link copied! Send it to a friend.",
+  "Kunde inte kopiera länken automatiskt.":
+    "Could not copy the link automatically.",
+  "Pusselbyggare":
+    "Puzzle Builder",
+  "Bannamn":
+    "Level name",
+  "Drag":
+    "Moves",
+  "Antal mål":
+    "Goal count",
+  "Måltyp":
+    "Goal type",
+  "Testspela bana":
+    "Test-play level",
+  "Kopiera delningslänk":
+    "Copy share link",
+  "Återställ mall":
+    "Reset template",
+  "Stråle ↔":
+    "Beam ↔",
+  "Stråle ↕":
+    "Beam ↕",
+  "Sudda":
+    "Erase",
+  "Mästarkrona":
+    "Master Crown",
+  "Molnsparning & Spelarnamn":
+    "Cloud Save & Player Name",
+  "Ditt spelarnamn":
+    "Your player name",
+  "T.ex. Räven99":
+    "E.g. Fox99",
+  "Spelarnamn sparat!":
+    "Player name saved!",
+  "Spara":
+    "Save",
+  "Supabase-moln (valfritt)":
+    "Supabase Cloud (optional)",
+  "Kopplad":
+    "Connected",
+  "Lokal":
+    "Local",
+  "Supabase Anon Key":
+    "Supabase Anon Key",
+  "Molninställningar sparade!":
+    "Cloud settings saved!",
+  "Anslut":
+    "Connect",
+  "Sparfil uppladdad till molnet!":
+    "Save uploaded to the cloud!",
+  "Kunde inte spara till molnet – kontrollera URL och nyckel.":
+    "Could not upload to cloud – check URL and key.",
+  "Spara moln":
+    "Upload cloud",
+  "Ingen molnsparning hittades för detta ID.":
+    "No cloud save found for this ID.",
+  "Hämta moln":
+    "Load cloud",
+  "Delat pussel från en vän":
+    "Shared puzzle from a friend",
+  "{n} drag":
+    "{n} moves",
+  "Stjärnkista öppnad! +{n} energi + gratis {booster}":
+    "Star Chest opened! +{n} energy + free {booster}",
+  "Samla {n} stjärnor till för att öppna Stjärnkistan!":
+    "Collect {n} more stars to open the Star Chest!",
+  "Öppna kista!":
+    "Open chest!",
+  "Lyckohjul":
+    "Lucky Wheel",
+  "Bygg bana":
+    "Build level",
+  "Mästarkrona tagen · 2× ligapoäng":
+    "Master Crown earned · 2× league points",
+  "Mästarläge: färre drag · +{n} energi första vinsten":
+    "Master Mode: fewer moves · +{n} energy first win",
+  "Mästare PÅ":
+    "Master ON",
+  "Mästarläge":
+    "Master Mode",
+  "Gratis":
+    "Free",
+  "Egen taktikbana":
+    "Custom tactical level",
+  "AnimalPuzzle · Egen bana: {name}":
+    "AnimalPuzzle · Custom level: {name}",
+  "+25 energi":
+    "+25 energy",
+  "Gratis Stråle":
+    "Free Beam",
+  "+40 energi":
+    "+40 energy",
+  "Fulla liv!":
+    "Full lives!",
+  "+60 energi":
+    "+60 energy",
+  "Gratis Nova":
+    "Free Nova",
+  "Gratis Prisma":
+    "Free Prism",
+  "+100 energi!":
+    "+100 energy!",
+  "Mästarläge aktivt · 2× ligapoäng!":
+    "Master Mode active · 2× league points!",
+  "FEBERLÄGE! ×2 poäng i {n} drag!":
+    "FEVER MODE! ×2 score for {n} moves!",
 };
