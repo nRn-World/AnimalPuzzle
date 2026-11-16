@@ -1604,4 +1604,196 @@ export const en: Record<string, string> = {
     "Show less",
   "Veckans jakt, djur-gäng och utmärkelser":
     "Weekly hunt, animal crew and achievements",
+  "Dagens pussel":
+    "Daily puzzle",
+  "Svit {n}":
+    "Streak {n}",
+  "Attack om {n}":
+    "Attack in {n}",
+  "Dagens pussel avklarat":
+    "Daily puzzle solved",
+  "Pusslet löst! +{n} bonusenergi":
+    "Puzzle solved! +{n} bonus energy",
+  "Löst igen – dagens pusselpris är redan hämtat":
+    "Solved again – today's puzzle reward is already claimed",
+  "+{n} ligapoäng":
+    "+{n} league points",
+  "Vinstsvit: {n} i rad":
+    "Win streak: {n} in a row",
+  "Rädda omgången (+5 drag · {cost} energi)":
+    "Save the run (+5 moves · {cost} energy)",
+  "Behåller din vinstsvit ({n}) och sparar ditt liv!":
+    "Keeps your win streak ({n}) and saves your life!",
+  "Plats #{n}":
+    "Rank #{n}",
+  "{n} pokaler":
+    "{n} trophies",
+  "Tjäna ligapoäng från stjärnor, dagliga pussel och utmaningar. Topp {n} går upp nästa vecka!":
+    "Earn league points from stars, daily puzzles and challenges. Top {n} promote next week!",
+  "Du är i högsta ligan! Håll dig kvar i toppen för största veckobelöningen.":
+    "You are in the top league! Stay near the top for the biggest weekly reward.",
+  "Uppflyttad till {tier}! Plats #{rank}":
+    "Promoted to {tier}! Rank #{rank}",
+  "Förra veckans resultat: Plats #{rank}":
+    "Last week's finish: Rank #{rank}",
+  "Hämta +{n} energi":
+    "Claim +{n} energy",
+  "{n} p":
+    "{n} pts",
+  "Liga":
+    "League",
+  "Jag förstår!":
+    "Got it!",
+  "Snabbsynk mellan enheter":
+    "Quick sync across devices",
+  "Synkkoden är kopierad! Klistra in den på din andra enhet.":
+    "Sync code copied! Paste it on your other device.",
+  "Synkkod skapad – kopiera texten i rutan.":
+    "Sync code created – copy the text in the box.",
+  "Kopiera synkkod":
+    "Copy sync code",
+  "Klistra in AP1:-kod här":
+    "Paste AP1: code here",
+  "Ogiltig synkkod – kontrollera att hela koden kopierades.":
+    "Invalid sync code – make sure the full code was copied.",
+  "Synkkoden kunde inte läsas in.":
+    "Could not load the sync code.",
+  "Läs in":
+    "Import",
+  "Vinstsvit: 0":
+    "Win streak: 0",
+  "+{n} gratis startspecialer":
+    "+{n} free starting specials",
+  "Vinn i rad för gratis startspecialer":
+    "Win in a row for free starting specials",
+  "Startboosters (valfritt)":
+    "Starter boosters (optional)",
+  "Bank: {n}":
+    "Energy bank: {n}",
+  "Dagens taktikpussel":
+    "Daily tactical puzzle",
+  "Löst idag":
+    "Solved today",
+  "Klara på {moves} drag · ingen slump":
+    "Solve in {moves} moves · zero luck",
+  "Spela pussel":
+    "Play puzzle",
+  "Stråle":
+    "Beam",
+  "Börjar nivån med en slumpmässig stråle på brädet.":
+    "Starts the level with a random Beam on the board.",
+  "Börjar nivån med en 3×3-Nova färdig på brädet.":
+    "Starts the level with a 3×3 Nova ready on the board.",
+  "Börjar nivån med en Prisma som rensar en hel färg.":
+    "Starts the level with a Prism that clears an entire colour.",
+  "Korseld":
+    "Crossfire",
+  "Kombinera två strålar i mitten för att rensa hela korset av is!":
+    "Combine two beams in the centre to clear the whole cross of ice!",
+  "Tina is":
+    "Melt ice",
+  "Supernovavalvet":
+    "Supernova Vault",
+  "Slå ihop två Novor för en 5×5-explosion mitt i isfästningen!":
+    "Merge two Novas for a 5×5 blast right in the ice fortress!",
+  "Äggexpressen":
+    "Egg Express",
+  "Rensa kolumnen under guldäggen med en lodrät stråle!":
+    "Clear the column beneath the golden eggs with a vertical beam!",
+  "Samla ägg":
+    "Collect eggs",
+  "Kedjebrytaren":
+    "Chain Breaker",
+  "Skapa en stråle eller kombinera specialbrickor för att krossa alla kedjor i ett drag!":
+    "Combine specials to smash every chain in a single move!",
+  "Bryt kedjor":
+    "Break chains",
+  "Honungsstjärnan":
+    "Honey Starburst",
+  "Utlös Stjärnfall (Nova + Stråle) för att rensa all honung innan den sprider sig!":
+    "Trigger a Starburst (Nova + Beam) to wipe all honey before it spreads!",
+  "Rensa honung":
+    "Clear honey",
+  "Flygarflocken":
+    "Scout Flock",
+  "Byt två flygare med varandra så jagar tre flygare upp lådorna i hörnen!":
+    "Swap two Scouts together to send three homing Scouts after the corner crates!",
+  "Krossa lådor":
+    "Smash crates",
+  "Rensa bort hindret mellan prismorna eller kombinera dem direkt för total rensning!":
+    "Combine the two Prisms directly for a full board sweep!",
+  "Tvåstegs-raketen":
+    "Two-Step Rocket",
+  "Gör först en matchning som flyttar strålen i läge, och kombinera den sedan med Novan!":
+    "First make a match to drop the Beam into position, then combine it with the Nova!",
+  "Desarmeringen":
+    "Bomb Defusal",
+  "Kombinera Prisma med rävarnas färg för att desarmera alla bomber på en gång!":
+    "Combine the Prism with a Fox to defuse every ticking bomb at once!",
+  "Samla Rävar":
+    "Collect Foxes",
+  "Strålregnet":
+    "Beam Storm",
+  "Para ihop Prismat med en Stråle – varje djur i färgen förvandlas till en egen stråle!":
+    "Swap the Prism with a Beam – every animal of that colour turns into a Beam!",
+  "Bronsligan":
+    "Bronze League",
+  "Silverligan":
+    "Silver League",
+  "Guldligan":
+    "Gold League",
+  "Kristalligan":
+    "Crystal League",
+  "Legendligan":
+    "Legend League",
+  "Nytt hinder: Frost & Is":
+    "New obstacle: Frost & Ice",
+  "Matcha djur ovanpå isrutor för att tina bort frosten. Tjock is behöver två träffar!":
+    "Match animals on ice tiles to melt the frost. Thick ice takes two hits!",
+  "Nytt hinder: Trälådor":
+    "New obstacle: Wooden Crates",
+  "Gör matchningar precis intill en trälåda eller träffa den med en specialbricka för att spräcka den.":
+    "Match right next to a wooden crate or hit it with a special piece to crack it open.",
+  "Nytt hinder: Kedjor":
+    "New obstacle: Chains",
+  "Kedjade djur går inte att flytta, men matcha dem på plats för att slå sönder kedjan!":
+    "Chained animals cannot be moved, but matching them in place shatters the chain!",
+  "Nytt hinder: Honung":
+    "New obstacle: Honey",
+  "Rensa honung genom att matcha intill den. Varje drag utan rensad honung låter den sprida sig en ruta!":
+    "Clear honey by matching beside it. Any move without clearing honey lets it spread one tile!",
+  "Nytt mål: Guldägg":
+    "New goal: Golden Eggs",
+  "Ägg kan inte matchas – rensa djuren under dem så att äggen faller hela vägen ner till botten!":
+    "Eggs cannot be matched – clear the animals below so the eggs drop all the way to the bottom!",
+  "Varning: Tickande bomb":
+    "Warning: Ticking Bomb",
+  "Bomben räknar ner ett steg varje drag. Matcha eller spräng djuret innan räknaren når noll!":
+    "The bomb counts down by one each move. Match or blast the animal before it hits zero!",
+  "Ny mekanik: Rullband":
+    "New mechanic: Conveyor Belts",
+  "Efter varje drag glider djuren på rullbandet ett steg i pilarnas riktning – utnyttja det för kedjor!":
+    "After every move, animals on the belt slide one step along the arrows – use it for chains!",
+  "Ny mekanik: Portaler":
+    "New mechanic: Portals",
+  "Portaler i samma färg byter djur med varandra efter varje drag.":
+    "Matching-colour portals swap animals with each other after every move.",
+  "Bossstrid!":
+    "Boss Battle!",
+  "Varje rensat djur skadar bossen! Vid halva hälsan blir den rasande och attackerar oftare.":
+    "Every cleared animal damages the boss! At half health it enrages and attacks more often.",
+  "AnimalPuzzle · Dagens pussel {date}":
+    "AnimalPuzzle · Daily puzzle {date}",
+  "Vinstsvit + startbonus: +{n} specialbrickor!":
+    "Win streak + starter bonus: +{n} specials!",
+  "Vinstsvit! +{n} startspecialer på brädet":
+    "Win streak! +{n} starting specials on the board",
+  "Startbonus aktiverad! +{n} specialer":
+    "Starter bonus active! +{n} specials",
+  "+{n} extra drag – kör på!":
+    "+{n} extra moves – keep going!",
+  "Segerbonus! Extra drag blir sprängningar!":
+    "Victory bonus! Extra moves turn into blasts!",
+  "Du":
+    "You",
 };

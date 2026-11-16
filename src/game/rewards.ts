@@ -50,7 +50,7 @@ export function createInitialRewardState(): RewardState {
 const count = (value: unknown): number =>
   typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
 
-const MODES: GameMode[] = ['campaign', 'daily', 'endless', 'blitz', 'weekly'];
+const MODES: GameMode[] = ['campaign', 'daily', 'endless', 'blitz', 'weekly', 'puzzle'];
 
 /** Turns anything read from storage into a valid reward state. */
 export function sanitizeRewardState(raw: unknown): RewardState {

@@ -5,12 +5,15 @@ import titleBackdrop from './assets/images/title-backdrop.webp';
 import { useCallback, useEffect, useState } from 'react';
 import { AchievementUnlockToast } from './components/AchievementsSection';
 import { ComboBanner } from './components/ComboBanner';
+import { FlyingGoalsOverlay } from './components/FlyingGoalsOverlay';
 import { GameBoard } from './components/GameBoard';
 import { GameHud } from './components/GameHud';
 import { GameModals } from './components/GameModals';
+import { ObstacleIntroModal } from './components/ObstacleIntroModal';
 import { TitleScreen } from './components/TitleScreen';
 import { TutorialBanner } from './components/TutorialBanner';
 import { soundEngine } from './game/audio';
+import { biomeOfChapter } from './game/biomes';
 import { CAMPAIGN_LEVEL_COUNT } from './game/levels';
 import { useBoardSize } from './hooks/useBoardSize';
 import { useFullscreen } from './hooks/useFullscreen';
@@ -87,7 +90,7 @@ export default function App() {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       // Dialogs on top of the game handle their own keys.
-      if (settingsOpen || showGuide) return;
+      if (settingsOpen || showGuide || game.activeObstacleIntro) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const key = e.key.toLowerCase();
 
@@ -128,6 +131,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [
     busy,
+    game.activeObstacleIntro,
     pause,
     phase,
     restart,
@@ -191,6 +195,18 @@ export default function App() {
               enterPlayFullscreen();
               game.startWeekly();
             }}
+            dailyPuzzle={game.dailyPuzzle}
+            dailyPuzzleSolvedToday={game.dailyPuzzleSolvedToday}
+            onStartDailyPuzzle={() => {
+              enterPlayFullscreen();
+              game.startDailyPuzzle();
+            }}
+            winStreak={game.winStreak}
+            armedStarters={game.armedStarters}
+            onToggleStarter={game.toggleStarter}
+            league={game.league}
+            leagueStandings={game.leagueStandings}
+            onClaimLeagueReward={game.claimWeeklyLeagueReward}
             stats={game.stats}
             blitz={game.blitz}
             storyPage={game.bossStoryPage ?? game.storyPage}
@@ -244,6 +260,10 @@ export default function App() {
               busy={busy}
               timeLeft={mode === 'blitz' ? game.blitzLeft : undefined}
               bossEnraged={game.bossEnraged}
+              movesUntilBoss={game.movesUntilBoss}
+              bossHitNonce={game.bossHitNonce}
+              bumpedGoals={game.bumpedGoals}
+              winStreak={game.winStreak.streak}
               companion={game.companion}
               companionSay={game.companionSay}
               powerCharge={game.powerCharge}
@@ -303,6 +323,12 @@ export default function App() {
             </div>
           </div>
 
+          <FlyingGoalsOverlay tokens={game.flyingGoals} />
+          <ObstacleIntroModal
+            intro={game.activeObstacleIntro}
+            biome={biomeOfChapter(activeLevel.chapter ?? 1)}
+            onDismiss={game.dismissObstacleIntro}
+          />
           <StoryModal
             page={game.bossStoryPage}
             skin={game.dailyState.equippedSkin}
@@ -326,6 +352,13 @@ export default function App() {
             blitzRank={game.endSnapshot.blitzRank}
             challengeScore={game.endSnapshot.challengeScore}
             weeklyEnergy={game.endSnapshot.weeklyEnergy}
+            puzzleEnergy={game.endSnapshot.puzzleEnergy}
+            leaguePoints={game.endSnapshot.leaguePoints}
+            winStreak={game.winStreak.streak}
+            rescueCost={game.rescueCostNow}
+            rescueEligible={game.rescueEligible}
+            canRescue={game.canRescue}
+            onRescue={game.rescueRun}
             livesLeft={game.lives.lives}
             totalMoves={activeLevel.moves}
             dailyReward={game.dailyReward}

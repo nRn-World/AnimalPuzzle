@@ -2,7 +2,7 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import { soundEngine } from '../game/audio';
 import { isHapticsSupported, vibrate } from '../game/haptics';
 import { remindersSupported, requestReminders } from '../game/reminders';
-import { downloadSave, importSave, parseSave } from '../game/saveFile';
+import { downloadSave, exportSyncCode, importSave, importSyncCode, parseSave, parseSyncCode } from '../game/saveFile';
 import { Settings, updateSettings } from '../game/settings';
 import { GemColor } from '../game/types';
 import { useSettings } from '../hooks/useSettings';
@@ -123,6 +123,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  const [syncInput, setSyncInput] = useState<string>('');
   const hapticsSupported = isHapticsSupported();
 
   useEffect(() => {
@@ -282,6 +283,57 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
                 });
               }}
             />
+            <div className="ui-inset p-2.5 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-extrabold">{t('Snabbsynk mellan enheter')}</span>
+                <button
+                  type="button"
+                  data-testid="sync-copy-btn"
+                  onClick={() => {
+                    const code = exportSyncCode();
+                    setSyncInput(code);
+                    if (navigator.clipboard?.writeText) {
+                      void navigator.clipboard.writeText(code).then(
+                        () => setSaveNotice(t('Synkkoden är kopierad! Klistra in den på din andra enhet.')),
+                        () => setSaveNotice(t('Synkkod skapad – kopiera texten i rutan.'))
+                      );
+                    } else {
+                      setSaveNotice(t('Synkkod skapad – kopiera texten i rutan.'));
+                    }
+                  }}
+                  className="ui-btn ui-btn-yellow px-2.5 py-0.5 text-xs"
+                >
+                  {t('Kopiera synkkod')}
+                </button>
+              </div>
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  value={syncInput}
+                  data-testid="sync-code-input"
+                  onChange={(e) => setSyncInput(e.target.value)}
+                  placeholder={t('Klistra in AP1:-kod här')}
+                  className="min-w-0 flex-1 rounded border-2 border-[#111111] bg-white px-2 py-1 font-mono-num text-xs text-[#111111]"
+                />
+                <button
+                  type="button"
+                  data-testid="sync-import-btn"
+                  disabled={!syncInput.trim()}
+                  onClick={() => {
+                    if (!parseSyncCode(syncInput)) {
+                      setSaveNotice(t('Ogiltig synkkod – kontrollera att hela koden kopierades.'));
+                      return;
+                    }
+                    if (!window.confirm(t('Läsa in sparfilen? Det som finns sparat på den här enheten ersätts.'))) return;
+                    if (importSyncCode(syncInput)) window.location.reload();
+                    else setSaveNotice(t('Synkkoden kunde inte läsas in.'));
+                  }}
+                  className="ui-btn ui-btn-green shrink-0 px-2.5 py-1 text-xs disabled:opacity-50"
+                >
+                  {t('Läs in')}
+                </button>
+              </div>
+            </div>
             <div role="status" data-testid="save-notice" className="min-h-4 text-[11px] font-bold text-[#D4002A]">
               {saveNotice}
             </div>

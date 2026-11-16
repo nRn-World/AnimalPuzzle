@@ -19,6 +19,8 @@ export function buildShareText(input: ShareResultInput): string {
   const title =
     input.mode === 'daily'
       ? t('AnimalPuzzle · Dagens utmaning {date}', { date: input.dateKey })
+      : input.mode === 'puzzle'
+      ? t('AnimalPuzzle · Dagens pussel {date}', { date: input.dateKey })
       : input.mode === 'endless'
       ? t('AnimalPuzzle · Oändligt läge')
       : input.mode === 'blitz'

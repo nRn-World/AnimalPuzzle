@@ -1605,4 +1605,196 @@ export const tr: Record<string, string> = {
     "Daha az göster",
   "Veckans jakt, djur-gäng och utmärkelser":
     "Haftalık av, hayvan ekibi ve başarılar",
+  "Dagens pussel":
+    "Günlük bulmaca",
+  "Svit {n}":
+    "Seri {n}",
+  "Attack om {n}":
+    "{n} hamlede saldırı",
+  "Dagens pussel avklarat":
+    "Günlük bulmaca çözüldü",
+  "Pusslet löst! +{n} bonusenergi":
+    "Bulmaca çözüldü! +{n} bonus enerji",
+  "Löst igen – dagens pusselpris är redan hämtat":
+    "Tekrar çözüldü – bugünün ödülü zaten alındı",
+  "+{n} ligapoäng":
+    "+{n} lig puanı",
+  "Vinstsvit: {n} i rad":
+    "Galibiyet serisi: {n} üst üste",
+  "Rädda omgången (+5 drag · {cost} energi)":
+    "Turu kurtar (+5 hamle · {cost} enerji)",
+  "Behåller din vinstsvit ({n}) och sparar ditt liv!":
+    "Galibiyet serini ({n}) korur ve canını kurtarır!",
+  "Plats #{n}":
+    "Sıra #{n}",
+  "{n} pokaler":
+    "{n} kupa",
+  "Tjäna ligapoäng från stjärnor, dagliga pussel och utmaningar. Topp {n} går upp nästa vecka!":
+    "Yıldızlardan, günlük bulmacalardan ve meydan okumalardan lig puanı kazan. İlk {n} haftaya yükselir!",
+  "Du är i högsta ligan! Håll dig kvar i toppen för största veckobelöningen.":
+    "En üst ligdesin! En büyük haftalık ödül için zirvede kal.",
+  "Uppflyttad till {tier}! Plats #{rank}":
+    "{tier} ligine yükseldin! Sıra #{rank}",
+  "Förra veckans resultat: Plats #{rank}":
+    "Geçen haftanın sonucu: Sıra #{rank}",
+  "Hämta +{n} energi":
+    "+{n} enerji al",
+  "{n} p":
+    "{n} puan",
+  "Liga":
+    "Lig",
+  "Jag förstår!":
+    "Anladım!",
+  "Snabbsynk mellan enheter":
+    "Cihazlar arası hızlı aktarım",
+  "Synkkoden är kopierad! Klistra in den på din andra enhet.":
+    "Aktarım kodu kopyalandı! Diğer cihazına yapıştır.",
+  "Synkkod skapad – kopiera texten i rutan.":
+    "Aktarım kodu oluşturuldu – kutudaki metni kopyala.",
+  "Kopiera synkkod":
+    "Kodu kopyala",
+  "Klistra in AP1:-kod här":
+    "AP1: kodunu buraya yapıştır",
+  "Ogiltig synkkod – kontrollera att hela koden kopierades.":
+    "Geçersiz kod – tüm kodun kopyalandığından emin ol.",
+  "Synkkoden kunde inte läsas in.":
+    "Aktarım kodu yüklenemedi.",
+  "Läs in":
+    "Yükle",
+  "Vinstsvit: 0":
+    "Galibiyet serisi: 0",
+  "+{n} gratis startspecialer":
+    "+{n} ücretsiz başlangıç özeli",
+  "Vinn i rad för gratis startspecialer":
+    "Ücretsiz başlangıç özelleri için üst üste kazan",
+  "Startboosters (valfritt)":
+    "Başlangıç güçlendiricileri (isteğe bağlı)",
+  "Bank: {n}":
+    "Enerji bankası: {n}",
+  "Dagens taktikpussel":
+    "Günün taktik bulmacası",
+  "Löst idag":
+    "Bugün çözüldü",
+  "Klara på {moves} drag · ingen slump":
+    "{moves} hamlede çöz · şans yok",
+  "Spela pussel":
+    "Bulmacayı oyna",
+  "Stråle":
+    "Işın",
+  "Börjar nivån med en slumpmässig stråle på brädet.":
+    "Bölüme tahtada rastgele bir Işın ile başlar.",
+  "Börjar nivån med en 3×3-Nova färdig på brädet.":
+    "Bölüme tahtada hazır bir 3×3 Nova ile başlar.",
+  "Börjar nivån med en Prisma som rensar en hel färg.":
+    "Bölüme tek bir rengi temizleyen Prizma ile başlar.",
+  "Korseld":
+    "Çapraz Ateş",
+  "Kombinera två strålar i mitten för att rensa hela korset av is!":
+    "Tüm buz haçını temizlemek için ortadaki iki ışını birleştir!",
+  "Tina is":
+    "Buzu erit",
+  "Supernovavalvet":
+    "Süpernova Kasası",
+  "Slå ihop två Novor för en 5×5-explosion mitt i isfästningen!":
+    "Buz kalesinin ortasında 5×5 patlama için iki Novayı birleştir!",
+  "Äggexpressen":
+    "Yumurta Ekspresi",
+  "Rensa kolumnen under guldäggen med en lodrät stråle!":
+    "Altın yumurtaların altındaki sütunu dikey bir ışınla temizle!",
+  "Samla ägg":
+    "Yumurta topla",
+  "Kedjebrytaren":
+    "Zincir Kıran",
+  "Skapa en stråle eller kombinera specialbrickor för att krossa alla kedjor i ett drag!":
+    "Tüm zincirleri tek hamlede kırmak için özel taşları birleştir!",
+  "Bryt kedjor":
+    "Zincirleri kır",
+  "Honungsstjärnan":
+    "Bal Yıldızı",
+  "Utlös Stjärnfall (Nova + Stråle) för att rensa all honung innan den sprider sig!":
+    "Bal yayılmadan hepsini temizlemek için Yıldız Patlaması (Nova + Işın) yap!",
+  "Rensa honung":
+    "Balı temizle",
+  "Flygarflocken":
+    "Keşif Sürüsü",
+  "Byt två flygare med varandra så jagar tre flygare upp lådorna i hörnen!":
+    "Köşedeki sandıkları vurmak için iki Keşifçiyi birleştir!",
+  "Krossa lådor":
+    "Sandıkları kır",
+  "Rensa bort hindret mellan prismorna eller kombinera dem direkt för total rensning!":
+    "Tüm tahtayı süpürmek için iki Prizmayı doğrudan birleştir!",
+  "Tvåstegs-raketen":
+    "İki Aşamalı Roket",
+  "Gör först en matchning som flyttar strålen i läge, och kombinera den sedan med Novan!":
+    "Önce Işını Novanın yanına düşüren bir eşleşme yap, sonra ikisini birleştir!",
+  "Desarmeringen":
+    "Bomba İmha",
+  "Kombinera Prisma med rävarnas färg för att desarmera alla bomber på en gång!":
+    "Tüm bombaları tek seferde etkisiz hale getirmek için Prizmayı Tilkiyle birleştir!",
+  "Samla Rävar":
+    "Tilki topla",
+  "Strålregnet":
+    "Işın Yağmuru",
+  "Para ihop Prismat med en Stråle – varje djur i färgen förvandlas till en egen stråle!":
+    "Prizmayı bir Işınla birleştir – o renkteki her hayvan Işına dönüşür!",
+  "Bronsligan":
+    "Bronz Lig",
+  "Silverligan":
+    "Gümüş Lig",
+  "Guldligan":
+    "Altın Lig",
+  "Kristalligan":
+    "Kristal Lig",
+  "Legendligan":
+    "Efsane Lig",
+  "Nytt hinder: Frost & Is":
+    "Yeni engel: Buz",
+  "Matcha djur ovanpå isrutor för att tina bort frosten. Tjock is behöver två träffar!":
+    "Buzu eritmek için üzerindeki hayvanları eşleştir. Kalın buz iki vuruş ister!",
+  "Nytt hinder: Trälådor":
+    "Yeni engel: Ahşap Sandıklar",
+  "Gör matchningar precis intill en trälåda eller träffa den med en specialbricka för att spräcka den.":
+    "Sandığı kırmak için hemen yanında eşleşme yap veya özel taşla vur.",
+  "Nytt hinder: Kedjor":
+    "Yeni engel: Zincirler",
+  "Kedjade djur går inte att flytta, men matcha dem på plats för att slå sönder kedjan!":
+    "Zincirli hayvanlar taşınamaz ama yerlerinde eşleştirerek zinciri kırabilirsin!",
+  "Nytt hinder: Honung":
+    "Yeni engel: Bal",
+  "Rensa honung genom att matcha intill den. Varje drag utan rensad honung låter den sprida sig en ruta!":
+    "Balı yanından eşleştirerek temizle. Bal temizlenmeyen her hamlede bir kare daha yayılır!",
+  "Nytt mål: Guldägg":
+    "Yeni hedef: Altın Yumurtalar",
+  "Ägg kan inte matchas – rensa djuren under dem så att äggen faller hela vägen ner till botten!":
+    "Yumurtalar eşleşmez – en alta düşmeleri için altlarındaki hayvanları temizle!",
+  "Varning: Tickande bomb":
+    "Uyarı: Saatli Bomba",
+  "Bomben räknar ner ett steg varje drag. Matcha eller spräng djuret innan räknaren når noll!":
+    "Bomba her hamlede bir azalır. Sıfıra inmeden hayvanı eşleştir veya patlat!",
+  "Ny mekanik: Rullband":
+    "Yeni mekanik: Konveyör Bant",
+  "Efter varje drag glider djuren på rullbandet ett steg i pilarnas riktning – utnyttja det för kedjor!":
+    "Her hamleden sonra banttaki hayvanlar ok yönünde bir kare kayar!",
+  "Ny mekanik: Portaler":
+    "Yeni mekanik: Portallar",
+  "Portaler i samma färg byter djur med varandra efter varje drag.":
+    "Aynı renkteki portallar her hamleden sonra hayvanlarını değiştirir.",
+  "Bossstrid!":
+    "Patron Savaşı!",
+  "Varje rensat djur skadar bossen! Vid halva hälsan blir den rasande och attackerar oftare.":
+    "Temizlenen her hayvan patrona hasar verir! Yarı canda öfkelenip daha sık saldırır.",
+  "AnimalPuzzle · Dagens pussel {date}":
+    "AnimalPuzzle · Günlük bulmaca {date}",
+  "Vinstsvit + startbonus: +{n} specialbrickor!":
+    "Seri + başlangıç bonusu: +{n} özel taş!",
+  "Vinstsvit! +{n} startspecialer på brädet":
+    "Galibiyet serisi! Tahtada +{n} başlangıç özeli",
+  "Startbonus aktiverad! +{n} specialer":
+    "Başlangıç bonusu aktif! +{n} özel taş",
+  "+{n} extra drag – kör på!":
+    "+{n} ekstra hamle – devam et!",
+  "Segerbonus! Extra drag blir sprängningar!":
+    "Zafer bonusu! Kalan hamleler patlamaya dönüşüyor!",
+  "Du":
+    "Sen",
 };

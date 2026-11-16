@@ -45,6 +45,14 @@ interface GameHudProps {
   timeLeft?: number;
   /** The boss has lost half its health and attacks sooner. */
   bossEnraged?: boolean;
+  /** Moves remaining until the boss strikes next. */
+  movesUntilBoss?: number | null;
+  /** Incremented whenever the boss takes damage, triggering hit feedback. */
+  bossHitNonce?: number;
+  /** Incremented per objective id whenever a flying collectible lands. */
+  bumpedGoals?: Record<string, number>;
+  /** Current campaign win streak count (shown as a small badge). */
+  winStreak?: number;
   companion: GemColor;
   /** A short line the companion says, shown as a speech bubble. */
   companionSay?: { text: string; id: number } | null;
@@ -75,6 +83,10 @@ export const GameHud: React.FC<GameHudProps> = ({
   busy,
   timeLeft,
   bossEnraged = false,
+  movesUntilBoss = null,
+  bossHitNonce = 0,
+  bumpedGoals,
+  winStreak = 0,
   companion,
   companionSay = null,
   powerCharge,
@@ -125,16 +137,28 @@ export const GameHud: React.FC<GameHudProps> = ({
         {/* Level name + in-game action buttons */}
         <div className="ui-play-header">
           <div className="ui-play-title-block ui-onscene min-w-0">
-            <div className="truncate text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider leading-tight opacity-90">
-              {mode === 'campaign'
-                ? t('Nivå {n}/{total}', { n: formatNumber(level.id), total: formatNumber(CAMPAIGN_LEVEL_COUNT) })
-                : mode === 'daily'
-                ? t('Daglig')
-                : mode === 'blitz'
-                ? t('60 sekunder')
-                : mode === 'weekly'
-                ? t('Veckans utmaning')
-                : t('Oändligt')}
+            <div className="flex items-center gap-1.5 truncate text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider leading-tight opacity-90">
+              <span className="truncate">
+                {mode === 'campaign'
+                  ? t('Nivå {n}/{total}', { n: formatNumber(level.id), total: formatNumber(CAMPAIGN_LEVEL_COUNT) })
+                  : mode === 'daily'
+                  ? t('Daglig')
+                  : mode === 'puzzle'
+                  ? t('Dagens pussel')
+                  : mode === 'blitz'
+                  ? t('60 sekunder')
+                  : mode === 'weekly'
+                  ? t('Veckans utmaning')
+                  : t('Oändligt')}
+              </span>
+              {mode === 'campaign' && winStreak > 0 && (
+                <span
+                  data-testid="hud-win-streak"
+                  className="shrink-0 rounded-full border border-[#111111] bg-[#F2CD1C] px-1.5 py-0.2 text-[9px] font-extrabold text-[#111111]"
+                >
+                  {t('Svit {n}', { n: winStreak })}
+                </span>
+              )}
             </div>
             <h1 className="ui-play-level-name font-display truncate leading-tight">
               {t(level.name)}
@@ -212,9 +236,11 @@ export const GameHud: React.FC<GameHudProps> = ({
             {level.objectives.map((obj, objIdx) => {
               const current = Math.min(obj.target, getObjectiveCurrent(obj, progress));
               const done = current >= obj.target;
+              const bumpCount = bumpedGoals?.[obj.id] ?? 0;
               return (
                 <div
                   key={obj.id}
+                  data-goal-id={obj.id}
                   title={t(obj.label)}
                   className={`ui-play-goal-row relative flex items-center ${
                     obj.kind === 'boss' ? 'w-full pb-3' : ''
@@ -252,10 +278,15 @@ export const GameHud: React.FC<GameHudProps> = ({
                     {obj.kind === 'honey' && <HoneySvg className="w-[85%] h-[85%]" />}
                     {obj.kind === 'egg' && <EggSvg className="w-[85%] h-[85%]" />}
                     {obj.kind === 'boss' && (
-                      <BossSvg
-                        className={`w-full h-full ${bossEnraged && !done ? 'animate-boss-rage' : ''}`}
-                        biome={biomeOfChapter(level.chapter ?? 1)}
-                      />
+                      <div
+                        key={`boss-hit-${bossHitNonce}`}
+                        className={`w-full h-full ${bossHitNonce > 0 && !done ? 'animate-boss-hit' : ''}`}
+                      >
+                        <BossSvg
+                          className={`w-full h-full ${bossEnraged && !done ? 'animate-boss-rage' : ''}`}
+                          biome={biomeOfChapter(level.chapter ?? 1)}
+                        />
+                      </div>
                     )}
                     {(obj.kind === 'score' || obj.kind === 'specials') && (
                       <UiIcon name="star" className="w-3/4 h-3/4 text-[#E09A00]" />
@@ -273,8 +304,27 @@ export const GameHud: React.FC<GameHudProps> = ({
                     {obj.kind === 'boss' && bossEnraged && !done && (
                       <span className="ml-1 font-extrabold uppercase text-[#D4002A]">· {t('Rasande')}</span>
                     )}
+                    {obj.kind === 'boss' && !done && movesUntilBoss !== null && (
+                      <span
+                        data-testid="boss-countdown"
+                        className={`ml-1.5 inline-block rounded border border-[#111111] px-1 py-0.2 text-[10px] font-extrabold uppercase ${
+                          movesUntilBoss <= 1
+                            ? 'bg-[#FF2E4D] text-white'
+                            : bossEnraged
+                            ? 'bg-[#F2CD1C] text-[#111111]'
+                            : 'bg-[#FFFFFF] text-[#111111]'
+                        }`}
+                      >
+                        {t('Attack om {n}', { n: movesUntilBoss })}
+                      </span>
+                    )}
                   </span>
-                  <span className="ui-play-goal-value font-display leading-none shrink-0">
+                  <span
+                    key={`val-${bumpCount}`}
+                    className={`ui-play-goal-value font-display leading-none shrink-0 ${
+                      bumpCount > 0 ? 'animate-goal-bump' : ''
+                    }`}
+                  >
                     {done ? (
                       <>
                         <UiIcon name="checkmark" className="w-4 h-4 text-[#0B6B2B]" />

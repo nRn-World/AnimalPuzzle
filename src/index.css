@@ -1585,3 +1585,91 @@ body[data-state='gameover'] {
   }
 }
 
+/* Flying objective collectibles & HUD impact feedback */
+.ui-fly-goal {
+  position: fixed;
+  width: 2.1rem;
+  height: 2.1rem;
+  margin-left: -1.05rem;
+  margin-top: -1.05rem;
+  will-change: transform, opacity;
+  animation: fly-to-goal 480ms cubic-bezier(0.22, 0.9, 0.32, 1) both;
+}
+
+@keyframes fly-to-goal {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.75);
+  }
+  15% {
+    opacity: 1;
+    transform: translate3d(calc(var(--fly-dx) * 0.16), calc(var(--fly-dy) * 0.16 + var(--fly-arc)), 0) scale(1.18);
+  }
+  80% {
+    opacity: 1;
+    transform: translate3d(calc(var(--fly-dx) * 0.92), calc(var(--fly-dy) * 0.92), 0) scale(0.92);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--fly-dx), var(--fly-dy), 0) scale(0.5);
+  }
+}
+
+.animate-goal-bump {
+  animation: goal-bump 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes goal-bump {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.24);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-boss-hit {
+  animation: boss-hit 360ms ease-out;
+}
+
+@keyframes boss-hit {
+  0%,
+  100% {
+    transform: translateX(0) scale(1);
+    filter: brightness(1);
+  }
+  25% {
+    transform: translateX(-5px) scale(1.14);
+    filter: brightness(1.6) saturate(1.5);
+  }
+  60% {
+    transform: translateX(5px) scale(0.94);
+    filter: brightness(1.3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-fly-goal,
+  .animate-goal-bump,
+  .animate-boss-hit {
+    animation: none !important;
+  }
+  .ui-fly-goal {
+    display: none;
+  }
+}
+
+html[data-reduce-motion='true'] .ui-fly-goal,
+html[data-reduce-motion='true'] .animate-goal-bump,
+html[data-reduce-motion='true'] .animate-boss-hit {
+  animation: none !important;
+}
+
+html[data-reduce-motion='true'] .ui-fly-goal {
+  display: none;
+}
+
+

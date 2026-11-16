@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FlyingGoalToken } from '../components/FlyingGoalsOverlay';
 import { BoardTransitionMode } from '../components/GameBoard';
 import { DailyRewardResult } from '../components/GameModals';
 import { ParticleCanvasHandle } from '../components/ParticleCanvas';
@@ -12,8 +13,26 @@ import {
 } from '../game/achievements';
 import { soundEngine } from '../game/audio';
 import {
+  applyStartSpecials,
+  canAffordRescue,
+  defuseExplodedBombs,
+  isRescuableMode,
+  MAX_RESCUES_PER_RUN,
+  readWinStreak,
+  recordStreakWin,
+  RESCUE_MOVES,
+  rescueCost,
+  resetWinStreak,
+  splitRescuePayment,
+  StarterId,
+  STARTERS,
+  starterSelectionCost,
+  WinStreakState,
+  winStreakSpecials,
+  writeWinStreak,
+} from '../game/boosters';
+import {
   claimDailyReward,
-  consumeBonusEnergy,
   createSeededRng,
   DailySaveState,
   equipAnimalSkin,
@@ -24,6 +43,16 @@ import {
   readDailyState,
   writeDailyState,
 } from '../game/daily';
+import {
+  buildPuzzleBoard,
+  DAILY_PUZZLE_REWARD_ENERGY,
+  DailyPuzzleSaveState,
+  getDailyPuzzle,
+  isDailyPuzzleSolved,
+  markDailyPuzzleSolved,
+  readDailyPuzzleState,
+  writeDailyPuzzleState,
+} from '../game/dailyPuzzle';
 import {
   applyTool,
   areObjectivesComplete,
@@ -97,6 +126,7 @@ import {
   GamePhase,
   LevelConfig,
   LevelProgress,
+  SpecialType,
   SwapResult,
   TOOL_COSTS,
   ToolType,
@@ -119,7 +149,23 @@ import {
   getActiveSeason,
 } from '../game/seasons';
 import { biomeOfChapter } from '../game/biomes';
-import { BOSSES } from '../game/bosses';
+import { BOSSES, movesUntilBossAttack } from '../game/bosses';
+import {
+  addLeaguePoints,
+  buildLeagueStandings,
+  claimLeagueReward,
+  LeagueState,
+  readLeagueState,
+  writeLeagueState,
+} from '../game/league';
+import {
+  detectNewObstacle,
+  ObstacleIntroDef,
+  ObstacleIntroId,
+  readSeenObstacles,
+  writeSeenObstacles,
+} from '../game/obstacleIntro';
+import { prefersReducedMotion } from '../game/settings';
 import { WEEKLY_LEVEL_ENERGY, WeeklyLevelState, getWeeklyLevel, readWeeklyLevel, writeWeeklyLevel } from '../game/weeklyLevel';
 import {
   animalLevel,
@@ -180,6 +226,10 @@ export interface EndSnapshot {
   challengeScore?: number;
   /** Weekly special level: bonus energy paid for the first win of the week. */
   weeklyEnergy?: number;
+  /** Daily tactical puzzle: bonus energy paid for today's first solve. */
+  puzzleEnergy?: number;
+  /** Weekly league points awarded for this round. */
+  leaguePoints?: number;
 }
 
 const EMPTY_SNAPSHOT: EndSnapshot = {
@@ -354,6 +404,59 @@ export function useGameSession(language: Lang) {
   const [blitzLeft, setBlitzLeft] = useState<number>(BLITZ_SECONDS);
   const weeklyQuest = useMemo(() => getWeeklyQuest(weekKey), [weekKey]);
 
+  // --- Win streak, pre-game starters, rescue, daily puzzle, league & intros -
+  const [winStreak, setWinStreak] = useState<WinStreakState>(() => readWinStreak());
+  const winStreakRef = useRef(winStreak);
+  const commitWinStreak = useCallback((next: WinStreakState) => {
+    winStreakRef.current = next;
+    setWinStreak(next);
+    writeWinStreak(next);
+  }, []);
+  const pendingStreakLossRef = useRef(false);
+
+  const [armedStarters, setArmedStarters] = useState<StarterId[]>([]);
+  const armedStartersRef = useRef(armedStarters);
+  armedStartersRef.current = armedStarters;
+
+  const [rescuesUsed, setRescuesUsed] = useState<number>(0);
+  const rescuesUsedRef = useRef(0);
+
+  const dailyPuzzle = useMemo(() => getDailyPuzzle(todayKey), [todayKey]);
+  const [dailyPuzzleState, setDailyPuzzleState] = useState<DailyPuzzleSaveState>(() =>
+    readDailyPuzzleState()
+  );
+  const dailyPuzzleStateRef = useRef(dailyPuzzleState);
+  const commitDailyPuzzle = useCallback((next: DailyPuzzleSaveState) => {
+    dailyPuzzleStateRef.current = next;
+    setDailyPuzzleState(next);
+    writeDailyPuzzleState(next);
+  }, []);
+  const dailyPuzzleSolvedToday = isDailyPuzzleSolved(dailyPuzzleState, todayKey);
+
+  const [league, setLeague] = useState<LeagueState>(() => readLeagueState(weekKey));
+  const leagueRef = useRef(league);
+  const commitLeague = useCallback((next: LeagueState) => {
+    leagueRef.current = next;
+    setLeague(next);
+    writeLeagueState(next);
+  }, []);
+  const awardLeague = useCallback(
+    (pts: number) => {
+      if (pts <= 0) return;
+      commitLeague(addLeaguePoints(leagueRef.current, pts, weekKey));
+    },
+    [commitLeague, weekKey]
+  );
+
+  const [seenObstacles, setSeenObstacles] = useState<ObstacleIntroId[]>(() => readSeenObstacles());
+  const seenObstaclesRef = useRef(seenObstacles);
+  const [activeObstacleIntro, setActiveObstacleIntro] = useState<ObstacleIntroDef | null>(null);
+
+  const [flyingGoals, setFlyingGoals] = useState<FlyingGoalToken[]>([]);
+  const flySeqRef = useRef<number>(1);
+  const [bumpedGoals, setBumpedGoals] = useState<Record<string, number>>({});
+  const [bossHitNonce, setBossHitNonce] = useState<number>(0);
+
   const [endlessTarget, setEndlessTarget] = useState<number>(ENDLESS_MILESTONE_STEP);
   const activeLevel: LevelConfig = useMemo(
     () =>
@@ -363,6 +466,8 @@ export function useGameSession(language: Lang) {
         ? dailyChallenge.level
         : mode === 'weekly'
         ? weeklyLevel.level
+        : mode === 'puzzle'
+        ? dailyPuzzle.level
         : mode === 'blitz'
         ? {
             ...ENDLESS_CONFIG,
@@ -388,7 +493,7 @@ export function useGameSession(language: Lang) {
               },
             ],
           },
-    [blitz.best, dailyChallenge, endlessTarget, levelIdx, mode, weeklyLevel]
+    [blitz.best, dailyChallenge, dailyPuzzle, endlessTarget, levelIdx, mode, weeklyLevel]
   );
 
   const [tutorialDone, setTutorialDone] = useState<boolean>(() =>
@@ -475,8 +580,8 @@ export function useGameSession(language: Lang) {
     // scripted tutorial board is simply replayed instead of restored.
     if (busy || tutorialStep !== 'done') return;
     // A round against the clock cannot be paused over a restart, and the
-    // weekly level always starts from its fixed board.
-    if (mode === 'blitz' || mode === 'weekly') return;
+    // weekly level and daily tactical puzzle always start from their fixed boards.
+    if (mode === 'blitz' || mode === 'weekly' || mode === 'puzzle') return;
     // Nothing worth keeping until the first move has been made.
     if (progress.score <= 0 && movesLeft >= activeLevel.moves) return;
 
@@ -570,12 +675,18 @@ export function useGameSession(language: Lang) {
   const backToTitle = useCallback(() => {
     runTokenRef.current += 1;
     clearComboNotice();
+    if (pendingStreakLossRef.current) {
+      pendingStreakLossRef.current = false;
+      commitWinStreak(resetWinStreak(winStreakRef.current));
+    }
     soundEngine.playClick();
     setShowGuide(false);
+    setActiveObstacleIntro(null);
+    setFlyingGoals([]);
     setShareNotice(null);
     setSavedGame(loadResumableSave(highestUnlockedIdx, todayKey));
     setPhase('TITLE_MENU');
-  }, [clearComboNotice, highestUnlockedIdx, todayKey]);
+  }, [clearComboNotice, commitWinStreak, highestUnlockedIdx, todayKey]);
 
   /** Clears every transient board interaction; shared by start and resume. */
   const resetInteraction = useCallback(() => {
@@ -591,6 +702,8 @@ export function useGameSession(language: Lang) {
     setBusy(false);
     setDailyReward(null);
     setShareNotice(null);
+    setFlyingGoals([]);
+    setBumpedGoals({});
   }, [clearComboNotice]);
 
   const startSession = useCallback(
@@ -601,6 +714,11 @@ export function useGameSession(language: Lang) {
       playIntro = false,
       skipTutorial = false
     ) => {
+      if (pendingStreakLossRef.current) {
+        pendingStreakLossRef.current = false;
+        commitWinStreak(resetWinStreak(winStreakRef.current));
+      }
+
       // Campaign levels need a life. Out of lives: back to the menu, where the
       // countdown to the next one is shown.
       if (targetMode === 'campaign' && !skipTutorial) {
@@ -619,6 +737,8 @@ export function useGameSession(language: Lang) {
           ? dailyChallenge.level
           : targetMode === 'weekly'
           ? weeklyLevel.level
+          : targetMode === 'puzzle'
+          ? dailyPuzzle.level
           : ENDLESS_CONFIG;
       if (targetMode === 'weekly') {
         commitWeeklyLevel({ ...weeklyLevelRef.current, attempts: weeklyLevelRef.current.attempts + 1 });
@@ -635,11 +755,11 @@ export function useGameSession(language: Lang) {
         forceTutorial,
         skipTutorial,
       });
-      setShowGuide(
+      const willShowGuide =
         playIntro &&
-          targetMode === 'campaign' &&
-          (forceTutorial || !readFlag(STORAGE_KEYS.introGuideSeen))
-      );
+        targetMode === 'campaign' &&
+        (forceTutorial || !readFlag(STORAGE_KEYS.introGuideSeen));
+      setShowGuide(willShowGuide);
 
       // Starting the same run over abandons its save. A save from another
       // level or mode stays until this run makes its first move.
@@ -653,16 +773,52 @@ export function useGameSession(language: Lang) {
         setSavedGame(null);
       }
 
-      // Load banked bonus energy into campaign/endless starts. Skipping the
-      // tutorial restarts the same run, so keep the energy already earned in it.
+      // Deduct any armed pre-game starters and compute win-streak specials.
+      let bankState = dailyStateRef.current;
+      const startSpecials: SpecialType[] = [];
+      let starterCount = 0;
+      let streakCount = 0;
+
+      if (targetMode === 'campaign' && !runTutorial && !skipTutorial) {
+        const streakBonus = winStreakSpecials(winStreakRef.current.streak);
+        streakCount = streakBonus.length;
+        startSpecials.push(...streakBonus);
+
+        const armed = armedStartersRef.current;
+        if (armed.length > 0) {
+          const cost = starterSelectionCost(armed);
+          if (bankState.bonusEnergyBank >= cost) {
+            bankState = { ...bankState, bonusEnergyBank: bankState.bonusEnergyBank - cost };
+            for (const id of armed) {
+              const def = STARTERS.find((s) => s.id === id);
+              if (def) {
+                startSpecials.push(def.special);
+                starterCount += 1;
+              }
+            }
+          }
+          setArmedStarters([]);
+        }
+      }
+
+      // Keep a reserve of 80 bonus energy in the bank so players can spend it
+      // on pre-game starters, Rescue (+5 moves) and life refills. Excess above
+      // the reserve still flows into the round's tool bar automatically.
+      const BANK_RESERVE = 80;
       let startingEnergy = 0;
       if (skipTutorial) {
         startingEnergy = energy;
-      } else if (targetMode !== 'daily' && dailyState.bonusEnergyBank > 0) {
-        const consumed = consumeBonusEnergy(dailyState, MAX_ENERGY);
-        startingEnergy = consumed.loadedEnergy;
-        setDailyState(consumed.nextState);
-        writeDailyState(consumed.nextState);
+      } else if (
+        targetMode !== 'daily' &&
+        targetMode !== 'puzzle' &&
+        bankState.bonusEnergyBank > BANK_RESERVE
+      ) {
+        const excess = Math.min(MAX_ENERGY, bankState.bonusEnergyBank - BANK_RESERVE);
+        startingEnergy = excess;
+        bankState = { ...bankState, bonusEnergyBank: bankState.bonusEnergyBank - excess };
+      }
+      if (bankState !== dailyStateRef.current) {
+        commitDaily(bankState);
       }
 
       resetInteraction();
@@ -670,18 +826,36 @@ export function useGameSession(language: Lang) {
       setLevelIdx(targetIdx);
       setEndlessTarget(ENDLESS_MILESTONE_STEP);
       setTutorialStep(runTutorial ? 'step1' : 'done');
+      rescuesUsedRef.current = 0;
+      setRescuesUsed(0);
       if (targetMode === 'blitz') blitzSeedRef.current = challengeRef.current?.seed ?? newChallengeSeed();
-      setBoard(
-        runTutorial
-          ? createTutorialBoard()
-          : targetMode === 'daily'
-          ? createBoard(lvl, createSeededRng(dailyChallenge.seed))
-          : targetMode === 'weekly'
-          ? createBoard(lvl, createSeededRng(weeklyLevel.seed))
-          : targetMode === 'blitz'
-          ? createBoard(lvl, createSeededRng(`animalpuzzle-challenge-${blitzSeedRef.current}`))
-          : createBoard(lvl)
-      );
+
+      let nextBoard = runTutorial
+        ? createTutorialBoard()
+        : targetMode === 'daily'
+        ? createBoard(lvl, createSeededRng(dailyChallenge.seed))
+        : targetMode === 'weekly'
+        ? createBoard(lvl, createSeededRng(weeklyLevel.seed))
+        : targetMode === 'puzzle'
+        ? buildPuzzleBoard(dailyPuzzle.spec)
+        : targetMode === 'blitz'
+        ? createBoard(lvl, createSeededRng(`animalpuzzle-challenge-${blitzSeedRef.current}`))
+        : createBoard(lvl);
+
+      if (startSpecials.length > 0) {
+        const planted = applyStartSpecials(nextBoard, startSpecials);
+        nextBoard = planted.board;
+      }
+
+      // First-time obstacle mini-intro (skipped during scripted tutorial/guide or puzzle).
+      if (!runTutorial && !willShowGuide && targetMode !== 'puzzle') {
+        const intro = detectNewObstacle(lvl, seenObstaclesRef.current);
+        setActiveObstacleIntro(intro);
+      } else {
+        setActiveObstacleIntro(null);
+      }
+
+      setBoard(nextBoard);
       setMovesLeft(lvl.moves);
       setProgress(createEmptyProgress());
       setEnergy(startingEnergy);
@@ -689,12 +863,38 @@ export function useGameSession(language: Lang) {
       setBlitzLeft(BLITZ_SECONDS);
       if (!skipTutorial) bumpStats({ gamesPlayed: 1 });
       setMaxCascade(1);
-      setStatusNotice(
-        startingEnergy > 0 ? t('Bonusenergi aktiverad: +{n}', { n: startingEnergy }) : null
-      );
+
+      let notice: string | null = null;
+      if (streakCount > 0 && starterCount > 0) {
+        notice = t('Vinstsvit + startbonus: +{n} specialbrickor!', { n: streakCount + starterCount });
+      } else if (streakCount > 0) {
+        notice = t('Vinstsvit! +{n} startspecialer på brädet', { n: streakCount });
+      } else if (starterCount > 0) {
+        notice = t('Startbonus aktiverad! +{n} specialer', { n: starterCount });
+      } else if (startingEnergy > 0) {
+        notice = t('Bonusenergi aktiverad: +{n}', { n: startingEnergy });
+      }
+      setStatusNotice(notice);
+      if (notice) {
+        window.setTimeout(() => {
+          setStatusNotice((curr) => (curr === notice ? null : curr));
+        }, 2800);
+      }
       setPhase('PLAYING');
     },
-    [bumpStats, commitLives, commitWeeklyLevel, dailyChallenge, dailyState, energy, resetInteraction, tutorialDone, weeklyLevel]
+    [
+      bumpStats,
+      commitDaily,
+      commitLives,
+      commitWeeklyLevel,
+      commitWinStreak,
+      dailyChallenge,
+      dailyPuzzle,
+      energy,
+      resetInteraction,
+      tutorialDone,
+      weeklyLevel,
+    ]
   );
 
   // Each landscape has its own music; menus and the other modes keep the calm tune.
@@ -877,6 +1077,80 @@ export function useGameSession(language: Lang) {
     startSession('weekly', 0);
   }, [startSession]);
 
+  const startDailyPuzzle = useCallback(() => {
+    soundEngine.playClick();
+    startSession('puzzle', 0);
+  }, [startSession]);
+
+  const toggleStarter = useCallback((id: StarterId) => {
+    soundEngine.playClick();
+    setArmedStarters((prev) => {
+      if (prev.includes(id)) return prev.filter((item) => item !== id);
+      const next = [...prev, id];
+      if (starterSelectionCost(next) > dailyStateRef.current.bonusEnergyBank) return prev;
+      return next;
+    });
+  }, []);
+
+  const dismissObstacleIntro = useCallback(() => {
+    soundEngine.playClick();
+    setActiveObstacleIntro((curr) => {
+      if (curr && !seenObstaclesRef.current.includes(curr.id)) {
+        const next = [...seenObstaclesRef.current, curr.id];
+        seenObstaclesRef.current = next;
+        setSeenObstacles(next);
+        writeSeenObstacles(next);
+      }
+      return null;
+    });
+  }, []);
+
+  const claimWeeklyLeagueReward = useCallback(() => {
+    const res = claimLeagueReward(leagueRef.current);
+    if (res.energy <= 0 && !leagueRef.current.pendingReward) return;
+    commitLeague(res.nextState);
+    if (res.energy > 0) {
+      commitDaily(grantReward(dailyStateRef.current, res.energy, null).nextState);
+    }
+    soundEngine.playSpecialCreate('prism');
+    vibrate('victory');
+  }, [commitDaily, commitLeague]);
+
+  /** Spends bonus energy (and if needed in-round energy) for +5 extra moves on Game Over. */
+  const rescueRun = useCallback(() => {
+    if (phase !== 'GAME_OVER') return;
+    const used = rescuesUsedRef.current;
+    const cost = rescueCost(used);
+    if (!canAffordRescue(mode, used, dailyStateRef.current.bonusEnergyBank, energy)) return;
+    const payment = splitRescuePayment(dailyStateRef.current.bonusEnergyBank, energy, cost);
+    if (!payment) return;
+
+    soundEngine.playSpecialCreate('prism');
+    vibrate('victory');
+
+    // Refund the life deducted on Game Over and preserve the win streak.
+    pendingStreakLossRef.current = false;
+    if (mode === 'campaign') {
+      const current = livesRef.current;
+      const nextLives = Math.min(MAX_LIVES, current.lives + 1);
+      commitLives({
+        lives: nextLives,
+        since: nextLives >= MAX_LIVES ? 0 : current.since,
+      });
+    }
+
+    commitDaily({ ...dailyStateRef.current, bonusEnergyBank: payment.nextBank });
+    setEnergy(payment.nextRound);
+    setBoard((curr) => defuseExplodedBombs(curr));
+    setMovesLeft(RESCUE_MOVES);
+    const nextUsed = used + 1;
+    rescuesUsedRef.current = nextUsed;
+    setRescuesUsed(nextUsed);
+    setStatusNotice(t('+{n} extra drag – kör på!', { n: RESCUE_MOVES }));
+    window.setTimeout(() => setStatusNotice(null), 2400);
+    setPhase('PLAYING');
+  }, [commitDaily, commitLives, energy, mode, phase]);
+
   /** Starts the time mode on the board of a friend's challenge. */
   const startChallenge = useCallback(() => {
     soundEngine.playClick();
@@ -913,6 +1187,9 @@ export function useGameSession(language: Lang) {
 
     resetInteraction();
     setShowGuide(false);
+    setActiveObstacleIntro(null);
+    rescuesUsedRef.current = 0;
+    setRescuesUsed(0);
     setMode(save.mode);
     if (save.mode === 'campaign') setLevelIdx(save.levelIdx);
     setEndlessTarget(save.endlessTarget);
@@ -953,7 +1230,9 @@ export function useGameSession(language: Lang) {
   const recordBestScore = useCallback(
     (score: number): number => {
       // Only the three classic modes keep a best score of their own.
-      if (mode === 'weekly' || mode === 'blitz') return Math.max(0, Math.round(score));
+      if (mode === 'weekly' || mode === 'blitz' || mode === 'puzzle') {
+        return Math.max(0, Math.round(score));
+      }
       const record = nextBestScore(
         {
           campaign: bestCampaignScore,
@@ -970,6 +1249,92 @@ export function useGameSession(language: Lang) {
       return record.best;
     },
     [bestCampaignScore, bestDailyScore, bestEndlessScore, mode]
+  );
+
+  /** Launches miniature icons flying from cleared board cells to matching HUD goal pills. */
+  const emitGoalFlights = useCallback(
+    (
+      step: SwapResult['steps'][number],
+      prevProgress: LevelProgress,
+      nextProgress: LevelProgress,
+      level: LevelConfig
+    ) => {
+      if (prefersReducedMotion()) return;
+      const boardEl = document.querySelector<HTMLElement>('[data-testid="game-board"]');
+      if (!boardEl) return;
+      const boardRect = boardEl.getBoundingClientRect();
+      if (boardRect.width <= 0 || boardRect.height <= 0) return;
+      const cellW = boardRect.width / 8;
+      const cellH = boardRect.height / 8;
+      const skin = dailyStateRef.current.equippedSkin;
+
+      const spawned: FlyingGoalToken[] = [];
+      const hitGoalIds: string[] = [];
+      let bossDamaged = false;
+
+      for (const goal of level.objectives) {
+        if (goal.kind === 'score') continue;
+        const before = getObjectiveCurrent(goal, prevProgress);
+        const after = getObjectiveCurrent(goal, nextProgress);
+        const delta = Math.min(3, after - before);
+        if (delta <= 0) continue;
+
+        hitGoalIds.push(goal.id);
+        if (goal.kind === 'boss') bossDamaged = true;
+
+        const targetEl = document.querySelector<HTMLElement>(`[data-goal-id="${goal.id}"]`);
+        if (!targetEl) continue;
+        const targetRect = targetEl.getBoundingClientRect();
+        const toX = targetRect.left + targetRect.width / 2;
+        const toY = targetRect.top + targetRect.height / 2;
+
+        // Pick representative origin cells from cleared coords or blasts.
+        const pool =
+          step.clearedCoords.length > 0
+            ? step.clearedCoords
+            : step.blasts.map((b) => ({ row: b.row, col: b.col }));
+        if (pool.length === 0) continue;
+
+        for (let i = 0; i < delta; i++) {
+          const src = pool[Math.floor((i * pool.length) / delta)];
+          const fromX = boardRect.left + (src.col + 0.5) * cellW;
+          const fromY = boardRect.top + (src.row + 0.5) * cellH;
+          spawned.push({
+            id: flySeqRef.current++,
+            fromX,
+            fromY,
+            toX,
+            toY,
+            arcY: -28 - (i % 3) * 14,
+            kind: goal.kind,
+            color: goal.color,
+            skin,
+            delayMs: i * 55,
+          });
+        }
+      }
+
+      if (bossDamaged) {
+        setBossHitNonce((n) => n + 1);
+      }
+      if (hitGoalIds.length > 0) {
+        window.setTimeout(() => {
+          setBumpedGoals((prev) => {
+            const next = { ...prev };
+            for (const id of hitGoalIds) next[id] = (next[id] ?? 0) + 1;
+            return next;
+          });
+        }, 380);
+      }
+      if (spawned.length > 0) {
+        setFlyingGoals((prev) => [...prev.slice(-18), ...spawned]);
+        const ids = new Set(spawned.map((t) => t.id));
+        window.setTimeout(() => {
+          setFlyingGoals((prev) => prev.filter((t) => !ids.has(t.id)));
+        }, 680);
+      }
+    },
+    []
   );
 
   const playSwapResult = useCallback(
@@ -1064,8 +1429,10 @@ export function useGameSession(language: Lang) {
         setTransitionMode('fall');
         setBoard(step.boardAfterGravity);
 
+        const prevStepProgress = runningProgress;
         runningProgress = addStepDelta(runningProgress, step);
         setProgress(runningProgress);
+        emitGoalFlights(step, prevStepProgress, runningProgress, activeLevel);
 
         const achStep = applyStepToAchievements(achievementStateRef.current, step);
         achievementStateRef.current = achStep.nextState;
@@ -1256,7 +1623,7 @@ export function useGameSession(language: Lang) {
         }
       }
 
-      // Check victory (Campaign or Daily)
+      // Check victory (Campaign, Daily, Weekly or Daily Tactical Puzzle)
       const currentObjectives =
         mode === 'campaign'
           ? getCampaignLevel(levelIdx).objectives
@@ -1264,9 +1631,34 @@ export function useGameSession(language: Lang) {
           ? dailyChallenge.level.objectives
           : mode === 'weekly'
           ? weeklyLevel.level.objectives
+          : mode === 'puzzle'
+          ? dailyPuzzle.level.objectives
           : null;
 
       if (currentObjectives && areObjectivesComplete(currentObjectives, runningProgress)) {
+        // Endgame celebration: turn leftover moves into festive board blasts!
+        if (updatedMoves > 0 && mode !== 'puzzle' && !prefersReducedMotion()) {
+          const celebrationCount = Math.min(6, updatedMoves);
+          setStatusNotice(t('Segerbonus! Extra drag blir sprängningar!'));
+          const celebrationBoard = cloneBoard(result.finalBoard);
+          for (let i = 0; i < celebrationCount; i++) {
+            if (runTokenRef.current !== token) return false;
+            const r = Math.floor(Math.random() * 8);
+            const c = Math.floor(Math.random() * 8);
+            const blastKind = i % 3 === 0 ? 'nova' : i % 2 === 0 ? 'beam_h' : 'beam_v';
+            if (celebrationBoard[r][c].gem) {
+              celebrationBoard[r][c].gem!.special = blastKind;
+              setTransitionMode('none');
+              setBoard(cloneBoard(celebrationBoard));
+            }
+            soundEngine.playBlast(blastKind === 'nova' ? 'nova' : 'beam');
+            fxRef.current?.emitBlasts([{ type: blastKind, row: r, col: c }]);
+            fxRef.current?.emitFloatingText(r, c, '+200', '#FDE047');
+            await waitMs(140);
+          }
+          if (runTokenRef.current !== token) return false;
+        }
+
         const { specialBonus, bonus, stars } = computeVictoryBonus(
           result.finalBoard,
           updatedMoves,
@@ -1282,6 +1674,8 @@ export function useGameSession(language: Lang) {
             setBestStars(nextStars);
             writeBestStars(nextStars);
           }
+          // Extend win streak!
+          commitWinStreak(recordStreakWin(winStreakRef.current));
         }
 
         reportMission({ wins: 1, score: bonus });
@@ -1307,6 +1701,29 @@ export function useGameSession(language: Lang) {
             weeklyEnergy = WEEKLY_LEVEL_ENERGY;
           }
         }
+
+        // Daily tactical puzzle pays out once per day.
+        let puzzleEnergy: number | undefined;
+        let puzzleNewlySolved = false;
+        if (mode === 'puzzle') {
+          const solved = markDailyPuzzleSolved(dailyPuzzleStateRef.current, dailyPuzzle.dateKey);
+          puzzleNewlySolved = solved.newlySolved;
+          if (solved.newlySolved) {
+            commitDailyPuzzle(solved.nextState);
+            commitDaily(grantReward(dailyStateRef.current, DAILY_PUZZLE_REWARD_ENERGY, null).nextState);
+            puzzleEnergy = DAILY_PUZZLE_REWARD_ENERGY;
+          } else {
+            puzzleEnergy = 0;
+          }
+        }
+
+        // Weekly league points.
+        let leaguePoints = 0;
+        if (mode === 'campaign') leaguePoints = stars * 15;
+        else if (mode === 'daily') leaguePoints = 35;
+        else if (mode === 'weekly') leaguePoints = 50;
+        else if (mode === 'puzzle' && puzzleNewlySolved) leaguePoints = 30;
+        if (leaguePoints > 0) awardLeague(leaguePoints);
 
         // A boss beaten for the first time gets a page in the story.
         if (mode === 'campaign' && activeLevel.boss && levelIdx + 1 > highestUnlockedIdx) {
@@ -1394,6 +1811,8 @@ export function useGameSession(language: Lang) {
           stars,
           chest,
           weeklyEnergy,
+          puzzleEnergy,
+          leaguePoints,
         });
         setBusy(false);
         setPhase('VICTORY');
@@ -1413,8 +1832,14 @@ export function useGameSession(language: Lang) {
           if (runTokenRef.current !== token) return false;
           setShaking(false);
         }
-        // A failed campaign level costs a life.
-        if (mode === 'campaign') commitLives(loseLife(livesRef.current, Date.now()));
+        // A failed campaign level costs a life and marks the win streak as pending
+        // reset (preserved if the player rescues the run with +5 moves).
+        if (mode === 'campaign') {
+          commitLives(loseLife(livesRef.current, Date.now()));
+          if (winStreakRef.current.streak > 0) {
+            pendingStreakLossRef.current = true;
+          }
+        }
         const best = recordBestScore(runningProgress.score);
         commitRewards(
           addTopScore(rewardStateRef.current, {
@@ -1449,20 +1874,31 @@ export function useGameSession(language: Lang) {
     },
     [
       activeLevel,
+      awardLeague,
       bestStars,
       bumpStats,
+      commitDaily,
+      commitDailyPuzzle,
+      commitLives,
+      commitRewards,
       commitWeeklyLevel,
-      weeklyLevel,
+      commitWinStreak,
       companion,
-      powerNeeded,
-      reportMission,
       dailyChallenge,
+      dailyPuzzle,
       dailyState,
+      emitGoalFlights,
       highestUnlockedIdx,
       levelIdx,
       mode,
       notifyAchievements,
+      powerNeeded,
       recordBestScore,
+      reportMission,
+      season,
+      todayKey,
+      weekKey,
+      weeklyLevel,
     ]
   );
 
@@ -1692,6 +2128,8 @@ export function useGameSession(language: Lang) {
     setBlitz(res.nextState);
     writeBlitz(res.nextState);
     commitRewards(addTopScore(rewardStateRef.current, { score, mode: 'blitz', level: 0, dateKey: todayKey }));
+    const leaguePts = Math.min(40, Math.floor(score / 250));
+    if (leaguePts > 0) awardLeague(leaguePts);
     soundEngine.playVictory();
     vibrate('victory');
     setEndSnapshot({
@@ -1703,10 +2141,11 @@ export function useGameSession(language: Lang) {
       specialBonus: 0,
       stars: 0,
       blitzRank: res.rank,
+      leaguePoints: leaguePts,
       ...(challenge ? { challengeScore: challenge.score } : {}),
     });
     setPhase('GAME_OVER');
-  }, [blitzLeft, busy, challenge, commitRewards, maxCascade, mode, phase, progress.score, todayKey]);
+  }, [awardLeague, blitzLeft, busy, challenge, commitRewards, maxCascade, mode, phase, progress.score, todayKey]);
 
   const selectTool = useCallback(
     (tool: ToolType) => {
@@ -1824,6 +2263,24 @@ export function useGameSession(language: Lang) {
     );
   }, [activeLevel.id, activeLevel.name, endSnapshot, mode, phase, todayKey]);
 
+  const bossEnraged = isBossEnraged(activeLevel, progress);
+  const movesUntilBoss = activeLevel.boss
+    ? movesUntilBossAttack(
+        activeLevel.boss.every,
+        Math.max(0, activeLevel.moves - movesLeft),
+        bossEnraged
+      )
+    : null;
+
+  const rescueCostNow = rescueCost(rescuesUsed);
+  const rescueEligible = isRescuableMode(mode) && rescuesUsed < MAX_RESCUES_PER_RUN;
+  const canRescue = canAffordRescue(mode, rescuesUsed, dailyState.bonusEnergyBank, energy);
+
+  const leagueStandings = useMemo(
+    () => buildLeagueStandings(league, t('Du'), companion),
+    [companion, language, league]
+  );
+
   return {
     // session
     phase,
@@ -1868,12 +2325,32 @@ export function useGameSession(language: Lang) {
     startChallenge,
     companionSay,
     startWeekly,
+    startDailyPuzzle,
+    dailyPuzzle,
+    dailyPuzzleState,
+    dailyPuzzleSolvedToday,
+    winStreak,
+    armedStarters,
+    toggleStarter,
+    rescueCostNow,
+    rescueEligible,
+    canRescue,
+    rescueRun,
+    league,
+    leagueStandings,
+    claimWeeklyLeagueReward,
+    activeObstacleIntro,
+    dismissObstacleIntro,
+    flyingGoals,
+    bumpedGoals,
+    bossHitNonce,
+    movesUntilBoss,
     companionLevel,
     weeklyLevel: weeklyLevel.level,
     weeklyLevelState,
     bossStoryPage: phase === 'VICTORY' ? null : bossStory,
     closeBossStory,
-    bossEnraged: isBossEnraged(activeLevel, progress),
+    bossEnraged,
     storyPage,
     closeStory,
     readStory,
