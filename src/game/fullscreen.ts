@@ -1,5 +1,9 @@
+export interface FullscreenRequestOptionsLike {
+  navigationUI?: 'auto' | 'hide' | 'show';
+}
+
 export interface FullscreenElementLike {
-  requestFullscreen?: () => Promise<void> | void;
+  requestFullscreen?: (options?: FullscreenRequestOptionsLike) => Promise<void> | void;
   webkitRequestFullscreen?: () => Promise<void> | void;
 }
 
@@ -40,32 +44,72 @@ export function isFullscreenSupported(
   return true;
 }
 
+async function requestElementFullscreen(el: FullscreenElementLike): Promise<void> {
+  if (typeof el.requestFullscreen === 'function') {
+    try {
+      await el.requestFullscreen({ navigationUI: 'hide' });
+    } catch (err) {
+      // Older or stricter implementations may reject the options argument.
+      if (err instanceof TypeError) {
+        await el.requestFullscreen();
+      } else {
+        throw err;
+      }
+    }
+    return;
+  }
+  if (typeof el.webkitRequestFullscreen === 'function') {
+    await el.webkitRequestFullscreen();
+  }
+}
+
+export async function enterDocumentFullscreen(
+  doc: FullscreenDocumentLike | null | undefined = typeof document !== 'undefined'
+    ? (document as unknown as FullscreenDocumentLike)
+    : null
+): Promise<boolean> {
+  if (!doc) return false;
+  if (isDocumentFullscreen(doc)) return true;
+
+  const el = doc.documentElement;
+  if (!el) return false;
+
+  try {
+    await requestElementFullscreen(el);
+    return isDocumentFullscreen(doc);
+  } catch {
+    return isDocumentFullscreen(doc);
+  }
+}
+
+export async function exitDocumentFullscreen(
+  doc: FullscreenDocumentLike | null | undefined = typeof document !== 'undefined'
+    ? (document as unknown as FullscreenDocumentLike)
+    : null
+): Promise<boolean> {
+  if (!doc) return false;
+  if (!isDocumentFullscreen(doc)) return false;
+
+  try {
+    if (typeof doc.exitFullscreen === 'function') {
+      await doc.exitFullscreen();
+    } else if (typeof doc.webkitExitFullscreen === 'function') {
+      await doc.webkitExitFullscreen();
+    }
+    return isDocumentFullscreen(doc);
+  } catch {
+    return isDocumentFullscreen(doc);
+  }
+}
+
 export async function toggleDocumentFullscreen(
   doc: FullscreenDocumentLike | null | undefined = typeof document !== 'undefined'
     ? (document as unknown as FullscreenDocumentLike)
     : null
 ): Promise<boolean> {
   if (!doc) return false;
-
-  try {
-    if (isDocumentFullscreen(doc)) {
-      if (typeof doc.exitFullscreen === 'function') {
-        await doc.exitFullscreen();
-      } else if (typeof doc.webkitExitFullscreen === 'function') {
-        await doc.webkitExitFullscreen();
-      }
-      return isDocumentFullscreen(doc);
-    }
-
-    const el = doc.documentElement;
-    if (!el) return false;
-    if (typeof el.requestFullscreen === 'function') {
-      await el.requestFullscreen();
-    } else if (typeof el.webkitRequestFullscreen === 'function') {
-      await el.webkitRequestFullscreen();
-    }
-    return isDocumentFullscreen(doc);
-  } catch {
-    return isDocumentFullscreen(doc);
+  if (isDocumentFullscreen(doc)) {
+    return exitDocumentFullscreen(doc);
   }
+  return enterDocumentFullscreen(doc);
 }

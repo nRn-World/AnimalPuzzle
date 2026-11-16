@@ -45,6 +45,9 @@ interface GameModalsProps {
   weeklyEnergy?: number;
   /** Lives left (campaign only). */
   livesLeft?: number;
+  isFullscreen?: boolean;
+  canFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
   onEquipSkin: (skin: AnimalSkinId) => void;
   /** Feedback after the share button was used; null while idle. */
   shareNotice: string | null;
@@ -178,6 +181,9 @@ export const GameModals: React.FC<GameModalsProps> = ({
   challengeScore,
   weeklyEnergy,
   livesLeft,
+  isFullscreen = false,
+  canFullscreen = false,
+  onToggleFullscreen,
   onEquipSkin,
   shareNotice,
   onShare,
@@ -269,6 +275,18 @@ export const GameModals: React.FC<GameModalsProps> = ({
               >
                 {t('Inställningar')}
               </button>
+              {canFullscreen && onToggleFullscreen && (
+                <button
+                  type="button"
+                  data-testid="pause-fullscreen-btn"
+                  onClick={onToggleFullscreen}
+                  aria-pressed={isFullscreen}
+                  className={SECONDARY_BTN_CLASS}
+                >
+                  <UiIcon name={isFullscreen ? 'smaller' : 'larger'} className="w-4 h-4" />
+                  {isFullscreen ? t('Avsluta hel skärm') : t('Hel skärm')}
+                </button>
+              )}
               {mode === 'campaign' && onReplayTutorial && (
                 <button type="button" onClick={onReplayTutorial} className={SECONDARY_BTN_CLASS}>
                   {t('Visa interaktiv guide')}

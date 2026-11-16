@@ -352,12 +352,17 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       (invalidPair[1].row === r && invalidPair[1].col === c));
 
   return (
-    <div className="perspective-stage relative w-full flex flex-col items-center justify-center">
+    <div className="perspective-stage relative flex h-full w-full items-center justify-center">
       {activeTool && (
-        <div className="mb-1.5 text-center text-[11px] sm:text-sm font-bold text-[#FDE047] px-2">
-          {activeTool === 'hammer'
-            ? t('Välj en ruta på brädet att spräcka med Hammaren')
-            : t('Välj en ruta för att utlösa Korspuls längs rad & kolumn')}
+        <div
+          role="status"
+          className="pointer-events-none absolute inset-x-0 top-1.5 z-40 flex justify-center px-2"
+        >
+          <span className="max-w-[94%] rounded-full border-2 border-[#FF2E4D] bg-[#111111]/90 px-3 py-1 text-center text-[11px] sm:text-xs font-extrabold text-[#FDE047] shadow-[3px_3px_0_#111111]">
+            {activeTool === 'hammer'
+              ? t('Välj en ruta på brädet att spräcka med Hammaren')
+              : t('Välj en ruta för att utlösa Korspuls längs rad & kolumn')}
+          </span>
         </div>
       )}
 
@@ -369,10 +374,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
         style={size ? { width: size, height: height ?? size } : undefined}
-        className={`preserve-3d relative p-1.5 sm:p-3 lg:p-3.5 rounded-lg bg-[#0B1030]/75 backdrop-blur-[2px] border-[3px] sm:border-4 ${
+        className={`preserve-3d relative p-1 sm:p-2 lg:p-2.5 rounded-lg bg-[#0B1030]/75 backdrop-blur-[2px] border-[3px] sm:border-4 ${
           activeTool
-            ? 'border-[#FF2E4D] shadow-[6px_6px_0_#FF2E4D]'
-            : 'border-[#C9CED6] shadow-[6px_6px_0_#111111]'
+            ? 'border-[#FF2E4D] shadow-[4px_4px_0_#FF2E4D]'
+            : 'border-[#C9CED6] shadow-[4px_4px_0_#111111]'
         } select-none ${
           shaking ? 'animate-board-shake' : ''
         }`}
@@ -390,7 +395,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           role="grid"
           aria-label={t('AnimalPuzzle spelbräde 8 gånger 8')}
           style={{ gridTemplateRows: 'repeat(8, minmax(0, 1fr))' }}
-          className="relative overflow-hidden rounded sm:rounded-md p-1 bg-[#111111] border-2 border-[#111111] grid grid-cols-8 gap-0.5 sm:gap-1.5 w-full h-full"
+          className="relative overflow-hidden rounded sm:rounded-md p-0.5 sm:p-1 bg-[#111111] border-2 border-[#111111] grid grid-cols-8 gap-0.5 sm:gap-1 w-full h-full"
         >
           {board.map((row, r) =>
             row.map((cell, c) => {
@@ -596,7 +601,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                           <span
                             aria-hidden="true"
                             data-testid="bomb-timer"
-                            className={`absolute -right-1 -top-1 z-20 grid h-[58%] w-[58%] place-items-center rounded-full border-[3px] border-[#111111] font-mono-num text-[min(4.4vw,19px)] font-extrabold leading-none ${
+                            className={`absolute -right-1 -top-1 z-20 grid aspect-square h-[54%] place-items-center rounded-full border-[3px] border-[#111111] font-mono-num text-[min(4.4vw,19px)] font-extrabold leading-none ${
                               cell.gem.bomb <= 3 ? 'bg-[#FF2E4D] text-white animate-pulse' : 'bg-[#FF9F1C] text-[#111111]'
                             }`}
                           >
@@ -632,17 +637,20 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
           {/* Directional Tutorial Swap Arrow Overlay (compact across cell seam) */}
           {tutorialPrompt && !busy && (() => {
+            const vbW = 800;
+            const vbH = size && height ? Math.round((vbW * height) / size) : vbW;
+            const cellH = vbH / BOARD_SIZE;
             const xFrom = (tutorialPrompt.from.col + 0.5) * 100;
-            const yFrom = (tutorialPrompt.from.row + 0.5) * 100;
+            const yFrom = (tutorialPrompt.from.row + 0.5) * cellH;
             const xTo = (tutorialPrompt.to.col + 0.5) * 100;
-            const yTo = (tutorialPrompt.to.row + 0.5) * 100;
+            const yTo = (tutorialPrompt.to.row + 0.5) * cellH;
             const x1 = xFrom + (xTo - xFrom) * 0.28;
             const y1 = yFrom + (yTo - yFrom) * 0.28;
             const x2 = xFrom + (xTo - xFrom) * 0.72;
             const y2 = yFrom + (yTo - yFrom) * 0.72;
             return (
               <svg
-                viewBox="0 0 800 800"
+                viewBox={`0 0 ${vbW} ${vbH}`}
                 className="pointer-events-none absolute inset-0 w-full h-full z-25"
                 aria-hidden="true"
               >

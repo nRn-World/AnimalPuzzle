@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  enterDocumentFullscreen,
+  exitDocumentFullscreen,
   FullscreenDocumentLike,
+  FullscreenRequestOptionsLike,
   isDocumentFullscreen,
   isFullscreenSupported,
   toggleDocumentFullscreen,
@@ -32,7 +35,44 @@ test('isFullscreenSupported detects standard and webkit fullscreen support clean
   );
 });
 
-test('toggleDocumentFullscreen enters and exits fullscreen and swallows blocked errors gracefully', async () => {
+test('enterDocumentFullscreen hides mobile navigation UI and falls back if options are rejected', async () => {
+  const fakeEl = {} as Element;
+  let receivedOptions: FullscreenRequestOptionsLike | undefined;
+  const doc: FullscreenDocumentLike = {
+    fullscreenEnabled: true,
+    fullscreenElement: null,
+    documentElement: {
+      requestFullscreen: async (options?: FullscreenRequestOptionsLike) => {
+        receivedOptions = options;
+        doc.fullscreenElement = fakeEl;
+      },
+    },
+  };
+
+  assert.equal(await enterDocumentFullscreen(doc), true);
+  assert.deepEqual(receivedOptions, { navigationUI: 'hide' });
+  // Calling enter again while already fullscreen stays true without error.
+  assert.equal(await enterDocumentFullscreen(doc), true);
+
+  let bareCalls = 0;
+  const legacyDoc: FullscreenDocumentLike = {
+    fullscreenEnabled: true,
+    fullscreenElement: null,
+    documentElement: {
+      requestFullscreen: async (options?: FullscreenRequestOptionsLike) => {
+        if (options !== undefined) {
+          throw new TypeError('Options not supported');
+        }
+        bareCalls++;
+        legacyDoc.fullscreenElement = fakeEl;
+      },
+    },
+  };
+  assert.equal(await enterDocumentFullscreen(legacyDoc), true);
+  assert.equal(bareCalls, 1);
+});
+
+test('toggleDocumentFullscreen and exitDocumentFullscreen handle standard, webkit and blocked states', async () => {
   const fakeEl = {} as Element;
   const doc: FullscreenDocumentLike = {
     fullscreenEnabled: true,
@@ -48,6 +88,7 @@ test('toggleDocumentFullscreen enters and exits fullscreen and swallows blocked 
   };
 
   assert.equal(isDocumentFullscreen(doc), false);
+  assert.equal(await exitDocumentFullscreen(doc), false);
   const entered = await toggleDocumentFullscreen(doc);
   assert.equal(entered, true);
   assert.equal(isDocumentFullscreen(doc), true);
@@ -55,6 +96,21 @@ test('toggleDocumentFullscreen enters and exits fullscreen and swallows blocked 
   const exited = await toggleDocumentFullscreen(doc);
   assert.equal(exited, false);
   assert.equal(isDocumentFullscreen(doc), false);
+
+  const webkitDoc: FullscreenDocumentLike = {
+    webkitFullscreenEnabled: true,
+    webkitFullscreenElement: null,
+    documentElement: {
+      webkitRequestFullscreen: () => {
+        webkitDoc.webkitFullscreenElement = fakeEl;
+      },
+    },
+    webkitExitFullscreen: () => {
+      webkitDoc.webkitFullscreenElement = null;
+    },
+  };
+  assert.equal(await enterDocumentFullscreen(webkitDoc), true);
+  assert.equal(await exitDocumentFullscreen(webkitDoc), false);
 
   const blockedDoc: FullscreenDocumentLike = {
     fullscreenEnabled: true,
