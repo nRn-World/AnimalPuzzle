@@ -1455,7 +1455,31 @@ export function findAllValidMoves(board: Board): HintMove[] {
 }
 
 export function hasValidMoves(board: Board): boolean {
-  return findAllValidMoves(board).length > 0;
+  // Stop at the first playable pair instead of building (and sorting) every
+  // hint. This runs after every move, refill and shuffle, so the early exit
+  // saves roughly a hundred board clones each time.
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      const a = { row: r, col: c };
+      for (const b of [
+        { row: r, col: c + 1 },
+        { row: r + 1, col: c },
+      ]) {
+        if (!inBounds(b.row, b.col)) continue;
+        if (!canSwap(board, a, b)) continue;
+        const gemA = board[a.row][a.col].gem!;
+        const gemB = board[b.row][b.col].gem!;
+        // A prism, or two specials together, always clears something.
+        if (gemA.special === 'prism' || gemB.special === 'prism') return true;
+        if (gemA.special !== 'none' && gemB.special !== 'none') return true;
+        const test = cloneBoard(board);
+        test[a.row][a.col].gem = gemB;
+        test[b.row][b.col].gem = gemA;
+        if (findMatchGroups(test).length > 0) return true;
+      }
+    }
+  }
+  return false;
 }
 
 export function findBestHint(board: Board): HintMove | null {

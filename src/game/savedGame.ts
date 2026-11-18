@@ -28,6 +28,8 @@ export interface SavedGame {
   energy: number;
   maxCascade: number;
   endlessTarget: number;
+  /** Seed the run's random stream was derived from (missing in older saves). */
+  seed?: number;
   savedAt: number;
 }
 
@@ -161,6 +163,7 @@ export function parseSavedGame(raw: unknown): SavedGame | null {
   const progress = reviveProgress(raw.progress);
   const board = reviveBoard(raw.board);
   if (!progress || !board) return null;
+  const seed = nonNegInt(raw.seed);
 
   return {
     version: SAVED_GAME_VERSION,
@@ -173,6 +176,7 @@ export function parseSavedGame(raw: unknown): SavedGame | null {
     energy,
     maxCascade: Math.max(1, maxCascade),
     endlessTarget: Math.max(1, endlessTarget),
+    ...(seed === null ? {} : { seed }),
     savedAt: nonNegInt(raw.savedAt) ?? 0,
   };
 }

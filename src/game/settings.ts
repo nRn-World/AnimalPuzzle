@@ -86,9 +86,18 @@ function applyToDocument(settings: Settings): void {
 
 applyToDocument(current);
 
-/** Loads the dictionary of the saved language; call before the first render. */
+/** Loads the dictionary of the saved language in the background. */
 export function prepareLanguage(): Promise<boolean> {
   return loadLanguage(current.language);
+}
+
+/**
+ * Tells the UI that the dictionary arrived, so text already on screen is
+ * translated. The first paint must never wait for this: a slow or blocked
+ * language chunk used to leave the whole game blank.
+ */
+export function notifyLanguageLoaded(): void {
+  for (const listener of Array.from(listeners)) listener();
 }
 
 export function getSettings(): Settings {

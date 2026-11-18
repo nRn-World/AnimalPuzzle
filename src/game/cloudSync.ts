@@ -177,6 +177,13 @@ export async function pullCloudSave(
 }
 
 /** Submits the player's weekly league or blitz score to Supabase `leaderboard_entries`. */
+/**
+ * Upper bound accepted by the leaderboard. A real run can never get close to
+ * it; the database enforces the same limit, so a forged request cannot post an
+ * absurd score even though the client is not trusted.
+ */
+export const MAX_SUBMITTED_SCORE = 5_000_000;
+
 export async function submitGlobalScore(
   cfg: CloudConfig,
   input: {
@@ -189,7 +196,8 @@ export async function submitGlobalScore(
   },
   fetchFn: typeof fetch = fetch
 ): Promise<boolean> {
-  if (!isCloudConfigured(cfg) || input.score <= 0) return false;
+  const score = Math.min(MAX_SUBMITTED_SCORE, Math.round(input.score));
+  if (!isCloudConfigured(cfg) || !Number.isFinite(score) || score <= 0) return false;
   try {
     const res = await fetchFn(
       `${cfg.url}/rest/v1/leaderboard_entries?on_conflict=board,period_key,player_id`,
@@ -202,7 +210,7 @@ export async function submitGlobalScore(
           player_id: input.playerId,
           handle: input.handle || 'Spelare',
           color: input.color,
-          score: Math.round(input.score),
+          score,
           updated_at: new Date().toISOString(),
         }),
       }

@@ -4,6 +4,8 @@
  * if an entry is no longer used, or if placeholders do not match.
  */
 export const en: Record<string, string> = {
+  "Framsteg kunde inte sparas – webbläsarens lagring är full eller blockerad.":
+    "Progress could not be saved – browser storage is full or blocked.",
   "Utmärkelser":
     "Achievements",
   "{n}/{total} upplåsta":

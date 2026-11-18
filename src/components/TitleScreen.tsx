@@ -493,6 +493,10 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   const [editorOpen, setEditorOpen] = useState(false);
   const [chestToast, setChestToast] = useState<string | null>(null);
   const [hubTab, setHubTab] = useState<HubTab | null>(null);
+  // Progressive disclosure: a player who has not finished a few levels yet
+  // sees the campaign and the dailies, not the whole reward economy. This
+  // keeps the first screen calm instead of showing every system at once.
+  const showExtras = highestUnlockedIdx > 2 || starChest.stars > 0 || canSpinToday;
   const { canInstall, install } = useInstallPrompt();
   // Tick once a second while a life is on its way back.
   const [now, setNow] = useState(() => Date.now());
@@ -782,6 +786,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               )}
 
               {/* Quick rewards & creator bar: Star Chest · Lucky Wheel · Puzzle Builder */}
+              {showExtras && (
               <div className="mb-2 grid grid-cols-3 gap-1.5">
                 <button
                   type="button"
@@ -808,6 +813,20 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                       window.setTimeout(() => setChestToast(null), 2600);
                     }
                   }}
+                  title={
+                    chestReady
+                      ? t('Öppna kista!')
+                      : t('Samla {n} stjärnor till för att öppna Stjärnkistan!', {
+                          n: Math.max(0, STAR_CHEST_GOAL - starChest.stars),
+                        })
+                  }
+                  aria-label={
+                    chestReady
+                      ? t('Öppna kista!')
+                      : t('Samla {n} stjärnor till för att öppna Stjärnkistan!', {
+                          n: Math.max(0, STAR_CHEST_GOAL - starChest.stars),
+                        })
+                  }
                   className={`ui-btn relative px-1.5 py-1 text-[11px] ${
                     chestReady ? 'ui-btn-yellow animate-pulse' : ''
                   }`}
@@ -843,6 +862,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                   <span className="truncate">{t('Bygg bana')}</span>
                 </button>
               </div>
+              )}
               {chestToast && (
                 <div
                   role="status"
@@ -1322,6 +1342,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               </div>
 
               {/* Animal skins */}
+              {showExtras && (
               <div className="mt-3">
                 <div className="flex items-center justify-between gap-2">
                   <h2 className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-[#4B4B4B]">
@@ -1396,6 +1417,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                   })}
                 </div>
               </div>
+              )}
 
               <div className="mt-3">
                 <TitleAchievementsSummary
@@ -1406,16 +1428,16 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               </div>
 
               {/* Missions, events, league, companion, island, statistics and the album */}
-              <div className="order-1 mt-2.5 grid grid-cols-4 sm:grid-cols-7 gap-1.5">
+              <div className="order-1 mt-2.5 grid grid-cols-4 xl:grid-cols-7 gap-1.5">
                 {HUB_TABS.map((entry) => (
                   <button
                     key={entry.id}
                     type="button"
                     data-testid={`open-hub-${entry.id}`}
                     onClick={() => setHubTab(entry.id)}
-                    className="ui-btn relative px-0.5 py-1.5 text-[11px] sm:text-xs"
+                    className="ui-btn relative min-h-[2.5rem] px-0.5 py-1 text-[10px] leading-[1.15]"
                   >
-                    <span className="truncate">{t(entry.label)}</span>
+                    <span className="block w-full break-words text-center !whitespace-normal">{t(entry.label)}</span>
                     {entry.id === 'missions' && (
                       <span className="absolute -right-1.5 -top-2 border-2 border-[#111111] bg-[#F2CD1C] px-1 font-mono-num text-[10px] font-extrabold leading-tight">
                         {missionsDone(missionState, missions)}/3

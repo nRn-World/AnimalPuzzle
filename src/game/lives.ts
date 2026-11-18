@@ -2,9 +2,9 @@ import { readJson, STORAGE_KEYS, writeJson } from './storage';
 
 export const MAX_LIVES = 5;
 /** A lost life comes back after this long. */
-export const LIFE_REGEN_MS = 20 * 60 * 1000;
+export const LIFE_REGEN_MS = 5 * 60 * 1000;
 /** Bonus energy it costs to refill all lives at once. */
-export const REFILL_COST = 40;
+export const REFILL_COST = 25;
 
 export interface LivesState {
   lives: number;
