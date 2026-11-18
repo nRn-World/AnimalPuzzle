@@ -15,6 +15,11 @@ const SKIP_PRECACHE = [
   /\.map$/,
   /(^|\/)og-image\./,
   /-(cyrillic|cyrillic-ext|greek|greek-ext|vietnamese)-[^/]*\.woff2$/,
+  // Translation dictionaries: only Swedish ships in the main bundle, and each
+  // other language is a ~60 kB chunk. Precaching all five made every install
+  // download ~300 kB of text most players never see. They are cached on demand
+  // by the fetch handler the first time a player actually picks the language.
+  /(^|\/)(en|de|es|fr|tr)-[^/]*\.js$/,
 ];
 
 function listFiles(dir: string, root = dir): string[] {

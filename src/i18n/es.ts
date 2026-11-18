@@ -5,6 +5,8 @@
  * and a leading `>` puts the adjective after the place. See `t()`.
  */
 export const es: Record<string, string> = {
+  "Framsteg kunde inte sparas – webbläsarens lagring är full eller blockerad.":
+    "No se pudo guardar el progreso: el almacenamiento del navegador está lleno o bloqueado.",
   "Utmärkelser":
     "Logros",
   "{n}/{total} upplåsta":

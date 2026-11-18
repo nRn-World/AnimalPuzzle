@@ -13,7 +13,7 @@ import {
 
 const T0 = 1_800_000_000_000;
 
-test('losing a life starts the clock and it comes back after twenty minutes', () => {
+test('losing a life starts the clock and it comes back after the regeneration time', () => {
   let state = loseLife(createFullLives(), T0);
   assert.equal(state.lives, MAX_LIVES - 1);
   assert.equal(msToNextLife(state, T0), LIFE_REGEN_MS);
@@ -24,10 +24,11 @@ test('losing a life starts the clock and it comes back after twenty minutes', ()
 });
 
 test('a second lost life does not restart the running countdown', () => {
+  const elapsed = Math.floor(LIFE_REGEN_MS / 4);
   let state = loseLife(createFullLives(), T0);
-  state = loseLife(state, T0 + 5 * 60_000);
+  state = loseLife(state, T0 + elapsed);
   assert.equal(state.lives, MAX_LIVES - 2);
-  assert.equal(msToNextLife(state, T0 + 5 * 60_000), 15 * 60_000);
+  assert.equal(msToNextLife(state, T0 + elapsed), LIFE_REGEN_MS - elapsed);
 });
 
 test('lives regained while away are capped at the maximum', () => {

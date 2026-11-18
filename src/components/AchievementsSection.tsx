@@ -228,7 +228,7 @@ export const TitleAchievementsSummary: React.FC<TitleAchievementsSummaryProps> =
               <div className="flex items-center justify-between gap-2 mb-1">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <AchievementIconSvg kind={def.icon} unlocked={prog.unlocked} className="w-4 h-4 shrink-0" />
-                  <span className="text-xs font-extrabold text-[#111111] truncate">{t(def.titleSv)}</span>
+                  <span className="text-xs font-extrabold leading-tight text-[#111111] line-clamp-2">{t(def.titleSv)}</span>
                 </div>
                 <span
                   className={`text-[11px] font-mono-num font-bold shrink-0 ${

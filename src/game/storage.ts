@@ -55,6 +55,32 @@ export interface StorageLike {
   removeItem(key: string): void;
 }
 
+/**
+ * Called once when a write fails (quota full, private mode, storage blocked).
+ * The game cannot do anything about it itself, but the player should be told
+ * that progress is no longer being saved instead of losing it silently.
+ */
+type StorageFailureListener = () => void;
+const failureListeners = new Set<StorageFailureListener>();
+let failureReported = false;
+
+export function onStorageFailure(listener: StorageFailureListener): () => void {
+  failureListeners.add(listener);
+  return () => failureListeners.delete(listener);
+}
+
+function reportStorageFailure(): void {
+  if (failureReported) return;
+  failureReported = true;
+  for (const listener of failureListeners) {
+    try {
+      listener();
+    } catch {
+      // A broken listener must never break saving.
+    }
+  }
+}
+
 function getStorage(): StorageLike | null {
   try {
     if (typeof window === 'undefined' || !window.localStorage) return null;
@@ -106,10 +132,14 @@ export function readString(key: string): string | null {
 export function writeString(key: string, value: string): boolean {
   try {
     const storage = getStorage();
-    if (!storage) return false;
+    if (!storage) {
+      reportStorageFailure();
+      return false;
+    }
     storage.setItem(key, value);
     return true;
   } catch {
+    reportStorageFailure();
     return false;
   }
 }

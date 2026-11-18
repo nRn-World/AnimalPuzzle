@@ -1,17 +1,15 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { StoryModal } from './components/StoryModal';
 import { useReminders } from './hooks/useReminders';
 import titleBackdrop from './assets/images/title-backdrop.webp';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { AchievementUnlockToast } from './components/AchievementsSection';
 import { ComboBanner } from './components/ComboBanner';
 import { FlyingGoalsOverlay } from './components/FlyingGoalsOverlay';
-import { GameBoard } from './components/GameBoard';
-import { GameHud } from './components/GameHud';
-import { GameModals } from './components/GameModals';
 import { ObstacleIntroModal } from './components/ObstacleIntroModal';
-import { TitleScreen } from './components/TitleScreen';
 import { TutorialBanner } from './components/TutorialBanner';
+import { onStorageFailure } from './game/storage';
+import { t } from './i18n';
 import { soundEngine } from './game/audio';
 import { biomeOfChapter } from './game/biomes';
 import { CAMPAIGN_LEVEL_COUNT } from './game/levels';
@@ -22,6 +20,13 @@ import { useSettings } from './hooks/useSettings';
 
 const HowToPlayGuide = lazy(() => import('./components/HowToPlayGuide').then((m) => ({ default: m.HowToPlayGuide })));
 const SettingsModal = lazy(() => import('./components/SettingsModal').then((m) => ({ default: m.SettingsModal })));
+// The menu, the board and the HUD are only needed once the player is in that
+// screen. Loading them on demand keeps the first paint (and the main bundle)
+// small, which matters most on the phones this game is made for.
+const TitleScreen = lazy(() => import('./components/TitleScreen').then((m) => ({ default: m.TitleScreen })));
+const GameBoard = lazy(() => import('./components/GameBoard').then((m) => ({ default: m.GameBoard })));
+const GameHud = lazy(() => import('./components/GameHud').then((m) => ({ default: m.GameHud })));
+const GameModals = lazy(() => import('./components/GameModals').then((m) => ({ default: m.GameModals })));
 
 export default function App() {
   // Subscribing here re-renders the whole tree when the language changes.
@@ -35,6 +40,10 @@ export default function App() {
     enterFullscreen();
   }, [enterFullscreen]);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // True when a save write failed: the player must know progress stopped saving.
+  const [storageWarning, setStorageWarning] = useState(false);
+
+  useEffect(() => onStorageFailure(() => setStorageWarning(true)), []);
 
   const {
     phase,
@@ -147,6 +156,24 @@ export default function App() {
   return (
     <>
       <AchievementUnlockToast achievement={game.achievementToast} />
+      {storageWarning && (
+        <div
+          role="alert"
+          className="fixed inset-x-2 bottom-2 z-[60] mx-auto flex max-w-lg items-start gap-2 rounded border-[3px] border-[#111111] bg-[#FFD166] px-3 py-2 text-xs font-extrabold text-[#111111] shadow-[3px_3px_0_#111111]"
+        >
+          <span className="flex-1">
+            {t('Framsteg kunde inte sparas – webbläsarens lagring är full eller blockerad.')}
+          </span>
+          <button
+            type="button"
+            onClick={() => setStorageWarning(false)}
+            aria-label={t('Stäng')}
+            className="shrink-0 px-1 text-sm leading-none"
+          >
+            ×
+          </button>
+        </div>
+      )}
       {/* Loaded after the first paint: neither is needed to show the menu */}
       <Suspense fallback={null}>
         <HowToPlayGuide open={showGuide} onClose={game.closeGuide} />
@@ -161,6 +188,7 @@ export default function App() {
       </Suspense>
 
       {!inGame ? (
+        <Suspense fallback={<div className="min-h-[100dvh] bg-[#0F1219]" />}>
         <TitleScreen
           mode={mode}
           selectedLevelIdx={levelIdx}
@@ -264,7 +292,9 @@ export default function App() {
             game.startSelected();
           }}
         />
+        </Suspense>
       ) : (
+        <Suspense fallback={<div className="fixed inset-0 z-10 bg-[#0B101A]" />}>
         <div className="fixed inset-0 z-10 flex h-[100dvh] w-full flex-col overflow-hidden ui-scene">
           {/* Scenery behind the board, dimmed so the animals stay in focus */}
           <img
@@ -312,7 +342,7 @@ export default function App() {
             />
 
             <div className="ui-play-center order-2 flex min-h-0 min-w-0 flex-1 flex-col items-center gap-1">
-              {game.tutorialPrompt && (
+              {game.tutorialPrompt && !showGuide && (
                 <TutorialBanner prompt={game.tutorialPrompt} onSkip={game.skipTutorial} />
               )}
 
@@ -412,6 +442,7 @@ export default function App() {
             onBackToTitle={game.backToTitle}
           />
         </div>
+        </Suspense>
       )}
     </>
   );

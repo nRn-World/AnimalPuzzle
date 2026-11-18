@@ -2,11 +2,10 @@
  * Player-made tactical puzzles: build 8x8 boards with specials & obstacles,
  * test-play them immediately, and share them via compact URL links (?pussel=APZ1:...).
  */
-import { allocGemId } from './engine';
+import { createBoard, hasValidMoves, shuffleBoard } from './engine';
 import {
   BOARD_SIZE,
   Board,
-  Cell,
   GEM_META,
   GemColor,
   HOLE_HP,
@@ -76,7 +75,8 @@ export function countCustomBoardItems(spec: CustomPuzzleSpec): Record<CustomGoal
     color: 10,
   };
   for (const c of spec.cells) {
-    if (c.ice && c.ice > 0) counts.ice += 1;
+    // Ice goals count broken layers, so a thick tile is worth two.
+    if (c.ice && c.ice > 0) counts.ice += Math.min(2, c.ice);
     if (c.crate && c.crate > 0) counts.crate += 1;
     if (c.chain) counts.chain += 1;
     if (c.honey) counts.honey += 1;
@@ -85,26 +85,36 @@ export function countCustomBoardItems(spec: CustomPuzzleSpec): Record<CustomGoal
   return counts;
 }
 
+/** Fixed seed: a shared puzzle link must look the same for every player. */
+function customBoardRng(): () => number {
+  let state = 0x9e3779b9;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** The generator only needs the board settings; the goals live in the spec. */
+const CUSTOM_BOARD_NAME = 'custom';
+const CUSTOM_BOARD_LEVEL: LevelConfig = {
+  id: 999,
+  name: CUSTOM_BOARD_NAME,
+  subtitle: '',
+  moves: 1,
+  colorCount: BASE_PALETTE.length,
+  palette: BASE_PALETTE,
+  difficulty: 'hard',
+  objectives: [],
+};
+
 export function buildCustomPuzzleBoard(spec: CustomPuzzleSpec): Board {
-  const board: Board = [];
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    const row: Cell[] = [];
-    for (let c = 0; c < BOARD_SIZE; c++) {
-      row.push({
-        row: r,
-        col: c,
-        gem: {
-          id: allocGemId(),
-          color: BASE_PALETTE[(r * 2 + c) % BASE_PALETTE.length],
-          special: 'none',
-          chained: false,
-        },
-        ice: 0,
-        crate: 0,
-      });
-    }
-    board.push(row);
-  }
+  // Start from the engine's generator: it never opens with a match and always
+  // leaves at least one legal swap. The old fixed diagonal fill left every
+  // custom puzzle deadlocked from move one.
+  const board = createBoard(CUSTOM_BOARD_LEVEL, customBoardRng());
 
   for (const p of spec.cells) {
     if (p.row < 0 || p.row >= BOARD_SIZE || p.col < 0 || p.col >= BOARD_SIZE) continue;
@@ -135,7 +145,8 @@ export function buildCustomPuzzleBoard(spec: CustomPuzzleSpec): Board {
     }
   }
 
-  return board;
+  // Painted holes, crates and colours can still corner a board.
+  return hasValidMoves(board) ? board : shuffleBoard(board, BASE_PALETTE, customBoardRng());
 }
 
 export function customPuzzleToLevel(spec: CustomPuzzleSpec): LevelConfig {

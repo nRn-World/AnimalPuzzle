@@ -355,6 +355,17 @@ export function useGameSession(language: Lang) {
   });
 
   const [mode, setMode] = useState<GameMode>('campaign');
+  /**
+   * Seed for the run in progress. Board refills and cascades are drawn from a
+   * stream derived from it (plus the move number), so the same seed and the
+   * same taps replay the same run. That makes a reported bug reproducible and
+   * a submitted score verifiable instead of trusting `Math.random`.
+   */
+  const [runSeed, setRunSeed] = useState<number>(() => Math.floor(Math.random() * 2 ** 31));
+  const runSeedRef = useRef(runSeed);
+  useEffect(() => {
+    runSeedRef.current = runSeed;
+  }, [runSeed]);
   const [levelIdx, setLevelIdx] = useState<number>(0);
   const [highestUnlockedIdx, setHighestUnlockedIdx] = useState<number>(() =>
     Math.min(CAMPAIGN_LEVEL_COUNT - 1, Math.max(0, readInt(STORAGE_KEYS.unlocked, 0)))
@@ -767,6 +778,7 @@ export function useGameSession(language: Lang) {
       energy,
       maxCascade,
       endlessTarget,
+      seed: runSeedRef.current,
     });
   }, [
     activeLevel.moves,
@@ -873,8 +885,12 @@ export function useGameSession(language: Lang) {
     setFlyingGoals([]);
     setShareNotice(null);
     setSavedGame(loadResumableSave(highestUnlockedIdx, todayKey));
+    // Weekly, daily-puzzle and custom runs are one-offs with no tab on the menu.
+    // Leaving the menu pointed at one of them shows an empty left column and
+    // makes Play now restart that run, so fall back to the campaign.
+    if (mode === 'weekly' || mode === 'puzzle' || mode === 'custom') setMode('campaign');
     setPhase('TITLE_MENU');
-  }, [clearComboNotice, commitFever, commitMiniEvents, commitWinStreak, highestUnlockedIdx, todayKey]);
+  }, [clearComboNotice, commitFever, commitMiniEvents, commitWinStreak, highestUnlockedIdx, todayKey, mode]);
 
   /** Clears every transient board interaction; shared by start and resume. */
   const resetInteraction = useCallback(() => {
@@ -1039,6 +1055,10 @@ export function useGameSession(language: Lang) {
       setRescuesUsed(0);
       if (targetMode === 'blitz') blitzSeedRef.current = challengeRef.current?.seed ?? newChallengeSeed();
 
+      const runStartSeed = Math.floor(Math.random() * 2 ** 31);
+      setRunSeed(runStartSeed);
+      runSeedRef.current = runStartSeed;
+
       let nextBoard = runTutorial
         ? createTutorialBoard()
         : targetMode === 'daily'
@@ -1051,7 +1071,7 @@ export function useGameSession(language: Lang) {
         ? buildCustomPuzzleBoard(customSpec)
         : targetMode === 'blitz'
         ? createBoard(lvl, createSeededRng(`animalpuzzle-challenge-${blitzSeedRef.current}`))
-        : createBoard(lvl);
+        : createBoard(lvl, createSeededRng(`run-${runStartSeed}`));
 
       if (startSpecials.length > 0) {
         const planted = applyStartSpecials(nextBoard, startSpecials);
@@ -1544,6 +1564,10 @@ export function useGameSession(language: Lang) {
     setProgress(save.progress);
     setEnergy(save.energy);
     setMaxCascade(save.maxCascade);
+    if (save.seed !== undefined) {
+      setRunSeed(save.seed);
+      runSeedRef.current = save.seed;
+    }
     setStatusNotice(t('Välkommen tillbaka – partiet fortsätter där du slutade'));
     window.setTimeout(() => setStatusNotice(null), 2600);
     setPhase('PLAYING');
@@ -2328,11 +2352,20 @@ export function useGameSession(language: Lang) {
 
       soundEngine.playSwap();
       vibrate('swap');
-      const result = resolveSwap(board, a, b, levelColorPool(activeLevel), Math.random, {
-        level: activeLevel,
-        moveNumber: Math.max(1, activeLevel.moves - movesLeft + 1),
-        enraged: isBossEnraged(activeLevel, progress),
-      });
+      const moveNumber = Math.max(1, activeLevel.moves - movesLeft + 1);
+      // Seeded per move: the run replays exactly if the seed is known.
+      const result = resolveSwap(
+        board,
+        a,
+        b,
+        levelColorPool(activeLevel),
+        createSeededRng(`run-${runSeedRef.current}-${moveNumber}`),
+        {
+          level: activeLevel,
+          moveNumber,
+          enraged: isBossEnraged(activeLevel, progress),
+        }
+      );
 
       const swappedPreview = cloneBoard(board);
       const gemA = swappedPreview[a.row][a.col].gem;
@@ -2422,7 +2455,13 @@ export function useGameSession(language: Lang) {
       const cost = TOOL_COSTS[tool];
       if (energy < cost) return;
 
-      const result = applyTool(board, tool, target, levelColorPool(activeLevel));
+      const result = applyTool(
+        board,
+        tool,
+        target,
+        levelColorPool(activeLevel),
+        createSeededRng(`tool-${runSeedRef.current}-${mode}-${movesLeft}-${tool}`)
+      );
       if (!result.valid) {
         soundEngine.playInvalidSwap();
         vibrate('invalid');

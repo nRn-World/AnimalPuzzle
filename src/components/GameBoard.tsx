@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { prefersReducedMotion } from '../game/settings';
 import { TutorialPrompt } from '../game/tutorial';
 import { useSettings } from '../hooks/useSettings';
@@ -103,7 +103,7 @@ const GemMotion: React.FC<GemMotionProps> = ({
   return (
     <div
       ref={elRef}
-      className={`relative z-10 w-full h-full p-[3px] will-change-transform ${
+      className={`relative z-10 w-full h-full p-[2px] will-change-transform ${
         clearing
           ? 'animate-gem-clear'
           : isSelected
@@ -114,7 +114,7 @@ const GemMotion: React.FC<GemMotionProps> = ({
       }`}
     >
       <div
-        className={`relative w-full h-full rounded-lg flex items-center justify-center p-[2px] border-t border-white/25 border-b-[3px] border-b-black/50 transition-shadow duration-150 ${
+        className={`relative w-full h-full rounded-lg flex items-center justify-center p-[1px] border-t border-white/25 border-b-[3px] border-b-black/50 transition-shadow duration-150 ${
           isSelected
             ? 'bg-gradient-to-b from-[#F5B841]/30 to-[#161A25]/85 shadow-[0_8px_16px_rgba(245,184,65,0.42)]'
             : isSpecial
@@ -164,24 +164,31 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   cheering = false,
   feverActive = false,
 }) => {
-  // A little life on the board: now and then a random animal hops in place.
-  const [hopId, setHopId] = useState<number | null>(null);
-  const boardRef = useRef(board);
-  boardRef.current = board;
-  useEffect(() => {
-    if (busy || cheering) {
-      setHopId(null);
-      return;
+  // Idle life on the board is a CSS animation (see .animate-gem-idle-hop), so
+  // it costs no React renders. The tilt loop only runs while it is settling.
+  const tiltLoopRef = useRef({ running: false, rafId: 0 });
+  const requestTiltRef = useRef<() => void>(() => {});
+
+  // Columns that hold an egg, and the cell where each egg will leave the
+  // board. Drawn as a subtle lane so players can read where it will land.
+  const eggDropCells = useMemo(() => {
+    const columns = new Set<number>();
+    for (const row of board) {
+      for (const cell of row) {
+        if (cell.gem?.egg) columns.add(cell.col);
+      }
     }
-    const timer = window.setInterval(() => {
-      const gems = boardRef.current
-        .flat()
-        .filter((cell) => cell.crate === 0 && cell.gem && !cell.gem.chained && !cell.gem.egg);
-      const pickOne = gems[Math.floor(Math.random() * gems.length)];
-      setHopId(pickOne?.gem?.id ?? null);
-    }, 2400);
-    return () => window.clearInterval(timer);
-  }, [busy, cheering]);
+    const out = new Set<string>();
+    for (const col of columns) {
+      for (let r = BOARD_SIZE - 1; r >= 0; r--) {
+        if (board[r][col].block !== 'hole') {
+          out.add(`${r},${col}`);
+          break;
+        }
+      }
+    }
+    return out;
+  }, [board]);
 
   const dragStartRef = useRef<{ coord: Coord; x: number; y: number } | null>(null);
   const swipeTriggeredRef = useRef(false);
@@ -192,11 +199,22 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const tiltCurrRef = useRef({ rx: 0, ry: 0, sx: 50, sy: 50 });
   const { reduceMotion } = useSettings();
 
-  // Smoothly interpolate 3D pedestal tilt at 60fps without React re-renders
+  // Smoothly interpolate 3D pedestal tilt at 60fps without React re-renders.
+  // The loop stops as soon as the pedestal has settled: a board nobody is
+  // touching should not keep a 60 fps loop (and a GPU layer) alive.
   useEffect(() => {
     if (prefersReducedMotion()) return;
+    const loop = tiltLoopRef.current;
 
-    let rafId = 0;
+    const paint = (rx: number, ry: number, sx: number, sy: number) => {
+      if (tiltRef.current) {
+        tiltRef.current.style.transform = `rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`;
+      }
+      if (sheenRef.current) {
+        sheenRef.current.style.background = `radial-gradient(circle at ${sx.toFixed(1)}% ${sy.toFixed(1)}%, rgba(255,255,255,0.10) 0%, rgba(245,184,65,0.03) 35%, transparent 65%)`;
+      }
+    };
+
     const step = () => {
       const target = tiltTargetRef.current;
       const curr = tiltCurrRef.current;
@@ -205,17 +223,38 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       curr.sx += (target.sx - curr.sx) * 0.14;
       curr.sy += (target.sy - curr.sy) * 0.14;
 
-      if (tiltRef.current) {
-        tiltRef.current.style.transform = `rotateX(${curr.rx.toFixed(2)}deg) rotateY(${curr.ry.toFixed(2)}deg)`;
+      const settled =
+        Math.abs(target.rx - curr.rx) < 0.01 &&
+        Math.abs(target.ry - curr.ry) < 0.01 &&
+        Math.abs(target.sx - curr.sx) < 0.05 &&
+        Math.abs(target.sy - curr.sy) < 0.05;
+
+      if (settled) {
+        curr.rx = target.rx;
+        curr.ry = target.ry;
+        curr.sx = target.sx;
+        curr.sy = target.sy;
+        paint(curr.rx, curr.ry, curr.sx, curr.sy);
+        loop.running = false;
+        return;
       }
-      if (sheenRef.current) {
-        sheenRef.current.style.background = `radial-gradient(circle at ${curr.sx.toFixed(1)}% ${curr.sy.toFixed(1)}%, rgba(255,255,255,0.10) 0%, rgba(245,184,65,0.03) 35%, transparent 65%)`;
-      }
-      rafId = requestAnimationFrame(step);
+
+      paint(curr.rx, curr.ry, curr.sx, curr.sy);
+      loop.rafId = requestAnimationFrame(step);
     };
-    rafId = requestAnimationFrame(step);
+
+    const ensure = () => {
+      if (loop.running) return;
+      loop.running = true;
+      loop.rafId = requestAnimationFrame(step);
+    };
+    requestTiltRef.current = ensure;
+    ensure();
+
     return () => {
-      cancelAnimationFrame(rafId);
+      cancelAnimationFrame(loop.rafId);
+      loop.running = false;
+      requestTiltRef.current = () => {};
       // Level the pedestal again if the tilt is switched off mid-game.
       if (tiltRef.current) tiltRef.current.style.transform = '';
     };
@@ -292,6 +331,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           sy: 50 + ny * 35,
         };
         onBoardTilt?.(nx, ny);
+        requestTiltRef.current();
       }
     }
 
@@ -320,6 +360,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const handleBoardPointerLeave = () => {
     dragStartRef.current = null;
     tiltTargetRef.current = { rx: 0, ry: 0, sx: 50, sy: 50 };
+    requestTiltRef.current();
     onBoardTilt?.(0, 0);
   };
 
@@ -400,11 +441,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           data-testid="game-board"
           role="grid"
           aria-label={t('AnimalPuzzle spelbräde 8 gånger 8')}
+          aria-rowcount={BOARD_SIZE}
+          aria-colcount={BOARD_SIZE}
           style={{ gridTemplateRows: 'repeat(8, minmax(0, 1fr))' }}
           className="relative overflow-hidden rounded sm:rounded-md p-0.5 sm:p-1 bg-[#111111] border-2 border-[#111111] grid grid-cols-8 gap-0.5 sm:gap-1 w-full h-full"
         >
-          {board.map((row, r) =>
-            row.map((cell, c) => {
+          {board.map((row, r) => (
+            <div key={r} role="row" style={{ display: 'contents' }}>
+            {row.map((cell, c) => {
               const key = `${r},${c}`;
               const isSelected = selected?.row === r && selected?.col === c;
               const hinted = isHinted(r, c);
@@ -484,19 +528,19 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   className={`group relative min-w-0 min-h-0 w-full h-full rounded-md sm:rounded-lg flex items-center justify-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B841] touch-none ${
                     isHole
                       ? 'pointer-events-none bg-[#070A14]'
-                      : `cursor-pointer shadow-[inset_0_2px_4px_rgba(0,0,0,0.65)] ${
-                          checkerboardDark ? 'bg-[#22307A]' : 'bg-[#2B3B91]'
+                      : `cursor-pointer shadow-[inset_0_2px_5px_rgba(0,0,0,0.55)] ${
+                          checkerboardDark ? 'bg-[#161C33]' : 'bg-[#1D2540]'
                         }`
                   } ${
                     isSelected
-                      ? 'ring-2 ring-inset ring-[#F5B841] bg-[#3F52C4] z-10'
+                      ? 'ring-2 ring-inset ring-[#F5B841] bg-[#2C3654] z-10'
                       : isTutTarget
-                      ? 'ring-2 ring-inset ring-[#FDE047] bg-[#3F52C4] z-10'
+                      ? 'ring-2 ring-inset ring-[#FDE047] bg-[#2C3654] z-10'
                       : hinted
                       ? 'ring-2 ring-inset ring-[#38BDF8] bg-[#182B42] z-10'
                       : activeTool
                       ? 'hover:ring-2 hover:ring-inset hover:ring-[#F5B841]/80'
-                      : 'hover:bg-[#1E263A]'
+                      : 'hover:bg-[#28324F]'
                   } ${invalid ? 'animate-gem-invalid' : ''}`}
                 >
                   {/* Portal: a glowing ring, one colour per pair */}
@@ -513,6 +557,26 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       }}
                     />
                   )}
+                  {/* Egg lane: a quiet hint for where an egg leaves the board */}
+                  {eggDropCells.has(key) && !cell.gem?.egg && (
+                    <div
+                      aria-hidden="true"
+                      data-testid="egg-lane"
+                      className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] flex justify-center"
+                    >
+                      <svg viewBox="0 0 24 10" className="w-3/4 opacity-70">
+                        <path
+                          d="M2 2 L12 8 L22 2"
+                          fill="none"
+                          stroke="#FDE047"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  )}
+
                   {/* Conveyor belt floor: chevrons show which way it moves */}
                   {cell.belt && !isHole && (
                     <div
@@ -563,9 +627,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     </div>
                   ) : cell.gem ? (
                     <div
-                      className={`w-full h-full transition-opacity duration-200 ${
+                      className={`w-full h-full rounded-md transition-opacity duration-200 ${
                         tutActive && !isTutTarget ? 'opacity-40' : 'opacity-100'
                       }`}
+                      // A soft halo in the animal's own colour: the board reads by
+                      // colour at a glance instead of turning into blue noise.
+                      style={{
+                        background: `radial-gradient(circle at 50% 44%, ${GEM_META[cell.gem.color].lightHex}4d, transparent 68%)`,
+                      }}
                     >
                       <GemMotion
                         key={cell.gem.id}
@@ -586,12 +655,20 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                             chained={cell.gem.chained}
                             skin={skin}
                             animationSeed={cell.gem.id}
+                            style={
+                              busy
+                                ? undefined
+                                : {
+                                    animationDelay: `${-((cell.gem.id * 977) % 7000)}ms`,
+                                    animationDuration: `${6000 + ((cell.gem.id * 337) % 3000)}ms`,
+                                  }
+                            }
                             className={`relative z-10 w-full h-full drop-shadow-[0_3px_4px_rgba(0,0,0,0.68)] ${
                               cheering
                                 ? `animate-gem-cheer gem-cheer-${(r + c) % 4}`
-                                : hopId === cell.gem.id
-                                ? 'animate-gem-hop'
-                                : ''
+                                : busy
+                                ? ''
+                                : 'animate-gem-idle-hop'
                             }`}
                           />
                         )}
@@ -638,8 +715,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   )}
                 </button>
               );
-            })
-          )}
+            })}
+            </div>
+          ))}
 
           {/* Directional Tutorial Swap Arrow Overlay (compact across cell seam) */}
           {tutorialPrompt && !busy && (() => {

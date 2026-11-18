@@ -1,6 +1,6 @@
 import { biomeOfChapter } from './biomes';
 import { BOSSES } from './bosses';
-import { Coord, GemColor, LevelConfig, LevelDifficulty } from './types';
+import { Coord, GemColor, LevelConfig, LevelDifficulty, LevelObjective } from './types';
 
 interface CellSpec {
   row: number;
@@ -1014,10 +1014,10 @@ const CHAPTER_CURVE: LevelDifficulty[] = [
  * one move ahead and never uses tools.
  */
 const EFFORT_SHARE: Record<LevelDifficulty, number> = {
-  easy: 0.46,
-  medium: 0.6,
-  hard: 0.76,
-  extreme: 0.92,
+  easy: 0.5,
+  medium: 0.68,
+  hard: 0.86,
+  extreme: 1.02,
 };
 
 /**
@@ -1133,7 +1133,16 @@ function generateLevel(levelIdx: number): LevelConfig {
   }
 
   const eggCells: Array<{ row: number; col: number }> = [];
-  if (chapter >= FIRST_CHAPTER.eggs && honeyMask.size === 0 && extraRng() < 0.22) {
+  // Eggs need room and time: never stack them on top of a heavy obstacle
+  // board, or the level becomes a coin flip rather than a puzzle.
+  const tooCrowded = iceMask.size > 20 || crateMask.size > 12;
+  if (
+    chapter >= FIRST_CHAPTER.eggs &&
+    rank >= 1 &&
+    honeyMask.size === 0 &&
+    !tooCrowded &&
+    extraRng() < 0.22
+  ) {
     // Eggs start near the top, in columns with a clear way down.
     const freeCols = [0, 1, 2, 3, 4, 5, 6, 7].filter((col) => {
       for (let row = 0; row < 8; row++) {
@@ -1146,7 +1155,9 @@ function generateLevel(levelIdx: number): LevelConfig {
       const j = Math.floor(extraRng() * (i + 1));
       [freeCols[i], freeCols[j]] = [freeCols[j], freeCols[i]];
     }
-    const wanted = Math.min(freeCols.length, 2 + (rank >= 2 ? 1 : 0) + (extraRng() < 0.35 ? 1 : 0));
+    // At most three eggs, and only on the very hardest rank. Two is the norm:
+    // every egg is pure gravity luck, not a match the player can plan.
+    const wanted = Math.min(freeCols.length, rank >= 3 ? 3 : 2);
     for (const col of freeCols.slice(0, wanted)) {
       eggCells.push({ row: Math.floor(extraRng() * 2), col });
     }
@@ -1187,7 +1198,7 @@ function generateLevel(levelIdx: number): LevelConfig {
   // depend on luck in their column: each gets a few moves of margin.
   moves += Math.round(holeCells.length / 4);
   if (honeyCells.length > 0) moves += 1;
-  moves += eggCells.length * (rank === 0 ? 2 : 1);
+  moves += eggCells.length * (rank === 0 ? 2 : 3);
   moves = Math.min(44, moves);
 
   // --- Objectives ----------------------------------------------------------
@@ -1243,6 +1254,58 @@ function generateLevel(levelIdx: number): LevelConfig {
           label: ANIMAL_LABELS[color],
           target: Math.max(10, Math.round((spare * perMove) / 2) * 2),
         });
+      }
+    }
+  }
+
+  // --- Effort cap ----------------------------------------------------------
+  // A level can pick up three goals that each need most of the move budget;
+  // then it is lost by construction, not by play. Estimate what every goal
+  // costs in moves and trim the elastic ones (collect/score) when the total
+  // no longer fits. Obstacles are part of the board and are never reduced.
+  const objectiveCost = (objective: LevelObjective): number => {
+    switch (objective.kind) {
+      case 'ice':
+        return iceHp / RATE.ice;
+      case 'crate':
+        return crateHp / RATE.crateHp;
+      case 'chain':
+        return chainCells.length / RATE.chain;
+      case 'honey':
+        return honeyCells.length / RATE.honey;
+      case 'egg':
+        return eggCells.length / RATE.egg;
+      case 'color':
+        // A focused player collects roughly three requested animals per move.
+        return objective.target / 3.0;
+      case 'score':
+        return objective.target / 900;
+      case 'specials':
+        return objective.target / RATE.special;
+      case 'cascade3':
+        return objective.target / RATE.cascade3;
+      case 'boss':
+        return objective.target / RATE.boss;
+      default:
+        return 0;
+    }
+  };
+
+  const totalCost = objectives.reduce((sum, objective) => sum + objectiveCost(objective), 0);
+  const budget = moves;
+  if (rank >= 1 && totalCost > budget * 1.15) {
+    const elastic = objectives.filter(
+      (objective) => objective.kind === 'color' || objective.kind === 'score'
+    );
+    const fixedCost = totalCost - elastic.reduce((sum, objective) => sum + objectiveCost(objective), 0);
+    const elasticCost = totalCost - fixedCost;
+    if (elasticCost > 0) {
+      const scale = Math.max(0.5, Math.max(0, budget - fixedCost) / elasticCost);
+      for (const objective of elastic) {
+        objective.target =
+          objective.kind === 'score'
+            ? Math.max(1500, Math.round((objective.target * scale) / 500) * 500)
+            : Math.max(10, Math.round((objective.target * scale) / 2) * 2);
       }
     }
   }

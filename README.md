@@ -15,7 +15,7 @@ cascade can become a small legend.
 ![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&labelColor=0F1219&logo=react&logoColor=61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square&labelColor=0F1219&logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&labelColor=0F1219&logo=vite&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-58%20passing-10B981?style=flat-square&labelColor=0F1219)
+![Tests](https://img.shields.io/badge/tests-154%20passing-10B981?style=flat-square&labelColor=0F1219)
 ![License](https://img.shields.io/badge/license-MIT-F5B841?style=flat-square&labelColor=0F1219)
 
 </div>
@@ -185,16 +185,23 @@ docs/screenshots/  Images used by this README
 
 ## Quality
 
-The project has **58 tests across 14 files**, covering the engine, levels,
+The project has **154 tests across 29 files**, covering the engine, levels,
 scoring, saved games, storage migration, sharing, translations, daily records,
-achievements and tutorial limits. The same three commands run in CI before
-every deploy and on every pull request.
+achievements, tutorial limits and a server-rendered smoke test of the board
+itself. The same three commands run in CI before every deploy and on every
+pull request.
 
 ```bash
-bun test        # 58 tests
-bun run lint    # TypeScript check
-bun run build   # production build
+bun test          # 154 tests
+bun run lint      # TypeScript check
+bun run build     # production build
+bun run balance   # simulates the campaign and reports win rates per difficulty
 ```
+
+The balance script plays hundreds of generated levels with a small bot (one
+move of lookahead, no tools). Generated levels get a move budget from their own
+obstacle load, and an effort cap shrinks collect/score goals when a level would
+otherwise need more moves than it has — that keeps a level hard, not unfair.
 
 ## Settings and accessibility
 

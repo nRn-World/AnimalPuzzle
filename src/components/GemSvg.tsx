@@ -49,6 +49,7 @@ interface GemSvgProps {
   className?: string;
   /** Unique number that offsets the idle animations so the animals never move in sync. */
   animationSeed?: number;
+  style?: React.CSSProperties;
 }
 
 const PetEyes: React.FC<{ seed: number; children: React.ReactNode }> = ({ seed, children }) => (
@@ -65,20 +66,21 @@ const PetEyes: React.FC<{ seed: number; children: React.ReactNode }> = ({ seed, 
   </g>
 );
 
-export const GemSvg: React.FC<GemSvgProps> = ({
+const GemSvgBase: React.FC<GemSvgProps> = ({
   color,
   special,
   chained = false,
   skin = 'classic',
   className = 'w-full h-full',
   animationSeed = 0,
+  style,
 }) => {
   const palette = GEM_META[color];
   const seed = animationSeed;
   const { symbols } = useSettings();
 
   return (
-    <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+    <svg viewBox="0 0 64 64" className={className} style={style} aria-hidden="true">
       {/* Special Aura Ring behind animal */}
       {special === 'nova' && (
         <circle
@@ -896,6 +898,23 @@ const BOSS_ART: Record<string, React.ReactNode> = {
 };
 
 /** The boss of a landscape. Without `biome` it shows the archipelago's Kapten Krake. */
+// Memoised: the board re-renders on every selection/hint change, but an animal
+// whose props did not change should not rebuild its whole SVG tree. The style
+// object is created inline for the idle-hop stagger, so compare its values
+// instead of its identity or the memo would never hit.
+export const GemSvg = React.memo(
+  GemSvgBase,
+  (prev, next) =>
+    prev.color === next.color &&
+    prev.special === next.special &&
+    prev.chained === next.chained &&
+    prev.skin === next.skin &&
+    prev.className === next.className &&
+    prev.animationSeed === next.animationSeed &&
+    prev.style?.animationDelay === next.style?.animationDelay &&
+    prev.style?.animationDuration === next.style?.animationDuration
+);
+
 export const BossSvg: React.FC<{ className?: string; biome?: string }> = ({
   className = 'w-full h-full',
   biome = 'skargard',
