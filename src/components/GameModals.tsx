@@ -144,6 +144,9 @@ const ChestIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 const PRIMARY_CTA_CLASS = 'ui-btn ui-btn-green w-full px-4 py-1.5 font-display text-lg tracking-wide';
 
+/** How many victory-screen design variants the picker offers. */
+export const VICTORY_VARIANT_COUNT = 10;
+
 const ShareButton: React.FC<{ notice: string | null; onShare: () => void; plain?: boolean; label?: string }> = ({
   notice,
   onShare,
@@ -220,6 +223,11 @@ export const GameModals: React.FC<GameModalsProps> = ({
   onNextLevel,
   onBackToTitle,
 }) => {
+  const [victoryVariant, setVictoryVariant] = useState<number>(() => {
+    const n = Number(new URLSearchParams(window.location.search).get('vinst'));
+    return Number.isInteger(n) && n >= 1 && n <= VICTORY_VARIANT_COUNT ? n : 1;
+  });
+
   if (phase !== 'PAUSED' && phase !== 'VICTORY' && phase !== 'GAME_OVER') {
     return null;
   }
@@ -234,7 +242,11 @@ export const GameModals: React.FC<GameModalsProps> = ({
       aria-labelledby="modal-heading"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111111]/70"
     >
-      <div className={`relative w-full max-w-md ${phase === 'VICTORY' ? 'pt-11' : ''}`}>
+      <div
+        className={`relative w-full max-w-md ${
+          phase === 'VICTORY' ? `pt-11 victory-variant-${victoryVariant}` : ''
+        }`}
+      >
       {phase === 'VICTORY' && (
         <>
           <Confetti />
@@ -570,6 +582,28 @@ export const GameModals: React.FC<GameModalsProps> = ({
               plain
               label={mode === 'custom' ? t('Dela pussellänk') : undefined}
             />
+
+            {/* Design-variant picker: try the ten victory-screen looks (1–10). */}
+            <div
+              data-testid="victory-variant-picker"
+              className="flex items-center justify-center gap-1 pt-1"
+              role="group"
+              aria-label="Vinstskärm-variant"
+            >
+              {Array.from({ length: VICTORY_VARIANT_COUNT }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setVictoryVariant(n)}
+                  aria-pressed={victoryVariant === n}
+                  className={`victory-variant-chip font-mono-num ${
+                    victoryVariant === n ? 'active' : ''
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
           </>
         )}
 
