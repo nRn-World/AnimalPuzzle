@@ -1961,28 +1961,34 @@ html[data-reduce-motion='true'] .ui-fever-board {
    is the game's identity and is kept in every look; only the palette,
    surfaces and accents change.
    ========================================================================== */
+/* Subtle by default (the player has already picked a look); lights up on
+   hover/tap for those who want to switch. */
 .victory-variant-chip {
-  width: 1.55rem;
-  height: 1.55rem;
+  width: 1.15rem;
+  height: 1.15rem;
   display: inline-grid;
   place-items: center;
   border: 2px solid var(--ui-ink);
   border-radius: 999px;
   background: #ffffff;
   color: var(--ui-ink);
-  font-size: 11px;
+  font-size: 9px;
   cursor: pointer;
+  opacity: 0.45;
   transition:
     transform 80ms ease,
     background-color 80ms ease,
-    box-shadow 80ms ease;
+    box-shadow 80ms ease,
+    opacity 120ms ease;
 }
 .victory-variant-chip:hover {
   transform: translateY(-1px);
+  opacity: 1;
 }
 .victory-variant-chip.active {
   background: var(--ui-yellow);
   box-shadow: 2px 2px 0 var(--ui-ink);
+  opacity: 1;
 }
 
 /* 1 · Klassisk — the warm classic (slightly creamier) */
@@ -2384,4 +2390,22 @@ html[data-reduce-motion='true'] .ui-fever-board {
 .victory-variant-10 .ui-panel .ui-btn:not(.ui-btn-green):not(.ui-btn-wood) {
   background: #fff3e0;
   color: #4a1608;
+}
+
+/* Defeat screen contrast: the red "time up / best score" text stays
+   legible on the dark variant palettes (2, 3, 4, 6, 8). */
+.victory-variant-2 .ui-panel .text-\[\#D4002A\] {
+  color: #ff9db0;
+}
+.victory-variant-3 .ui-panel .text-\[\#D4002A\] {
+  color: #ffc94d;
+}
+.victory-variant-4 .ui-panel .text-\[\#D4002A\] {
+  color: #ffd75e;
+}
+.victory-variant-6 .ui-panel .text-\[\#D4002A\] {
+  color: #ffd75e;
+}
+.victory-variant-8 .ui-panel .text-\[\#D4002A\] {
+  color: #ff2e88;
 }

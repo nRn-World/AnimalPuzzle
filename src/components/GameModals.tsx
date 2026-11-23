@@ -234,7 +234,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
     } catch {
       // Storage can be blocked (private mode); fall through to the default.
     }
-    return 1;
+    return 4;
   });
 
   const chooseVictoryVariant = (n: number) => {
@@ -263,8 +263,8 @@ export const GameModals: React.FC<GameModalsProps> = ({
     >
       <div
         className={`relative w-full max-w-md ${
-          phase === 'VICTORY' ? `pt-11 victory-variant-${victoryVariant}` : ''
-        }`}
+          phase === 'VICTORY' || phase === 'GAME_OVER' ? `victory-variant-${victoryVariant}` : ''
+        } ${phase === 'VICTORY' ? 'pt-11' : ''}`}
       >
       {phase === 'VICTORY' && (
         <>
@@ -607,7 +607,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
               data-testid="victory-variant-picker"
               className="flex items-center justify-center gap-1 pt-1"
               role="group"
-              aria-label="Vinstskärm-variant"
+              aria-label="Victory screen design"
             >
               {Array.from({ length: VICTORY_VARIANT_COUNT }, (_, i) => i + 1).map((n) => (
                 <button
