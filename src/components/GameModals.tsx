@@ -4,6 +4,8 @@ import { formatNumber, t } from '../i18n';
 import { AnimalSkinId, GameMode, GamePhase } from '../game/types';
 import { getSkinMeta } from '../game/daily';
 import { nextStarGoal } from '../game/mastery';
+import { STORAGE_KEYS } from '../game/storage';
+import { soundEngine } from '../game/audio';
 import { GemSvg } from './GemSvg';
 import { StarRating } from './StarRating';
 import { UiIcon } from './UiIcon';
@@ -224,9 +226,26 @@ export const GameModals: React.FC<GameModalsProps> = ({
   onBackToTitle,
 }) => {
   const [victoryVariant, setVictoryVariant] = useState<number>(() => {
-    const n = Number(new URLSearchParams(window.location.search).get('vinst'));
-    return Number.isInteger(n) && n >= 1 && n <= VICTORY_VARIANT_COUNT ? n : 1;
+    const fromUrl = Number(new URLSearchParams(window.location.search).get('vinst'));
+    if (Number.isInteger(fromUrl) && fromUrl >= 1 && fromUrl <= VICTORY_VARIANT_COUNT) return fromUrl;
+    try {
+      const saved = Number(window.localStorage.getItem(STORAGE_KEYS.victoryVariant));
+      if (Number.isInteger(saved) && saved >= 1 && saved <= VICTORY_VARIANT_COUNT) return saved;
+    } catch {
+      // Storage can be blocked (private mode); fall through to the default.
+    }
+    return 1;
   });
+
+  const chooseVictoryVariant = (n: number) => {
+    soundEngine.playClick();
+    setVictoryVariant(n);
+    try {
+      window.localStorage.setItem(STORAGE_KEYS.victoryVariant, String(n));
+    } catch {
+      // Non-fatal: the pick simply will not be remembered.
+    }
+  };
 
   if (phase !== 'PAUSED' && phase !== 'VICTORY' && phase !== 'GAME_OVER') {
     return null;
@@ -594,7 +613,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
                 <button
                   key={n}
                   type="button"
-                  onClick={() => setVictoryVariant(n)}
+                  onClick={() => chooseVictoryVariant(n)}
                   aria-pressed={victoryVariant === n}
                   className={`victory-variant-chip font-mono-num ${
                     victoryVariant === n ? 'active' : ''

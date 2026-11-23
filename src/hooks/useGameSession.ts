@@ -1178,17 +1178,24 @@ export function useGameSession(language: Lang) {
     return () => window.clearInterval(timer);
   }, [lives.lives, commitLives]);
 
-  // Time played, counted while a board is on screen.
+  // Time played, counted while a board is on screen (a hidden tab does not count).
   useEffect(() => {
     if (phase !== 'PLAYING') return;
-    const timer = window.setInterval(() => bumpStats({ secondsPlayed: 5 }), 5000);
+    const timer = window.setInterval(() => {
+      if (document.hidden) return;
+      bumpStats({ secondsPlayed: 5 });
+    }, 5000);
     return () => window.clearInterval(timer);
   }, [phase, bumpStats]);
 
-  // The clock of the time mode only runs while playing.
+  // The clock of the time mode only runs while playing — and a hidden tab
+  // never spends blitz seconds, so switching tabs cannot drain the clock.
   useEffect(() => {
     if (phase !== 'PLAYING' || mode !== 'blitz') return;
-    const timer = window.setInterval(() => setBlitzLeft((left) => Math.max(0, left - 1)), 1000);
+    const timer = window.setInterval(() => {
+      if (document.hidden) return;
+      setBlitzLeft((left) => Math.max(0, left - 1));
+    }, 1000);
     return () => window.clearInterval(timer);
   }, [phase, mode]);
 
@@ -1617,6 +1624,17 @@ export function useGameSession(language: Lang) {
     soundEngine.playClick();
     setPhase('PLAYING');
   }, []);
+
+  // Leaving the tab mid-run pauses the game so nothing advances unseen
+  // (the blitz clock is additionally gated on document.hidden).
+  useEffect(() => {
+    if (phase !== 'PLAYING') return;
+    const onVisibility = () => {
+      if (document.hidden) pause();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [phase, pause]);
 
   // --- Playing out a move --------------------------------------------------
 
