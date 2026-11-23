@@ -20,6 +20,9 @@ export default defineConfig(() => {
       },
     },
     server: {
+      // The sandbox preview proxies the dev server through a *.e2b.app
+      // hostname; without this allowlist Vite's host check returns 403.
+      allowedHosts: ['.e2b.app'],
       // Set DISABLE_HMR=true to turn off hot reload and file watching.
       hmr: process.env.DISABLE_HMR !== 'true',
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
