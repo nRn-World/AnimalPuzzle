@@ -10,6 +10,8 @@ export const STORAGE_PREFIX = 'animalpuzzle_';
 export const LEGACY_STORAGE_PREFIX = 'kromatik_';
 
 export const STORAGE_KEYS = {
+  /** The victory-screen design variant (1–10) the player picked in the picker. */
+  victoryVariant: `${STORAGE_PREFIX}victory_variant_v1`,
   unlocked: `${STORAGE_PREFIX}unlocked`,
   daily: `${STORAGE_PREFIX}daily_state`,
   tutorialDone: `${STORAGE_PREFIX}tutorial_done`,

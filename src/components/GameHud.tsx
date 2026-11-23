@@ -103,6 +103,7 @@ export const GameHud: React.FC<GameHudProps> = ({
   onHint,
   onToggleFullscreen,
   onPause,
+  onBackToTitle,
 }) => {
   const energyPct = Math.min(100, Math.round((energy / maxEnergy) * 100));
   const feverActive = fever ? isFeverActive(fever) : false;
@@ -189,6 +190,22 @@ export const GameHud: React.FC<GameHudProps> = ({
           </div>
 
           <div className="ui-play-actions flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <button
+              type="button"
+              tabIndex={-1}
+              data-testid="hud-home-btn"
+              onClick={(e) =>
+                blurAfterClick(e, () => {
+                  if (window.confirm(t('Gå tillbaka till huvudmenyn?'))) onBackToTitle();
+                })
+              }
+              disabled={busy}
+              title={t('Till huvudmenyn')}
+              aria-label={t('Till huvudmenyn')}
+              className="ui-booster ui-booster-plain ui-play-action-btn"
+            >
+              <UiIcon name="home" className="ui-play-action-icon" />
+            </button>
             <button
               type="button"
               tabIndex={-1}

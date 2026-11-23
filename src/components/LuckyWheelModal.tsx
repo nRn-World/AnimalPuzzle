@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { soundEngine } from '../game/audio';
 import { prefersReducedMotion } from '../game/settings';
 import { WHEEL_SLICES, WheelSlice } from '../game/starChest';
@@ -33,10 +33,30 @@ export const LuckyWheelModal: React.FC<LuckyWheelModalProps> = ({
   const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [wonSlice, setWonSlice] = useState<WheelSlice | null>(null);
+  const spinTimerRef = useRef<number | null>(null);
+
+  // Clear previous prize banner only when freshly opening the modal.
+  useEffect(() => {
+    if (open) {
+      setWonSlice(null);
+    } else if (spinTimerRef.current !== null) {
+      window.clearTimeout(spinTimerRef.current);
+      spinTimerRef.current = null;
+      setSpinning(false);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    return () => {
+      if (spinTimerRef.current !== null) {
+        window.clearTimeout(spinTimerRef.current);
+        spinTimerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
-    setWonSlice(null);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !spinning) {
         e.preventDefault();
@@ -67,7 +87,9 @@ export const LuckyWheelModal: React.FC<LuckyWheelModalProps> = ({
     });
 
     const delay = prefersReducedMotion() ? 50 : 3200;
-    window.setTimeout(() => {
+    if (spinTimerRef.current !== null) window.clearTimeout(spinTimerRef.current);
+    spinTimerRef.current = window.setTimeout(() => {
+      spinTimerRef.current = null;
       setSpinning(false);
       setWonSlice(outcome.slice);
       soundEngine.playVictory();

@@ -22,7 +22,8 @@ import {
   parseCustomPuzzleFromSearch,
 } from './customPuzzle';
 import { createSeededRng } from './daily';
-import { areObjectivesComplete, createEmptyProgress, levelColorPool, resolveSwap } from './engine';
+import { areObjectivesComplete, createEmptyProgress, findBestHint, levelColorPool, resolveSwap } from './engine';
+import { hapticPattern } from './haptics';
 import {
   advanceFever,
   createInitialFever,
@@ -159,6 +160,13 @@ test('Master Mode tightens moves, preserves physical obstacle limits and tracks 
   assert.ok(master.moves < base.moves);
   assert.equal(master.difficulty, 'extreme');
 
+  // Physical obstacle targets (including honey) stay capped at board count
+  const honeyLevel = {
+    ...base,
+    objectives: [{ id: 'h', kind: 'honey' as const, label: 'Rensa honung', target: 6 }],
+  };
+  assert.equal(applyMasterMode(honeyLevel).objectives[0].target, 6);
+
   const first = recordMasterClear({}, 1, 2);
   assert.equal(first.firstClear, true);
   assert.equal(totalMasterCrowns(first.nextCrowns), 1);
@@ -180,6 +188,17 @@ test('custom tactical puzzles encode/decode in shareable URLs and solve through 
   assert.equal(parsed!.moves, starter.moves);
   assert.equal(parsed!.cells.length, starter.cells.length);
   assert.equal(decodeCustomPuzzle('APZ1:broken!!!'), null);
+
+  // Even an empty custom puzzle board starts with natural valid moves (no deadlock!)
+  const emptyBoard = buildCustomPuzzleBoard({
+    heading: 'Tom',
+    moves: 3,
+    goalKind: 'color',
+    goalColor: 'ruby',
+    goalTarget: 5,
+    cells: [],
+  });
+  assert.ok(findBestHint(emptyBoard), 'Empty custom board must have valid moves');
 
   // Starter custom puzzle solves cleanly in 1 combo swap: (3,3) beam_h + (3,4) nova!
   const board = buildCustomPuzzleBoard(parsed!);
@@ -235,4 +254,10 @@ test('cloud sync client handles unconfigured state and Supabase REST calls clean
   assert.equal(board![0].rank, 1);
   assert.equal(board![1].isPlayer, true);
   assert.equal(calls.length, 2);
+});
+
+test('the prism storm (two fused stars) uses its own cinematic haptic pattern', () => {
+  assert.deepEqual(hapticPattern('starstorm'), [60, 50, 90, 50, 140]);
+  assert.notDeepEqual(hapticPattern('starstorm'), hapticPattern('blast'));
+  assert.notDeepEqual(hapticPattern('starstorm'), hapticPattern('special'));
 });

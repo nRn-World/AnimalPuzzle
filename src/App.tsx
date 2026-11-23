@@ -5,6 +5,7 @@ import titleBackdrop from './assets/images/title-backdrop.webp';
 import { useCallback } from 'react';
 import { AchievementUnlockToast } from './components/AchievementsSection';
 import { ComboBanner } from './components/ComboBanner';
+import { StarStormFx } from './components/StarStormFx';
 import { FlyingGoalsOverlay } from './components/FlyingGoalsOverlay';
 import { ObstacleIntroModal } from './components/ObstacleIntroModal';
 import { TutorialBanner } from './components/TutorialBanner';
@@ -57,6 +58,7 @@ export default function App() {
     restart,
     showHint,
     selectTool,
+    demoPrismStorm,
   } = game;
 
   const inGame = phase !== 'TITLE_MENU';
@@ -128,6 +130,9 @@ export default function App() {
         } else if (key === '3') {
           e.preventDefault();
           selectTool('shuffle');
+        } else if (key === 'f9') {
+          e.preventDefault();
+          demoPrismStorm();
         }
       } else if (phase === 'PAUSED') {
         if (key === 'p' || key === 'escape') {
@@ -140,6 +145,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [
     busy,
+    demoPrismStorm,
     game.activeObstacleIntro,
     pause,
     phase,
@@ -351,7 +357,12 @@ export default function App() {
                 className="relative flex min-h-0 w-full flex-1 items-center justify-center"
               >
                 {game.comboNotice && (
-                  <ComboBanner key={game.comboNotice.nonce} type={game.comboNotice.type} />
+                  <>
+                    <ComboBanner key={game.comboNotice.nonce} type={game.comboNotice.type} />
+                    {game.comboNotice.type === 'prism_storm' && (
+                      <StarStormFx key={`storm-${game.comboNotice.nonce}`} />
+                    )}
+                  </>
                 )}
                 <GameBoard
                   board={game.board}

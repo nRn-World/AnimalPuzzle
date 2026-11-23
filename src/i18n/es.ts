@@ -91,6 +91,8 @@ export const es: Record<string, string> = {
     "Prisma",
   "Till huvudmenyn":
     "Menú principal",
+  "Gå tillbaka till huvudmenyn?":
+    "¿Volver al menú principal?",
   "Nivå {n}/{total}":
     "Nivel {n}/{total}",
   "Daglig":

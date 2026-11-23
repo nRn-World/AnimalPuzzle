@@ -4,6 +4,8 @@ import { formatNumber, t } from '../i18n';
 import { AnimalSkinId, GameMode, GamePhase } from '../game/types';
 import { getSkinMeta } from '../game/daily';
 import { nextStarGoal } from '../game/mastery';
+import { STORAGE_KEYS } from '../game/storage';
+import { soundEngine } from '../game/audio';
 import { GemSvg } from './GemSvg';
 import { StarRating } from './StarRating';
 import { UiIcon } from './UiIcon';
@@ -144,6 +146,9 @@ const ChestIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 const PRIMARY_CTA_CLASS = 'ui-btn ui-btn-green w-full px-4 py-1.5 font-display text-lg tracking-wide';
 
+/** How many victory-screen design variants the picker offers. */
+export const VICTORY_VARIANT_COUNT = 10;
+
 const ShareButton: React.FC<{ notice: string | null; onShare: () => void; plain?: boolean; label?: string }> = ({
   notice,
   onShare,
@@ -220,6 +225,28 @@ export const GameModals: React.FC<GameModalsProps> = ({
   onNextLevel,
   onBackToTitle,
 }) => {
+  const [victoryVariant, setVictoryVariant] = useState<number>(() => {
+    const fromUrl = Number(new URLSearchParams(window.location.search).get('vinst'));
+    if (Number.isInteger(fromUrl) && fromUrl >= 1 && fromUrl <= VICTORY_VARIANT_COUNT) return fromUrl;
+    try {
+      const saved = Number(window.localStorage.getItem(STORAGE_KEYS.victoryVariant));
+      if (Number.isInteger(saved) && saved >= 1 && saved <= VICTORY_VARIANT_COUNT) return saved;
+    } catch {
+      // Storage can be blocked (private mode); fall through to the default.
+    }
+    return 4;
+  });
+
+  const chooseVictoryVariant = (n: number) => {
+    soundEngine.playClick();
+    setVictoryVariant(n);
+    try {
+      window.localStorage.setItem(STORAGE_KEYS.victoryVariant, String(n));
+    } catch {
+      // Non-fatal: the pick simply will not be remembered.
+    }
+  };
+
   if (phase !== 'PAUSED' && phase !== 'VICTORY' && phase !== 'GAME_OVER') {
     return null;
   }
@@ -234,7 +261,11 @@ export const GameModals: React.FC<GameModalsProps> = ({
       aria-labelledby="modal-heading"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111111]/70"
     >
-      <div className={`relative w-full max-w-md ${phase === 'VICTORY' ? 'pt-11' : ''}`}>
+      <div
+        className={`relative w-full max-w-md ${
+          phase === 'VICTORY' || phase === 'GAME_OVER' ? `victory-variant-${victoryVariant}` : ''
+        } ${phase === 'VICTORY' ? 'pt-11' : ''}`}
+      >
       {phase === 'VICTORY' && (
         <>
           <Confetti />
@@ -570,6 +601,28 @@ export const GameModals: React.FC<GameModalsProps> = ({
               plain
               label={mode === 'custom' ? t('Dela pussellänk') : undefined}
             />
+
+            {/* Design-variant picker: try the ten victory-screen looks (1–10). */}
+            <div
+              data-testid="victory-variant-picker"
+              className="flex items-center justify-center gap-1 pt-1"
+              role="group"
+              aria-label="Victory screen design"
+            >
+              {Array.from({ length: VICTORY_VARIANT_COUNT }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => chooseVictoryVariant(n)}
+                  aria-pressed={victoryVariant === n}
+                  className={`victory-variant-chip font-mono-num ${
+                    victoryVariant === n ? 'active' : ''
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
           </>
         )}
 

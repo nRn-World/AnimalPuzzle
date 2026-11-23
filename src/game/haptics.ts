@@ -7,6 +7,7 @@ export type HapticKind =
   | 'match'
   | 'special'
   | 'blast'
+  | 'starstorm'
   | 'victory'
   | 'defeat';
 
@@ -30,6 +31,8 @@ export function hapticPattern(kind: HapticKind, cascadeIndex = 1): number[] {
       return [18, 30, 28];
     case 'blast':
       return [45];
+    case 'starstorm':
+      return [60, 50, 90, 50, 140];
     case 'victory':
       return [30, 60, 30, 60, 90];
     case 'defeat':
