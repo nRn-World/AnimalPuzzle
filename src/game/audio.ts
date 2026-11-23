@@ -534,6 +534,21 @@ class SoundEngine {
     });
   }
 
+  /**
+   * The PRISM STORM: two stars fuse into a golden supernova. A rising sweep
+   * builds the spin-up, a deep impact hits when they collide, then a shimmering
+   * arpeggio of crystal bells rings out over the detonation.
+   */
+  playStarStorm(): void {
+    this.playTone(240, 0.5, 'sawtooth', 0.06, 0, 1900);
+    this.playTone(1200, 0.1, 'triangle', 0.05, 0.44, 2400);
+    this.playTone(72, 0.55, 'triangle', 0.16, 0.5, 41);
+    this.playTone(220, 0.42, 'sine', 0.09, 0.52, 55);
+    [1046.5, 1318.51, 1567.98, 2093, 2637, 3135.96].forEach((freq, i) => {
+      this.playCrystalBellStrike(freq, 2.76, 0.55, 0.045, 0.58 + i * 0.07, (i % 3) * 0.5 - 0.5);
+    });
+  }
+
   /** A short call for each animal: pitch and shape follow its place in the roster. */
   playAnimalVoice(index: number): void {
     const i = ((index % 12) + 12) % 12;

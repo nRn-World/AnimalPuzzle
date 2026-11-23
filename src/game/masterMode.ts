@@ -22,8 +22,14 @@ export function canPlayMasterMode(
 export function applyMasterMode(level: LevelConfig): LevelConfig {
   const moves = Math.max(10, Math.round(level.moves * 0.78));
   const objectives = level.objectives.map((obj) => {
-    if (obj.kind === 'egg' || obj.kind === 'ice' || obj.kind === 'crate' || obj.kind === 'chain') {
-      // Board-placed counts cannot exceed physical items placed on the board.
+    if (
+      obj.kind === 'egg' ||
+      obj.kind === 'ice' ||
+      obj.kind === 'crate' ||
+      obj.kind === 'chain' ||
+      obj.kind === 'honey'
+    ) {
+      // Board-placed obstacle counts cannot exceed physical items placed on the board.
       return obj;
     }
     if (obj.kind === 'boss') {

@@ -339,6 +339,231 @@
   animation: menu-firefly 7s ease-in-out infinite;
 }
 
+/* ===== PRISM STORM — the unique 3D effect for fusing two Prism Stars ===== */
+.star-storm-fx {
+  position: absolute;
+  inset: 0;
+  z-index: 39;
+  pointer-events: none;
+  perspective: 900px;
+  overflow: hidden;
+}
+
+/* Radial light rays, tilted into 3D space at the impact point */
+.star-storm-rays {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 260%;
+  aspect-ratio: 1;
+  opacity: 0;
+  background: repeating-conic-gradient(rgba(253, 224, 71, 0.4) 0deg 6deg, rgba(253, 224, 71, 0) 6deg 26deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.6) 30%, transparent 62%);
+  mask-image: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.6) 30%, transparent 62%);
+  animation: star-storm-rays 1500ms linear both;
+}
+@keyframes star-storm-rays {
+  0%,
+  47% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotateX(64deg) translateZ(-140px) rotate(0turn);
+  }
+  60% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotateX(64deg) translateZ(-140px) rotate(0.4turn);
+  }
+}
+
+/* Two tilted 3D shockwave rings sweeping out at the collision */
+.star-storm-wave {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 78%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 7px solid rgba(253, 224, 71, 0.95);
+  box-shadow: 0 0 26px rgba(253, 224, 71, 0.8), inset 0 0 26px rgba(253, 224, 71, 0.5);
+  opacity: 0;
+  animation: star-storm-wave 950ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 700ms;
+}
+.star-storm-wave-b {
+  width: 62%;
+  border-color: rgba(236, 72, 153, 0.85);
+  box-shadow: 0 0 20px rgba(236, 72, 153, 0.7), inset 0 0 20px rgba(236, 72, 153, 0.4);
+  animation-delay: 830ms;
+}
+@keyframes star-storm-wave {
+  0% {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) rotateX(72deg) scale(0.12);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotateX(72deg) scale(3);
+  }
+}
+
+/* The two Prism Stars streak in from opposite sides, spinning in 3D */
+.star-storm-star {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(17vmin, 104px);
+  height: min(17vmin, 104px);
+  opacity: 0;
+  filter: drop-shadow(0 0 16px rgba(253, 224, 71, 0.95)) drop-shadow(0 0 34px rgba(236, 72, 153, 0.5));
+  will-change: transform, opacity;
+}
+.star-storm-star-left {
+  animation: star-storm-star-left 1500ms cubic-bezier(0.45, 0, 0.35, 1) both;
+}
+.star-storm-star-right {
+  animation: star-storm-star-right 1500ms cubic-bezier(0.45, 0, 0.35, 1) both;
+}
+@keyframes star-storm-star-left {
+  0% {
+    opacity: 0;
+    transform: translate(calc(-50% - 58vw), calc(-50% + 46px)) rotateY(0turn) rotateZ(-14deg) scale(0.8);
+  }
+  9% {
+    opacity: 1;
+  }
+  45% {
+    transform: translate(calc(-50% + 1.5vw), calc(-50% - 14px)) rotateY(2.1turn) rotateZ(9deg) scale(1.28);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotateY(2.3turn) rotateZ(0deg) scale(1.05);
+  }
+  58% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotateY(2.5turn) scale(0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+}
+@keyframes star-storm-star-right {
+  0% {
+    opacity: 0;
+    transform: translate(calc(-50% + 58vw), calc(-50% + 46px)) rotateY(0turn) rotateZ(14deg) scale(0.8);
+  }
+  9% {
+    opacity: 1;
+  }
+  45% {
+    transform: translate(calc(-50% - 1.5vw), calc(-50% - 14px)) rotateY(-2.1turn) rotateZ(-9deg) scale(1.28);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotateY(-2.3turn) rotateZ(0deg) scale(1.05);
+  }
+  58% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotateY(-2.5turn) scale(0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+}
+
+/* White-gold impact flash */
+.star-storm-flash {
+  position: absolute;
+  inset: -25%;
+  opacity: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 250, 220, 0.98) 0%, rgba(253, 224, 71, 0.6) 24%, rgba(253, 224, 71, 0) 60%);
+  animation: star-storm-flash 1500ms ease-out both;
+}
+@keyframes star-storm-flash {
+  0%,
+  48% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  54% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  78% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+
+/* The 3D-rotating golden burst star */
+.star-storm-burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(48vmin, 320px);
+  aspect-ratio: 1;
+  opacity: 0;
+  filter: drop-shadow(0 0 24px rgba(253, 224, 71, 0.95)) drop-shadow(0 0 60px rgba(253, 224, 71, 0.5));
+  will-change: transform, opacity;
+  animation: star-storm-burst 1500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes star-storm-burst {
+  0%,
+  49% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0) rotateX(0deg) rotateY(0turn) rotate(0deg);
+  }
+  57% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.3) rotateX(18deg) rotateY(0.35turn) rotate(24deg);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.2) rotateX(46deg) rotateY(1.2turn) rotate(150deg);
+  }
+}
+
+/* 3D spark shards flying out of the burst */
+.star-storm-spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  opacity: 0;
+  background: #fde047;
+  border-radius: 50% 0 50% 50%;
+  box-shadow: 0 0 10px 3px rgba(253, 224, 71, 0.85);
+  will-change: transform, opacity;
+  animation: star-storm-spark 950ms ease-out both;
+  animation-delay: var(--sd, 540ms);
+}
+@keyframes star-storm-spark {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate3d(0, 0, 40px) scale(0.5) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate3d(var(--sx, 30vmin), var(--sy, -20vmin), var(--sz, 120px)) scale(1.2) rotate(200deg);
+  }
+}
+
+/* The PRISM STORM banner gets a golden treatment */
+.ui-banner.prism-storm {
+  background: linear-gradient(135deg, #fde047 0%, #f5b841 45%, #ec4899 130%);
+  box-shadow: 5px 5px 0 var(--ui-ink), 0 0 22px rgba(253, 224, 71, 0.65);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-gem-spawn,
   .animate-gem-clear,
@@ -359,6 +584,11 @@
   .animate-star-pop,
   .animate-combo-banner {
     animation: none !important;
+  }
+  .star-storm-fx,
+  .star-storm-fx * {
+    animation: none !important;
+    opacity: 0 !important;
   }
 }
 
@@ -381,6 +611,11 @@ html[data-reduce-motion="true"] .dolphin-blink-frame,
 html[data-reduce-motion="true"] .animate-star-pop,
 html[data-reduce-motion="true"] .animate-combo-banner {
   animation: none !important;
+}
+html[data-reduce-motion="true"] .star-storm-fx,
+html[data-reduce-motion="true"] .star-storm-fx * {
+  animation: none !important;
+  opacity: 0 !important;
 }
 
 /* ------------------------------------------------------------------

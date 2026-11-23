@@ -885,12 +885,36 @@ export function useGameSession(language: Lang) {
     setFlyingGoals([]);
     setShareNotice(null);
     setSavedGame(loadResumableSave(highestUnlockedIdx, todayKey));
-    // Weekly, daily-puzzle and custom runs are one-offs with no tab on the menu.
-    // Leaving the menu pointed at one of them shows an empty left column and
-    // makes Play now restart that run, so fall back to the campaign.
-    if (mode === 'weekly' || mode === 'puzzle' || mode === 'custom') setMode('campaign');
+    // Return sub-modes (custom puzzle, daily puzzle, weekly level) to their
+    // parent TitleScreen tab so the menu panel and Play CTA stay valid: the
+    // daily puzzle and the weekly level live under the daily tab.
+    setMode((curr) =>
+      curr === 'custom'
+        ? 'campaign'
+        : curr === 'puzzle' || curr === 'weekly'
+        ? 'daily'
+        : curr
+    );
     setPhase('TITLE_MENU');
-  }, [clearComboNotice, commitFever, commitMiniEvents, commitWinStreak, highestUnlockedIdx, todayKey, mode]);
+  }, [clearComboNotice, commitFever, commitMiniEvents, commitWinStreak, highestUnlockedIdx, todayKey]);
+
+  /**
+   * Cosmetic-only preview of the PRISM STORM show (two fused stars).
+   * Press F9 during play to watch the 3D effect without building a real combo.
+   */
+  const demoPrismStorm = useCallback(() => {
+    if (phase !== 'PLAYING' || busy) return;
+    if (comboNoticeTimerRef.current !== null) {
+      window.clearTimeout(comboNoticeTimerRef.current);
+    }
+    setComboNotice({ type: 'prism_storm', nonce: Date.now() });
+    soundEngine.playStarStorm();
+    vibrate('starstorm');
+    comboNoticeTimerRef.current = window.setTimeout(() => {
+      setComboNotice(null);
+      comboNoticeTimerRef.current = null;
+    }, 2400);
+  }, [busy, phase]);
 
   /** Clears every transient board interaction; shared by start and resume. */
   const resetInteraction = useCallback(() => {
@@ -1720,12 +1744,19 @@ export function useGameSession(language: Lang) {
       setSelected(null);
       setHintPair(null);
 
+      try {
       if (result.combo) {
         if (comboNoticeTimerRef.current !== null) {
           window.clearTimeout(comboNoticeTimerRef.current);
         }
         setComboNotice({ type: result.combo, nonce: Date.now() });
-        soundEngine.playSpecialCreate('prism');
+        if (result.combo === 'prism_storm') {
+          // Two Prism Stars fused: the unique star-storm sound + haptic.
+          soundEngine.playStarStorm();
+          vibrate('starstorm');
+        } else {
+          soundEngine.playSpecialCreate('prism');
+        }
         comboNoticeTimerRef.current = window.setTimeout(() => {
           setComboNotice(null);
           comboNoticeTimerRef.current = null;
@@ -2292,8 +2323,10 @@ export function useGameSession(language: Lang) {
         return true;
       }
 
-      setBusy(false);
       return true;
+      } finally {
+        if (runTokenRef.current === token) setBusy(false);
+      }
     },
     [
       activeLevel,
@@ -2885,6 +2918,7 @@ export function useGameSession(language: Lang) {
     replayTutorial,
     skipTutorial,
     backToTitle,
+    demoPrismStorm,
     pause,
     resume,
     attemptSwap,

@@ -91,6 +91,8 @@ export const tr: Record<string, string> = {
     "Prizma",
   "Till huvudmenyn":
     "Ana menü",
+  "Gå tillbaka till huvudmenyn?":
+    "Ana menüye dön?",
   "Nivå {n}/{total}":
     "Seviye {n}/{total}",
   "Daglig":

@@ -703,6 +703,14 @@ export const IceBadgeIcon: React.FC<{ className?: string }> = ({ className = 'w-
 
 export const ChainBadgeIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
   <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+    {/* Dark ink outline keeps the chain legible on the cream HUD panel. */}
+    <path
+      d="M9 15 L15 9 M7 11 L5 13 C3.5 14.5 3.5 17 5 18.5 C6.5 20 9 20 10.5 18.5 L12.5 16.5 M11.5 7.5 L13.5 5.5 C15 4 17.5 4 19 5.5 C20.5 7 20.5 9.5 19 11 L17 13"
+      fill="none"
+      stroke="#0F1219"
+      strokeWidth="4"
+      strokeLinecap="round"
+    />
     <path
       d="M9 15 L15 9 M7 11 L5 13 C3.5 14.5 3.5 17 5 18.5 C6.5 20 9 20 10.5 18.5 L12.5 16.5 M11.5 7.5 L13.5 5.5 C15 4 17.5 4 19 5.5 C20.5 7 20.5 9.5 19 11 L17 13"
       fill="none"

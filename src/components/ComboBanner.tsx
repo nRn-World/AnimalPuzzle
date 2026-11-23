@@ -23,7 +23,11 @@ export const ComboBanner: React.FC<{ type: ComboType }> = ({ type }) => (
     role="status"
     className="pointer-events-none absolute inset-x-0 top-2 z-40 flex justify-center px-3"
   >
-    <div className="animate-combo-banner ui-banner px-2 pt-2.5 pb-3 text-center">
+    <div
+      className={`animate-combo-banner ui-banner px-2 pt-2.5 pb-3 text-center${
+        type === 'prism_storm' ? ' prism-storm' : ''
+      }`}
+    >
       <div className="font-display text-sm sm:text-base font-extrabold tracking-wide">
         {t(COMBO_COPY[type].title)}
       </div>

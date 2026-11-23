@@ -221,6 +221,18 @@ test('special + special swaps are legal and carry a combo identity', () => {
   );
   assert.equal(prismRes.valid, true);
   assert.equal(prismRes.combo, 'prism');
+
+  // Two prisms fuse into a prism storm that sweeps the whole board.
+  const stormBoard = makeCleanBoard();
+  stormBoard[3][3].gem!.special = 'prism';
+  stormBoard[3][4].gem!.special = 'prism';
+  const stormRes = resolveSwap(stormBoard, { row: 3, col: 3 }, { row: 3, col: 4 }, 5, rng);
+  assert.equal(stormRes.valid, true);
+  assert.equal(stormRes.combo, 'prism_storm');
+  const stormCleared = new Set(
+    stormRes.steps.flatMap((s) => s.clearedCoords.map((c) => `${c.row},${c.col}`))
+  );
+  assert.ok(stormCleared.size >= 40, `prism_storm should sweep the board (cleared ${stormCleared.size})`);
 });
 
 test('findBestHint finds valid move and objective checker evaluates completion', () => {
