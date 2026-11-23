@@ -2409,3 +2409,43 @@ html[data-reduce-motion='true'] .ui-fever-board {
 .victory-variant-8 .ui-panel .text-\[\#D4002A\] {
   color: #ff2e88;
 }
+
+/* Dark-look text legibility: the plain "Dela resultat" link, the
+   next-star-goal hint and the share notice all ship dark-grey/dark-blue
+   colours that disappear on the dark palettes. (Inset labels are covered
+   by the higher-specificity .ui-inset rules above.) */
+.victory-variant-2 .ui-panel .text-\[\#4B4B4B\],
+.victory-variant-2 .ui-panel .hover\:text-\[\#111111\]:hover {
+  color: #d9a8b8;
+}
+.victory-variant-2 .ui-panel .text-\[\#0A6FB0\] {
+  color: #ffd75e;
+}
+.victory-variant-3 .ui-panel .text-\[\#4B4B4B\],
+.victory-variant-3 .ui-panel .hover\:text-\[\#111111\]:hover {
+  color: #c4bbf0;
+}
+.victory-variant-3 .ui-panel .text-\[\#0A6FB0\] {
+  color: #ffe066;
+}
+.victory-variant-4 .ui-panel .text-\[\#4B4B4B\],
+.victory-variant-4 .ui-panel .hover\:text-\[\#111111\]:hover {
+  color: #9db1ff;
+}
+.victory-variant-4 .ui-panel .text-\[\#0A6FB0\] {
+  color: #9db1ff;
+}
+.victory-variant-6 .ui-panel .text-\[\#4B4B4B\],
+.victory-variant-6 .ui-panel .hover\:text-\[\#111111\]:hover {
+  color: #bcd3b4;
+}
+.victory-variant-6 .ui-panel .text-\[\#0A6FB0\] {
+  color: #ffd75e;
+}
+.victory-variant-8 .ui-panel .text-\[\#4B4B4B\],
+.victory-variant-8 .ui-panel .hover\:text-\[\#111111\]:hover {
+  color: #8b96a8;
+}
+.victory-variant-8 .ui-panel .text-\[\#0A6FB0\] {
+  color: #35e0ff;
+}
